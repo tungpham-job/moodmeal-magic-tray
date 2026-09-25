@@ -2,14 +2,62 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#0E6655">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<link rel="manifest" href="manifest.json">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎨</text></svg>">
 <title>Thiết kế Khay – MoodMeal</title>
 <link rel="stylesheet" href="style.css">
+<style>
+.tray-section-label {
+  font-size: 10px; color: #888;
+  padding: 2px 14px 4px;
+  font-weight: 500;
+}
+.tray-cell .cell-group {
+  font-size: 8px; color: #aaa;
+  margin-top: 1px;
+}
+.tray-cell.filled .cell-group {
+  color: var(--purple-mid); font-weight: 500;
+}
+.nutrition-ring {
+  display: flex; gap: 6px; flex-wrap: wrap;
+  padding: 4px 12px 4px;
+}
+.n-tag {
+  font-size: 9px; padding: 3px 8px;
+  border-radius: 8px; font-weight: 600;
+}
+.n-ok   { background: #D5F5E3; color: #1E8449; }
+.n-warn { background: #FEF9E7; color: #B7950B; }
+.n-miss { background: #FADBD8; color: #C0392B; }
+.sent-box {
+  margin: 6px 12px 4px;
+  background: linear-gradient(135deg, #0E6655, #1E8449);
+  border-radius: 14px; padding: 14px;
+  color: white; display: none;
+  animation: toast-in 0.3s ease;
+}
+.sent-box.show { display: block; }
+.sent-box .sb-icon { font-size: 28px; text-align:center; margin-bottom:6px; }
+.sent-box .sb-title { font-size: 13px; font-weight: 700; text-align:center; margin-bottom:4px; }
+.sent-box .sb-sub { font-size: 10px; opacity: 0.85; text-align:center; }
 
+/* ── Remove button in tray cell ── */
+.tray-cell { position: relative; }
+.cell-remove {
+  position: absolute; top: 4px; right: 4px;
+  background: rgba(125,60,152,0.15);
+  border: none; border-radius: 50%;
+  width: 18px; height: 18px;
+  font-size: 9px; color: var(--purple-mid);
+  cursor: pointer; display: flex;
+  align-items: center; justify-content: center;
+  line-height: 1; padding: 0;
+  font-family: inherit; font-weight: 700;
+  transition: background 0.15s;
+}
+.cell-remove:hover { background: rgba(125,60,152,0.3); }
+</style>
 </head>
 <body>
 <div class="phone-frame">
@@ -17,10 +65,9 @@
 
   <div class="screen-header header-purple">
     <h2>🎨 Khay cơm của em</h2>
-    <div class="sub">Bấm nguyên liệu để thêm vào khay</div>
-    <div class="xp-bar-wrap" style="margin-top:8px">
-      <span class="xp-label">Bảo Trúc · Level 2 · 185 / 300 XP</span>
-      <div class="xp-track"><div class="xp-fill" style="width:62%"></div></div>
+    <div class="sub">Bảo Trúc · Level 2 · 185 / 300 XP</div>
+    <div class="xp-bar-wrap" style="margin-top:6px">
+      <div class="xp-track"><div class="xp-fill" style="width:62%;background:#6DEBB0"></div></div>
     </div>
   </div>
 
@@ -28,23 +75,23 @@
     <!-- Khay 2x2 -->
     <div class="tray-section-label">Khay hôm nay</div>
     <div class="tray-grid">
-      <div class="tray-cell filled" id="cell-tinBot" data-group="tinBot" data-pts="30">
-        <button class="cell-remove" onclick="removeIng('tinBot','ing-tinBot',30)" title="Bỏ ra">✕</button>
+      <div class="tray-cell filled" id="cell-tinBot" data-group="tinBot" onclick="cellClick('tinBot')">
         <div class="cell-icon">🍚</div>
         <div class="cell-label">Cơm trắng</div>
         <div class="cell-group">Tinh bột</div>
+        <button class="cell-remove" onclick="removeCell(event,'tinBot')">✕</button>
       </div>
-      <div class="tray-cell filled" id="cell-dam" data-group="dam" data-pts="35">
-        <button class="cell-remove" onclick="removeIng('dam','ing-dam',35)" title="Bỏ ra">✕</button>
+      <div class="tray-cell filled" id="cell-dam" data-group="dam" onclick="cellClick('dam')">
         <div class="cell-icon">🥩</div>
         <div class="cell-label">Thịt kho</div>
         <div class="cell-group">Đạm</div>
+        <button class="cell-remove" onclick="removeCell(event,'dam')">✕</button>
       </div>
-      <div class="tray-cell" id="cell-rauCu" data-group="rauCu" onclick="focusTray('rauCu')">
+      <div class="tray-cell" id="cell-rauCu" data-group="rauCu" onclick="cellClick('rauCu')">
         <div class="cell-plus">+</div>
         <div class="cell-label">Rau củ</div>
       </div>
-      <div class="tray-cell" id="cell-canh" data-group="canh" onclick="focusTray('canh')">
+      <div class="tray-cell" id="cell-canh" data-group="canh" onclick="cellClick('canh')">
         <div class="cell-plus">+</div>
         <div class="cell-label">Canh</div>
       </div>
@@ -74,16 +121,16 @@
     <div class="ing-section">
       <div class="ing-label">Nguyên liệu đã mở khóa — bấm để thêm</div>
       <div class="ing-row" id="ingRow">
-        <button class="ing-btn used" id="ing-tinBot" data-group="tinBot" data-icon="🍚" data-name="Cơm trắng" data-score="30" onclick="addIng(this)" title="Cơm trắng">🍚</button>
-        <button class="ing-btn" data-group="tinBot" data-icon="🍞" data-name="Bánh mì"  data-score="25" onclick="addIng(this)" title="Bánh mì">🍞</button>
-        <button class="ing-btn used" id="ing-dam"   data-group="dam"    data-icon="🥩" data-name="Thịt kho"   data-score="35" onclick="addIng(this)" title="Thịt kho">🥩</button>
-        <button class="ing-btn" data-group="dam"   data-icon="🐟" data-name="Cá hấp"   data-score="30" onclick="addIng(this)" title="Cá hấp">🐟</button>
-        <button class="ing-btn" data-group="rauCu" data-icon="🥦" data-name="Bông cải" data-score="15" onclick="addIng(this)" title="Bông cải">🥦</button>
-        <button class="ing-btn" data-group="rauCu" data-icon="🥕" data-name="Cà rốt"   data-score="12" onclick="addIng(this)" title="Cà rốt">🥕</button>
-        <button class="ing-btn" data-group="rauCu" data-icon="🍅" data-name="Cà chua"  data-score="10" onclick="addIng(this)" title="Cà chua">🍅</button>
-        <button class="ing-btn" data-group="canh"  data-icon="🍲" data-name="Canh chua" data-score="10" onclick="addIng(this)" title="Canh chua">🍲</button>
-        <button class="ing-btn" data-group="canh"  data-icon="🥬" data-name="Canh rau" data-score="8"  onclick="addIng(this)" title="Canh rau">🥬</button>
-        <button class="ing-btn" data-group="dam"   data-icon="🥚" data-name="Trứng"    data-score="6"  onclick="addIng(this)" title="Trứng">🥚</button>
+        <button class="ing-btn" data-group="tinBot" data-icon="🍚" data-name="Cơm trắng" data-score="12" onclick="addIng(this)">🍚 <span style="font-size:8px;color:#888">Cơm trắng</span></button>
+        <button class="ing-btn" data-group="tinBot" data-icon="🍞" data-name="Bánh mì" data-score="10" onclick="addIng(this)">🍞 <span style="font-size:8px;color:#888">Bánh mì</span></button>
+        <button class="ing-btn" data-group="dam" data-icon="🥩" data-name="Thịt kho" data-score="12" onclick="addIng(this)">🥩 <span style="font-size:8px;color:#888">Thịt kho</span></button>
+        <button class="ing-btn" data-group="dam" data-icon="🐟" data-name="Cá hấp" data-score="12" onclick="addIng(this)">🐟 <span style="font-size:8px;color:#888">Cá hấp</span></button>
+        <button class="ing-btn" data-group="rauCu" data-icon="🥦" data-name="Bông cải" data-score="15" onclick="addIng(this)">🥦</button>
+        <button class="ing-btn" data-group="rauCu" data-icon="🥕" data-name="Cà rốt" data-score="12" onclick="addIng(this)">🥕</button>
+        <button class="ing-btn" data-group="rauCu" data-icon="🍅" data-name="Cà chua" data-score="10" onclick="addIng(this)">🍅</button>
+        <button class="ing-btn" data-group="canh" data-icon="🍲" data-name="Canh chua" data-score="10" onclick="addIng(this)">🍲</button>
+        <button class="ing-btn" data-group="canh" data-icon="🥬" data-name="Canh rau" data-score="8" onclick="addIng(this)">🥬</button>
+        <button class="ing-btn" data-group="dam" data-icon="🥚" data-name="Trứng" data-score="6" onclick="addIng(this)">🥚</button>
       </div>
     </div>
 
@@ -117,12 +164,15 @@
   </nav>
 </div>
 
+<script>
+let score = 65;
 
-  </div>
-
-</div>
-<script>let score = 65;
+// Track which ingredient button is occupying each cell (by btn element reference)
+const cellOccupant = { tinBot: null, dam: null, rauCu: null, canh: null };
 const filled = { tinBot: true, dam: true, rauCu: false, canh: false };
+
+// Pre-fill score for default items (cơm trắng, thịt kho)
+// already counted in initial score=65
 
 const scoreThresholds = [
   { min:90, hint:'🌟 Tuyệt vời! Khay dinh dưỡng hoàn hảo!', color:'#1E8449' },
@@ -132,7 +182,6 @@ const scoreThresholds = [
 ];
 
 const groupLabels = { rauCu:'Rau củ', canh:'Canh', dam:'Đạm', tinBot:'Tinh bột' };
-const tagClasses  = { rauCu:'n-miss', canh:'n-miss', dam:'n-ok', tinBot:'n-ok' };
 
 function updateNutritionTags() {
   const tags = document.getElementById('nutritionTags');
@@ -142,7 +191,7 @@ function updateNutritionTags() {
 }
 
 function updateScore() {
-  score = Math.min(score, 100);
+  score = Math.min(Math.max(score, 0), 100);
   document.getElementById('scoreVal').textContent = Math.round(score) + ' / 100';
   document.getElementById('scoreFill').style.width = score + '%';
   const t = scoreThresholds.find(t => score >= t.min);
@@ -151,95 +200,109 @@ function updateScore() {
   hint.style.color = t.color;
 }
 
-function focusGroup(g) {
-  // Xóa highlight cũ
-  document.querySelectorAll('.ing-btn').forEach(b => b.classList.remove('highlight'));
-  // Highlight nguyên liệu khớp group và chưa used
-  document.querySelectorAll('.ing-btn:not(.used)').forEach(b => {
-    if (b.dataset.group === g) b.classList.add('highlight');
+// Highlight ingredient buttons matching a group, clear others
+function highlightGroup(g) {
+  document.querySelectorAll('.ing-btn').forEach(b => {
+    if (b.classList.contains('used')) return;
+    if (b.dataset.group === g) {
+      b.classList.add('highlighted');
+    } else {
+      b.classList.remove('highlighted');
+    }
   });
-  // Auto reset sau 3 giây
-  clearTimeout(window._focusTimer);
-  window._focusTimer = setTimeout(() => {
-    document.querySelectorAll('.ing-btn').forEach(b => b.classList.remove('highlight'));
-  }, 3000);
+}
+
+function clearHighlight() {
+  document.querySelectorAll('.ing-btn').forEach(b => b.classList.remove('highlighted'));
+}
+
+// Called when any tray cell is clicked
+function cellClick(g) {
+  const cell = document.getElementById('cell-' + g);
+  if (!cell) return;
+  // Always show suggestion for this group (even if filled)
+  highlightGroup(g);
+}
+
+// Remove an ingredient from a cell and restore its button
+function removeCell(event, group) {
+  event.stopPropagation(); // Don't also trigger cellClick
+  const cell = document.getElementById('cell-' + group);
+  if (!cell || !cell.classList.contains('filled')) return;
+
+  // Restore the occupant button if tracked
+  const occupant = cellOccupant[group];
+  if (occupant) {
+    const pts = parseInt(occupant.dataset.score);
+    score -= pts;
+    occupant.classList.remove('used');
+    occupant.classList.remove('highlighted');
+    cellOccupant[group] = null;
+  } else {
+    // Default pre-filled cells (cơm trắng, thịt kho) — subtract their base points
+    const basePoints = { tinBot: 30, dam: 35 }; // approximate initial scores
+    score -= (basePoints[group] || 0);
+  }
+
+  // Reset cell to empty
+  cell.classList.remove('filled');
+  cell.innerHTML = `<div class="cell-plus">+</div><div class="cell-label">${groupLabels[group]}</div>`;
+  cell.setAttribute('onclick', `cellClick('${group}')`);
+  filled[group] = false;
+
+  updateScore();
+  updateNutritionTags();
+  // Show suggestion for this group immediately
+  highlightGroup(group);
 }
 
 function addIng(btn) {
   const group = btn.dataset.group;
   const cell = document.getElementById('cell-' + group);
-  if (!cell || cell.classList.contains('filled')) {
-    // Tìm ô canh hoặc rauCu còn trống
+
+  // If target cell already filled, try to place in an empty cell of same logical group
+  // (e.g. dam button → dam cell filled → fallback to rauCu empty)
+  let targetCell = cell;
+  let targetGroup = group;
+
+  if (!targetCell || targetCell.classList.contains('filled')) {
+    // For dam overflow, try rauCu
     const alt = group === 'dam' ? 'rauCu' : group;
     const altCell = document.getElementById('cell-' + alt);
     if (altCell && !altCell.classList.contains('filled')) {
-      fillCell(altCell, alt, btn);
+      targetCell = altCell;
+      targetGroup = alt;
+    } else {
+      return; // No available slot
     }
-    return;
   }
-  fillCell(cell, group, btn);
+
+  fillCell(targetCell, targetGroup, btn);
 }
 
 function fillCell(cell, group, btn) {
-  const icon  = btn.dataset.icon;
-  const name  = btn.dataset.name;
-  const pts   = parseInt(btn.dataset.score);
-  const btnId = btn.id || (btn.id = 'ing-' + group + '-' + Date.now());
+  const icon = btn.dataset.icon;
+  const name = btn.dataset.name;
+  const pts  = parseInt(btn.dataset.score);
+
   cell.classList.add('filled');
-  cell.dataset.pts   = pts;
-  cell.dataset.btnId = btnId;
   cell.innerHTML = `
-    <button class="cell-remove" onclick="removeIng('${group}','${btnId}',${pts})" title="Bỏ ra">✕</button>
     <div class="cell-icon">${icon}</div>
     <div class="cell-label">${name}</div>
-    <div class="cell-group">${groupLabels[group]}</div>`;
-  btn.id = btnId;
+    <div class="cell-group">${groupLabels[group]}</div>
+    <button class="cell-remove" onclick="removeCell(event,'${group}')">✕</button>
+  `;
+  // Bind cellClick via attribute for the filled cell too
+  cell.setAttribute('onclick', `cellClick('${group}')`);
+
   btn.classList.add('used');
+  btn.classList.remove('highlighted');
+  cellOccupant[group] = btn;
   filled[group] = true;
   score = Math.min(score + pts, 100);
   updateScore();
   updateNutritionTags();
-  // Xóa highlight sau khi đã chọn nguyên liệu
-  document.querySelectorAll('.ing-btn').forEach(b => b.classList.remove('highlight'));
-  clearTimeout(window._focusTimer);
-}
-
-// Map id nút cố định cho từng group
-const defaultIngId = { tinBot: 'ing-tinBot', dam: 'ing-dam' };
-
-function focusTray(g) {
-  document.querySelectorAll('.ing-btn').forEach(b => b.classList.remove('highlight'));
-  document.querySelectorAll('.ing-btn:not(.used)').forEach(b => {
-    if (b.dataset.group === g) b.classList.add('highlight');
-  });
-  clearTimeout(window._trayTimer);
-  window._trayTimer = setTimeout(() => {
-    document.querySelectorAll('.ing-btn').forEach(b => b.classList.remove('highlight'));
-  }, 3000);
-}
-
-function removeIng(group, btnId, pts) {
-  const cell = document.getElementById('cell-' + group);
-  if (!cell) return;
-  // Reset ô khay về trống
-  cell.classList.remove('filled');
-  cell.dataset.pts = 0;
-  cell.innerHTML = `<div class="cell-plus">+</div><div class="cell-label">${groupLabels[group]}</div>`;
-  cell.onclick = () => focusTray(group);
-  // Restore nút nguyên liệu
-  const resolvedId = btnId || defaultIngId[group] || '';
-  const ingBtn = resolvedId ? document.getElementById(resolvedId) : null;
-  if (ingBtn) {
-    ingBtn.classList.remove('used');
-    ingBtn.classList.remove('highlight');
-    ingBtn.style.outline = ingBtn.style.background = ingBtn.style.borderColor = '';
-  }
-  filled[group] = false;
-  score = Math.max(score - pts, 0);
-  updateScore();
-  updateNutritionTags();
-  // Tự động highlight nguyên liệu phù hợp ngay sau khi xóa
-  setTimeout(() => focusTray(group), 50);
+  clearHighlight();
 }
 
 function sendProposal() {
@@ -254,147 +317,23 @@ function sendProposal() {
 
 function shareFamily() {
   const name = document.getElementById('trayName').value.trim() || 'Khay cơm của em';
-  const sentBox = document.getElementById('sentBox');
   document.getElementById('sentTitle').textContent = `🏠 Đã gửi cho ba mẹ!`;
   document.getElementById('sentSub').textContent = `Ba mẹ nhận gợi ý nấu "${name}" tối nay · +10 XP 🌱`;
-  sentBox.classList.add('show');
+  document.getElementById('sentBox').classList.add('show');
   document.getElementById('familyBtn').disabled = true;
   document.getElementById('familyBtn').textContent = '✅ Đã gửi cho ba mẹ!';
   document.querySelector('.screen-content').scrollTo({ top:9999, behavior:'smooth' });
 }
 
-// Init
+// Init: auto-highlight the two missing groups right away
 updateNutritionTags();
 updateScore();
-let score = 65;
-const filled = { tinBot: true, dam: true, rauCu: false, canh: false };
 
-const scoreThresholds = [
-  { min:90, hint:'🌟 Tuyệt vời! Khay dinh dưỡng hoàn hảo!', color:'#1E8449' },
-  { min:80, hint:'✅ Gần hoàn hảo! Thêm canh sẽ đạt 90+ điểm', color:'#2874A6' },
-  { min:70, hint:'👍 Khá tốt! Còn thiếu một nhóm thực phẩm', color:'#7D3C98' },
-  { min:0,  hint:'💡 Thêm rau củ và canh để tăng điểm!', color:'#E67E22' },
-];
-
-const groupLabels = { rauCu:'Rau củ', canh:'Canh', dam:'Đạm', tinBot:'Tinh bột' };
-const tagClasses  = { rauCu:'n-miss', canh:'n-miss', dam:'n-ok', tinBot:'n-ok' };
-
-function updateNutritionTags() {
-  const tags = document.getElementById('nutritionTags');
-  tags.innerHTML = Object.entries(filled).map(([g, ok]) =>
-    `<span class="n-tag ${ok ? 'n-ok' : 'n-miss'}">${ok ? '✓' : '✗'} ${groupLabels[g]}</span>`
-  ).join('');
-}
-
-function updateScore() {
-  score = Math.min(score, 100);
-  document.getElementById('scoreVal').textContent = Math.round(score) + ' / 100';
-  document.getElementById('scoreFill').style.width = score + '%';
-  const t = scoreThresholds.find(t => score >= t.min);
-  const hint = document.getElementById('scoreHint');
-  hint.textContent = t.hint;
-  hint.style.color = t.color;
-}
-
-  const group = btn.dataset.group;
-  const cell = document.getElementById('cell-' + group);
-  if (!cell || cell.classList.contains('filled')) {
-    // Tìm ô canh hoặc rauCu còn trống
-    const alt = group === 'dam' ? 'rauCu' : group;
-    const altCell = document.getElementById('cell-' + alt);
-    if (altCell && !altCell.classList.contains('filled')) {
-      fillCell(altCell, alt, btn);
-    }
-    return;
-  }
-  fillCell(cell, group, btn);
-}
-
-function fillCell(cell, group, btn) {
-  const icon  = btn.dataset.icon;
-  const name  = btn.dataset.name;
-  const pts   = parseInt(btn.dataset.score);
-  const btnId = btn.id || (btn.id = 'ing-' + group + '-' + Date.now());
-  cell.classList.add('filled');
-  cell.dataset.pts   = pts;
-  cell.dataset.btnId = btnId;
-  cell.innerHTML = `
-    <button class="cell-remove" onclick="removeIng('${group}','${btnId}',${pts})" title="Bỏ ra">✕</button>
-    <div class="cell-icon">${icon}</div>
-    <div class="cell-label">${name}</div>
-    <div class="cell-group">${groupLabels[group]}</div>`;
-  btn.id = btnId;
-  btn.classList.add('used');
-  filled[group] = true;
-  score = Math.min(score + pts, 100);
-  updateScore();
-  updateNutritionTags();
-  // Xóa highlight sau khi đã chọn nguyên liệu
-  document.querySelectorAll('.ing-btn').forEach(b => b.classList.remove('highlight'));
-  clearTimeout(window._focusTimer);
-}
-
-// Map id nút cố định cho từng group
-const defaultIngId = { tinBot: 'ing-tinBot', dam: 'ing-dam' };
-
-function focusTray(g) {
-  document.querySelectorAll('.ing-btn').forEach(b => b.classList.remove('highlight'));
-  document.querySelectorAll('.ing-btn:not(.used)').forEach(b => {
-    if (b.dataset.group === g) b.classList.add('highlight');
-  });
-  clearTimeout(window._trayTimer);
-  window._trayTimer = setTimeout(() => {
-    document.querySelectorAll('.ing-btn').forEach(b => b.classList.remove('highlight'));
-  }, 3000);
-}
-
-function removeIng(group, btnId, pts) {
-  const cell = document.getElementById('cell-' + group);
-  if (!cell) return;
-  // Reset ô khay về trống
-  cell.classList.remove('filled');
-  cell.dataset.pts = 0;
-  cell.innerHTML = `<div class="cell-plus">+</div><div class="cell-label">${groupLabels[group]}</div>`;
-  cell.onclick = () => focusTray(group);
-  // Restore nút nguyên liệu
-  const resolvedId = btnId || defaultIngId[group] || '';
-  const ingBtn = resolvedId ? document.getElementById(resolvedId) : null;
-  if (ingBtn) {
-    ingBtn.classList.remove('used');
-    ingBtn.classList.remove('highlight');
-    ingBtn.style.outline = ingBtn.style.background = ingBtn.style.borderColor = '';
-  }
-  filled[group] = false;
-  score = Math.max(score - pts, 0);
-  updateScore();
-  updateNutritionTags();
-  // Tự động highlight nguyên liệu phù hợp ngay sau khi xóa
-  setTimeout(() => focusTray(group), 50);
-}
-
-function sendProposal() {
-  const name = document.getElementById('trayName').value.trim() || 'Khay cơm của em';
-  document.getElementById('sentTitle').textContent = `✅ Đã gửi "${name}"!`;
-  document.getElementById('sentSub').textContent = 'Bếp trưởng sẽ nhận vào sáng thứ Hai 7:00 · +20 XP 🌱';
-  document.getElementById('sentBox').classList.add('show');
-  document.getElementById('sendBtn').disabled = true;
-  document.getElementById('sendBtn').textContent = '✅ Đã gửi cho bếp trưởng!';
-  document.querySelector('.screen-content').scrollTo({ top:9999, behavior:'smooth' });
-}
-
-function shareFamily() {
-  const name = document.getElementById('trayName').value.trim() || 'Khay cơm của em';
-  const sentBox = document.getElementById('sentBox');
-  document.getElementById('sentTitle').textContent = `🏠 Đã gửi cho ba mẹ!`;
-  document.getElementById('sentSub').textContent = `Ba mẹ nhận gợi ý nấu "${name}" tối nay · +10 XP 🌱`;
-  sentBox.classList.add('show');
-  document.getElementById('familyBtn').disabled = true;
-  document.getElementById('familyBtn').textContent = '✅ Đã gửi cho ba mẹ!';
-  document.querySelector('.screen-content').scrollTo({ top:9999, behavior:'smooth' });
-}
-
-// Init
-updateNutritionTags();
-updateScore();</script>
+// Highlight rauCu and canh (the two empty cells) immediately on load
+window.addEventListener('DOMContentLoaded', () => {
+  // Show hint for first empty group
+  highlightGroup('rauCu');
+});
+</script>
 </body>
 </html>
