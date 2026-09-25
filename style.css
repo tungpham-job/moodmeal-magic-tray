@@ -40,17 +40,51 @@ body {
 
 /* ── Phone Frame ─────────────────────────── */
 .phone-frame {
-  width: 375px;
-  height: 720px;
+  width: min(375px, 100vw);
+  height: min(720px, calc(100vh - 120px));
   background: var(--white);
-  border-radius: 40px;
-  border: 8px solid #1A1A1A;
+  border-radius: clamp(0px, 4vw, 40px);
+  border: clamp(2px, 1vw, 8px) solid #1A1A1A;
   overflow: hidden;
   box-shadow: var(--shadow);
   display: flex;
   flex-direction: column;
   position: relative;
   flex-shrink: 0;
+}
+
+/* Responsive cho điện thoại & iPad */
+@media (max-width: 420px) {
+  body { padding: 0; background: #fff; align-items: flex-start; }
+  .phone-frame {
+    width: 100vw;
+    height: 100dvh;
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
+  }
+  .app-header { position: fixed; top: 0; left: 0; right: 0; z-index: 200; }
+  .demo-nav { position: fixed; top: 56px; left: 0; right: 0; z-index: 199;
+              padding: 6px 8px; gap: 5px; }
+  .demo-btn { font-size: 11px; padding: 5px 10px; }
+  .screens-container { padding: 110px 0 0 !important; }
+  .screen-wrap { width: 100%; }
+}
+
+@media (min-width: 421px) and (max-width: 900px) {
+  .phone-frame {
+    width: min(390px, 90vw);
+    height: min(720px, calc(100dvh - 130px));
+  }
+}
+
+/* iPad landscape */
+@media (orientation: landscape) and (max-height: 600px) {
+  .phone-frame {
+    width: auto;
+    height: calc(100dvh - 110px);
+    aspect-ratio: 9/19.5;
+  }
 }
 
 /* Status bar giả lập */
@@ -380,6 +414,29 @@ body {
 }
 .ing-btn:hover:not(.used) { border-color: var(--purple-mid); background: var(--purple-light); }
 .ing-btn.used { opacity: 0.3; pointer-events: none; }
+.ing-btn.highlight {
+  outline: 2.5px solid var(--purple-mid) !important;
+  background: var(--purple-light) !important;
+  border-color: var(--purple-mid) !important;
+  transform: scale(1.08);
+  box-shadow: 0 0 0 3px rgba(125,60,152,0.18);
+}
+
+/* Nút X xóa nguyên liệu khỏi khay */
+.cell-remove {
+  position: absolute; top: 5px; right: 5px;
+  width: 18px; height: 18px;
+  background: rgba(74,35,90,0.15);
+  border: none; border-radius: 50%;
+  font-size: 9px; font-weight: 700;
+  color: var(--purple-dark);
+  cursor: pointer; line-height: 18px;
+  display: flex; align-items: center; justify-content: center;
+  padding: 0; transition: all 0.15s;
+  z-index: 5;
+}
+.cell-remove:hover { background: #C0392B; color: white; }
+.tray-cell.filled { position: relative; }
 
 /* ── Score Bar ───────────────────────────── */
 .score-section {
@@ -450,3 +507,49 @@ body {
 /* ── Spacer util ─────────────────────────── */
 .gap { height: 8px; }
 .gap2 { height: 4px; }
+
+
+/* ── Multi-screen wrapper ── */
+body { padding: 0; gap: 0; flex-direction: column; align-items: center; justify-content: flex-start; background: #E8EDF2; min-height: 100vh; }
+
+.app-header {
+  width: 100%; background: #0E6655; color: white;
+  padding: 14px 20px 12px; text-align: center;
+  font-size: 13px; font-weight: 600; letter-spacing: 0.3px;
+  position: sticky; top: 0; z-index: 100;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+}
+.app-header .ah-title { font-size: 16px; font-weight: 800; }
+.app-header .ah-sub   { font-size: 10px; opacity: 0.8; margin-top: 2px; }
+
+.demo-nav {
+  display: flex; gap: 8px; padding: 14px 16px 10px;
+  justify-content: center; flex-wrap: wrap;
+  position: sticky; top: 60px; z-index: 99;
+  background: #E8EDF2;
+}
+.demo-btn {
+  padding: 7px 16px; border-radius: 20px; border: 2px solid transparent;
+  font-size: 12px; font-weight: 600; cursor: pointer;
+  font-family: inherit; transition: all 0.15s;
+  background: white; color: #666;
+}
+.demo-btn.active { background: #0E6655; color: white; border-color: #0E6655; }
+.demo-btn:not(.active):hover { border-color: #0E6655; color: #0E6655; }
+
+.screens-container {
+  display: flex; gap: 24px; padding: 10px 20px 30px;
+  justify-content: center; flex-wrap: wrap;
+}
+.screen-wrap {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+}
+.screen-tag {
+  font-size: 11px; color: #666; font-weight: 600;
+  background: white; padding: 4px 12px; border-radius: 10px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+
+/* Single screen mode */
+.single-mode .screens-container { flex-direction: column; align-items: center; }
+.phone-frame { margin: 0; }

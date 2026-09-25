@@ -2,46 +2,14 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0E6655">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.json">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌍</text></svg>">
 <title>Hành tinh Thực phẩm – MoodMeal</title>
 <link rel="stylesheet" href="style.css">
-<style>
-.popup-overlay {
-  position: absolute; inset: 0;
-  background: rgba(0,0,0,0.45);
-  display: none; align-items: center; justify-content: center;
-  z-index: 10;
-}
-.popup-overlay.show { display: flex; }
-.popup-box {
-  background: white; border-radius: 20px;
-  padding: 20px; width: 80%; max-width: 280px;
-  animation: pop-in 0.25s ease;
-}
-@keyframes pop-in {
-  from { transform: scale(0.85); opacity: 0; }
-  to   { transform: scale(1); opacity: 1; }
-}
-.popup-title { font-size: 14px; font-weight: 700; color: #1A1A1A; margin-bottom: 10px; }
-.popup-item {
-  display: flex; align-items: center; gap: 8px;
-  padding: 7px 0; border-bottom: 1px solid #F0F0F0;
-  font-size: 12px; color: #444;
-}
-.popup-item:last-child { border-bottom: none; }
-.popup-item .pi-icon { font-size: 16px; }
-.popup-close {
-  margin-top: 12px; width: 100%; padding: 9px;
-  background: #0E6655; color: white; border: none;
-  border-radius: 10px; font-size: 12px; font-weight: 600;
-  cursor: pointer; font-family: inherit;
-}
-.planet-stars {
-  font-size: 9px; color: #F39C12;
-  margin-top: 2px;
-}
-</style>
+
 </head>
 <body>
 <div class="phone-frame">
@@ -59,11 +27,9 @@
   <!-- Header -->
   <div class="screen-header header-green">
     <h2>🌍 Hành tinh Thực phẩm</h2>
-    <div class="sub">Minh Đức · Level 2 · 185 XP</div>
     <div class="xp-bar-wrap" style="margin-top:8px">
-      <span class="xp-label">185 / 300</span>
+      <span class="xp-label">Bảo Trúc · Level 2 · 185 / 300 XP</span>
       <div class="xp-track"><div class="xp-fill" style="width:62%"></div></div>
-      <span class="xp-label">Lv.3</span>
     </div>
   </div>
 
@@ -158,9 +124,7 @@
     <a href="screen3.html" class="nav-item"><span class="nav-icon">🎨</span>Khay cơm</a>
   </nav>
 </div>
-
-<script>
-const popupData = {
+<script>const popupData = {
   rauCu: {
     title: '🥕 Hành tinh Rau củ — Đã mở khóa!',
     items: [
@@ -212,6 +176,57 @@ function closePopup(e) {
     document.getElementById('popup').classList.remove('show');
   }
 }
-</script>
+const popupData = {
+  rauCu: {
+    title: '🥕 Hành tinh Rau củ — Đã mở khóa!',
+    items: [
+      { icon:'🥕', name:'Cà rốt', fas:'FAS: 3.2 ⭐' },
+      { icon:'🥬', name:'Rau muống', fas:'FAS: 3.8 ⭐' },
+      { icon:'🍅', name:'Cà chua', fas:'FAS: 2.5 ⭐' },
+      { icon:'❓', name:'?? Món 4', fas:'Chưa khám phá' },
+      { icon:'❓', name:'?? Món 5', fas:'Chưa khám phá' },
+    ]
+  },
+  dam: {
+    title: '🍗 Hành tinh Đạm — Đã mở khóa!',
+    items: [
+      { icon:'🍗', name:'Thịt gà', fas:'FAS: 3.9 ⭐' },
+      { icon:'🥚', name:'Trứng kho', fas:'FAS: 3.5 ⭐' },
+      { icon:'🐟', name:'Cá kho', fas:'FAS: 3.1 ⭐' },
+      { icon:'🥩', name:'Thịt heo', fas:'FAS: 3.7 ⭐' },
+      { icon:'❓', name:'?? Món 5', fas:'Chưa khám phá' },
+    ]
+  },
+  xanhLa: {
+    title: '🥦 Hành tinh Xanh lá — Đang mở khóa!',
+    items: [
+      { icon:'🥦', name:'Bông cải xanh', fas:'→ Thử hôm nay để mở khóa!' },
+      { icon:'🔒', name:'Món 2', fas:'Chưa mở' },
+      { icon:'🔒', name:'Món 3', fas:'Chưa mở' },
+      { icon:'🔒', name:'Món 4', fas:'Chưa mở' },
+      { icon:'🔒', name:'Món 5', fas:'Chưa mở' },
+    ]
+  },
+  trangMieng: {
+    title: '🍎 Hành tinh Trái cây — Chưa mở',
+    items: [
+      { icon:'🔒', name:'Cần hoàn thành Xanh lá trước', fas:'Hành tinh bị khóa' },
+    ]
+  }
+};
+
+function showPopup(key) {
+  const d = popupData[key];
+  document.getElementById('popupTitle').textContent = d.title;
+  document.getElementById('popupContent').innerHTML = d.items.map(it =>
+    `<div class="popup-item"><span class="pi-icon">${it.icon}</span><span>${it.name}</span><span style="margin-left:auto;font-size:10px;color:#888">${it.fas}</span></div>`
+  ).join('');
+  document.getElementById('popup').classList.add('show');
+}
+function closePopup(e) {
+  if (!e || e.target === document.getElementById('popup')) {
+    document.getElementById('popup').classList.remove('show');
+  }
+}</script>
 </body>
 </html>
