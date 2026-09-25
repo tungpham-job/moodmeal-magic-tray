@@ -6,37 +6,19 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍱</text></svg>">
 <title>Thử món – MoodMeal</title>
 <link rel="stylesheet" href="style.css">
-<style>
-.fas-track-label {
-  display: flex; justify-content: space-between;
-  font-size: 9px; color: #888; margin-top: 3px;
-}
-.confirm-btn {
-  width: calc(100% - 24px); margin: 8px 12px 0;
-  padding: 11px; border: none; border-radius: 12px;
-  font-size: 13px; font-weight: 600;
-  background: var(--green-dark); color: white;
-  cursor: pointer; font-family: inherit;
-  display: flex; align-items: center; justify-content: center; gap: 6px;
-  transition: all 0.15s;
-}
-.confirm-btn:disabled {
-  background: #BDC3C7; cursor: not-allowed;
-}
-.confirm-btn:not(:disabled):active { transform: scale(0.97); }
-</style>
 </head>
 <body>
 <div class="phone-frame">
   <div class="status-bar"><div class="status-notch"></div></div>
 
+  <!-- Header -->
   <div class="screen-header header-blue">
     <h2>🍱 Bữa trưa hôm nay</h2>
     <div class="sub">Bảo Trúc · Level 2 · 185 / 300 XP</div>
     <div class="xp-bar-wrap" style="margin-top:6px">
-      <div class="xp-track"><div class="xp-fill" style="width:62%;background:#6DEBB0"></div></div>
+      <div class="xp-track"><div class="xp-fill" style="width:62%"></div></div>
     </div>
-    <div class="sub" id="dateDisplay" style="margin-top:4px;opacity:0.7;font-size:10px">Thứ Ba, 21/09/2026 · 11:45</div>
+    <div class="sub" id="dateDisplay" style="margin-top:4px;opacity:0.7;font-size:10px">--</div>
   </div>
 
   <div class="screen-content">
@@ -55,61 +37,35 @@
 
     <!-- Emoji đánh giá -->
     <div class="emoji-label">Sau khi thử, em cảm thấy thế nào?</div>
-    <div class="emoji-row" id="emojiRow">
-      <button class="emoji-btn" data-val="4" onclick="pickEmoji(this)">
-        <span class="e-icon">❤️</span>
-        <span class="e-label">Rất thích</span>
-      </button>
-      <button class="emoji-btn" data-val="3" onclick="pickEmoji(this)">
-        <span class="e-icon">🙂</span>
-        <span class="e-label">Thích</span>
-      </button>
-      <button class="emoji-btn" data-val="2" onclick="pickEmoji(this)">
-        <span class="e-icon">😐</span>
-        <span class="e-label">Chưa quen</span>
-      </button>
-      <button class="emoji-btn" data-val="1" onclick="pickEmoji(this)">
-        <span class="e-icon">🙁</span>
-        <span class="e-label">Không thích</span>
-      </button>
+    <div class="emoji-row">
+      <button class="emoji-btn" data-val="4" onclick="pickEmoji(this)"><span class="e-icon">❤️</span><span class="e-label">Rất thích</span></button>
+      <button class="emoji-btn" data-val="3" onclick="pickEmoji(this)"><span class="e-icon">🙂</span><span class="e-label">Thích</span></button>
+      <button class="emoji-btn" data-val="2" onclick="pickEmoji(this)"><span class="e-icon">😐</span><span class="e-label">Chưa quen</span></button>
+      <button class="emoji-btn" data-val="1" onclick="pickEmoji(this)"><span class="e-icon">🙁</span><span class="e-label">Không thích</span></button>
     </div>
 
     <div class="gap"></div>
 
-    <!-- TRY AGAIN button -->
+    <!-- TRY AGAIN -->
     <button class="btn btn-secondary" id="tryAgainBtn" onclick="toggleTryAgain()" style="margin-bottom:6px">
       <span>⭐</span> Muốn thử lại lần sau (TRY AGAIN)
     </button>
 
-    <!-- Confirm button -->
+    <!-- Confirm -->
     <button class="confirm-btn" id="confirmBtn" onclick="confirmEval()" disabled>
       ✓ Xác nhận đánh giá
     </button>
 
     <!-- Toast -->
-    <div class="toast" id="toast">
-      🌱 +15 XP! Hành tinh Xanh đang sáng lên!
-    </div>
+    <div class="toast" id="toast">🌱 +15 XP! Hành tinh Xanh đang sáng lên!</div>
 
     <!-- FAS Chart -->
     <div class="fas-chart" id="fasChart">
       <div class="fas-chart-title">📈 Hành trình khám phá bông cải xanh</div>
-      <div class="fas-bars" id="fasBars">
-        <div class="fas-bar-wrap">
-          <div class="fas-bar-val">2.0</div>
-          <div class="fas-bar" style="height:25%"></div>
-          <div class="fas-bar-label">Lần 1</div>
-        </div>
-        <div class="fas-bar-wrap">
-          <div class="fas-bar-val">2.3</div>
-          <div class="fas-bar" style="height:32%"></div>
-          <div class="fas-bar-label">Lần 2</div>
-        </div>
-        <div class="fas-bar-wrap">
-          <div class="fas-bar-val">2.6</div>
-          <div class="fas-bar" style="height:42%"></div>
-          <div class="fas-bar-label">Lần 3</div>
-        </div>
+      <div class="fas-bars">
+        <div class="fas-bar-wrap"><div class="fas-bar-val">2.0</div><div class="fas-bar" style="height:25%"></div><div class="fas-bar-label">Lần 1</div></div>
+        <div class="fas-bar-wrap"><div class="fas-bar-val">2.3</div><div class="fas-bar" style="height:32%"></div><div class="fas-bar-label">Lần 2</div></div>
+        <div class="fas-bar-wrap"><div class="fas-bar-val">2.6</div><div class="fas-bar" style="height:42%"></div><div class="fas-bar-label">Lần 3</div></div>
         <div class="fas-bar-wrap">
           <div class="fas-bar-val" id="currentVal">3.0</div>
           <div class="fas-bar current" style="height:60%" id="currentBar"></div>
@@ -132,73 +88,11 @@
   <nav class="bottom-nav">
     <a href="index.html"   class="nav-item"><span class="nav-icon">🏠</span>Trang chủ</a>
     <a href="screen1.html" class="nav-item"><span class="nav-icon">🌍</span>Hành tinh</a>
-    <a href="screen2.html" class="nav-item active"><span class="nav-icon">🍱</span>Thử món</a>
+    <a href="screen2.html" class="nav-item"><span class="nav-icon">🍱</span>Thử món</a>
     <a href="screen3.html" class="nav-item"><span class="nav-icon">🎨</span>Khay cơm</a>
   </nav>
 </div>
-
-<script>
-const emojiMap = { 4:{ val:3.0, note:'Tuyệt! FAS tăng từ 2.6 → 3.0 (+0.4) 🎉 FAG tổng: +1.0' },
-                   3:{ val:2.8, note:'Tốt! FAS tăng từ 2.6 → 2.8 (+0.2) 👍' },
-                   2:{ val:2.6, note:'OK! FAS giữ nguyên ở 2.6 · Thử lại lần sau nhé 💪' },
-                   1:{ val:2.4, note:'FAS giảm nhẹ · Không sao, thử lần sau sẽ khác! 🌱' } };
-let selected = null;
-let tryAgain = false;
-
-// Hiển thị giờ thật
-const now = new Date();
-const days = ['Chủ Nhật','Thứ Hai','Thứ Ba','Thứ Tư','Thứ Năm','Thứ Sáu','Thứ Bảy'];
-document.getElementById('dateDisplay').textContent =
-  `${days[now.getDay()]}, ${now.getDate().toString().padStart(2,'0')}/${(now.getMonth()+1).toString().padStart(2,'0')}/${now.getFullYear()} · ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
-
-function pickEmoji(btn) {
-  document.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('selected'));
-  btn.classList.add('selected');
-  selected = parseInt(btn.dataset.val);
-  document.getElementById('confirmBtn').disabled = false;
-}
-
-function toggleTryAgain() {
-  tryAgain = !tryAgain;
-  const btn = document.getElementById('tryAgainBtn');
-  if (tryAgain) {
-    btn.innerHTML = '<span>✅</span> Đã đặt nhắc nhở thử lại!';
-    btn.classList.add('done');
-  } else {
-    btn.innerHTML = '<span>⭐</span> Muốn thử lại lần sau (TRY AGAIN)';
-    btn.classList.remove('done');
-  }
-}
-
-function confirmEval() {
-  if (!selected) return;
-  const data = emojiMap[selected];
-
-  // Disable nút
-  const btn = document.getElementById('confirmBtn');
-  btn.disabled = true;
-  btn.textContent = '✅ Đã ghi nhận!';
-
-  // Cập nhật biểu đồ
-  const pct = (data.val / 4) * 100;
-  document.getElementById('currentBar').style.height = pct + '%';
-  document.getElementById('currentVal').textContent = data.val.toFixed(1);
-
-  // Hiện toast + chart
-  const toast = document.getElementById('toast');
-  toast.textContent = `⭐ +15 XP! FAS lần này: ${data.val}/4 🌱`;
-  if (tryAgain) toast.textContent += ' · TRY AGAIN đã đặt!';
-  toast.classList.add('show');
-
-  document.getElementById('fasChart').classList.add('show');
-  document.getElementById('fasNote').textContent = data.note;
-  document.getElementById('fasStatus').textContent = `✅ FAS lần 4: ${data.val}/4 — Đã ghi nhận!`;
-
-  // Auto scroll xuống
-  setTimeout(() => {
-    document.querySelector('.screen-content').scrollTo({ top: 9999, behavior: 'smooth' });
-  }, 300);
-}
-</script>
+<script src="js/nav.js"></script>
+<script src="js/screen2.js"></script>
 </body>
 </html>
