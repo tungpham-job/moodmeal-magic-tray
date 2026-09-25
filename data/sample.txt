@@ -1,16 +1,24 @@
 # MOODMEAL MAGIC TRAY — Dữ liệu mẫu demo
+# Chỉnh sửa file này để thay dữ liệu khi demo
+
 [nhanVat]
-ten=Bảo Trúc
-level=2
+ten=Minh Đức
 tenLevel=Người khám phá
+level=2
 xp=185
 xpMax=300
 
 [thucDon]
-mon1=Cơm trắng|🍚|Tinh bột
-mon2=Thịt kho trứng|🥚|Đạm
-mon3=Bông cải xanh xào tỏi|🥦|Rau củ|moiThu
-mon4=Canh chua|🍲|Canh
+mon1=Tinh bột|Cơm trắng-🍚
+mon2=Đạm|Thị kho trứng-🥚
+mon3=Rau củ|Bông cải xanh xào tỏi-🥦|MỚI!
+mon4=Canh|Canh chua-🍲
+
+[nguyenLieu]
+mon1=Tinh bột|Cơm trắng-🍚, Bánh mì-🍞
+mon2=Đạm|Thị kho-🥩,Cá hấp-🐟,Trứng-🥚
+mon3=Rau củ|Bông cải-🥦,Cà rốt-🥕,Cà chua-🍅
+mon4=Canh|Canh chua-🍲,Canh rau-🥬
 
 [fasLichSu]
 lan1=2.0|01/09/2026
