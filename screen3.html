@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎨</text></svg>">
+<title>Thiết kế Khay – MoodMeal</title>
+<link rel="stylesheet" href="style.css">
+<style>
+.tray-section-label {
+  font-size: 10px; color: #888;
+  padding: 2px 14px 4px;
+  font-weight: 500;
+}
+.tray-cell .cell-group {
+  font-size: 8px; color: #aaa;
+  margin-top: 1px;
+}
+.tray-cell.filled .cell-group {
+  color: var(--purple-mid); font-weight: 500;
+}
+.nutrition-ring {
+  display: flex; gap: 6px; flex-wrap: wrap;
+  padding: 4px 12px 4px;
+}
+.n-tag {
+  font-size: 9px; padding: 3px 8px;
+  border-radius: 8px; font-weight: 600;
+}
+.n-ok   { background: #D5F5E3; color: #1E8449; }
+.n-warn { background: #FEF9E7; color: #B7950B; }
+.n-miss { background: #FADBD8; color: #C0392B; }
+.sent-box {
+  margin: 6px 12px 4px;
+  background: linear-gradient(135deg, #0E6655, #1E8449);
+  border-radius: 14px; padding: 14px;
+  color: white; display: none;
+  animation: toast-in 0.3s ease;
+}
+.sent-box.show { display: block; }
+.sent-box .sb-icon { font-size: 28px; text-align:center; margin-bottom:6px; }
+.sent-box .sb-title { font-size: 13px; font-weight: 700; text-align:center; margin-bottom:4px; }
+.sent-box .sb-sub { font-size: 10px; opacity: 0.85; text-align:center; }
+</style>
+</head>
+<body>
+<div class="phone-frame">
+  <div class="status-bar"><div class="status-notch"></div></div>
+
+  <div class="screen-header header-purple">
+    <h2>🎨 Khay cơm của em</h2>
+    <div class="sub">Bấm nguyên liệu để thêm vào khay</div>
+  </div>
+
+  <div class="screen-content">
+    <!-- Khay 2x2 -->
+    <div class="tray-section-label">Khay hôm nay</div>
+    <div class="tray-grid">
+      <div class="tray-cell filled" id="cell-tinBot" data-group="tinBot">
+        <div class="cell-icon">🍚</div>
+        <div class="cell-label">Cơm trắng</div>
+        <div class="cell-group">Tinh bột</div>
+      </div>
+      <div class="tray-cell filled" id="cell-dam" data-group="dam">
+        <div class="cell-icon">🥩</div>
+        <div class="cell-label">Thịt kho</div>
+        <div class="cell-group">Đạm</div>
+      </div>
+      <div class="tray-cell" id="cell-rauCu" data-group="rauCu" onclick="focusGroup('rauCu')">
+        <div class="cell-plus">+</div>
+        <div class="cell-label">Rau củ</div>
+      </div>
+      <div class="tray-cell" id="cell-canh" data-group="canh" onclick="focusGroup('canh')">
+        <div class="cell-plus">+</div>
+        <div class="cell-label">Canh</div>
+      </div>
+    </div>
+
+    <!-- Nutrition tags -->
+    <div class="nutrition-ring" id="nutritionTags">
+      <span class="n-tag n-ok">✓ Tinh bột</span>
+      <span class="n-tag n-ok">✓ Đạm</span>
+      <span class="n-tag n-miss">✗ Rau củ</span>
+      <span class="n-tag n-miss">✗ Canh</span>
+    </div>
+
+    <!-- Score -->
+    <div class="score-section">
+      <div class="score-row">
+        <span class="score-label">Điểm dinh dưỡng</span>
+        <span class="score-val" id="scoreVal">65 / 100</span>
+      </div>
+      <div class="score-track">
+        <div class="score-fill" id="scoreFill" style="width:65%"></div>
+      </div>
+      <div class="score-hint" id="scoreHint">💡 Thêm rau củ và canh để tăng điểm!</div>
+    </div>
+
+    <!-- Nguyên liệu -->
+    <div class="ing-section">
+      <div class="ing-label">Nguyên liệu đã mở khóa — bấm để thêm</div>
+      <div class="ing-row" id="ingRow">
+        <button class="ing-btn" data-group="rauCu" data-icon="🥦" data-name="Bông cải" data-score="15" onclick="addIng(this)">🥦</button>
+        <button class="ing-btn" data-group="rauCu" data-icon="🥕" data-name="Cà rốt" data-score="12" onclick="addIng(this)">🥕</button>
+        <button class="ing-btn" data-group="rauCu" data-icon="🍅" data-name="Cà chua" data-score="10" onclick="addIng(this)">🍅</button>
+        <button class="ing-btn" data-group="canh" data-icon="🍲" data-name="Canh chua" data-score="10" onclick="addIng(this)">🍲</button>
+        <button class="ing-btn" data-group="canh" data-icon="🥬" data-name="Canh rau" data-score="8" onclick="addIng(this)">🥬</button>
+        <button class="ing-btn" data-group="dam" data-icon="🥚" data-name="Trứng" data-score="6" onclick="addIng(this)">🥚</button>
+      </div>
+    </div>
+
+    <!-- Tên khay -->
+    <input type="text" class="name-input" id="trayName"
+      placeholder="Đặt tên sáng tạo cho khay cơm... 🌈">
+
+    <!-- Gửi đề xuất -->
+    <button class="btn btn-purple" id="sendBtn" onclick="sendProposal()" style="margin-bottom:6px">
+      📨 Gửi đề xuất cho bếp trưởng
+    </button>
+    <button class="btn btn-secondary" onclick="shareFamily()" id="familyBtn">
+      🏠 Gửi cho ba mẹ nấu tối nay
+    </button>
+
+    <!-- Sent confirmation -->
+    <div class="sent-box" id="sentBox">
+      <div class="sb-icon">✅</div>
+      <div class="sb-title" id="sentTitle">Đã gửi đề xuất!</div>
+      <div class="sb-sub" id="sentSub">Bếp trưởng sẽ nhận vào sáng thứ Hai 7:00 · +20 XP 🌱</div>
+    </div>
+
+    <div class="gap"></div>
+  </div>
+
+  <nav class="bottom-nav">
+    <a href="index.html"   class="nav-item"><span class="nav-icon">🏠</span>Trang chủ</a>
+    <a href="screen1.html" class="nav-item"><span class="nav-icon">🌍</span>Hành tinh</a>
+    <a href="screen2.html" class="nav-item"><span class="nav-icon">🍱</span>Thử món</a>
+    <a href="screen3.html" class="nav-item active"><span class="nav-icon">🎨</span>Khay cơm</a>
+  </nav>
+</div>
+
+<script>
+let score = 65;
+const filled = { tinBot: true, dam: true, rauCu: false, canh: false };
+
+const scoreThresholds = [
+  { min:90, hint:'🌟 Tuyệt vời! Khay dinh dưỡng hoàn hảo!', color:'#1E8449' },
+  { min:80, hint:'✅ Gần hoàn hảo! Thêm canh sẽ đạt 90+ điểm', color:'#2874A6' },
+  { min:70, hint:'👍 Khá tốt! Còn thiếu một nhóm thực phẩm', color:'#7D3C98' },
+  { min:0,  hint:'💡 Thêm rau củ và canh để tăng điểm!', color:'#E67E22' },
+];
+
+const groupLabels = { rauCu:'Rau củ', canh:'Canh', dam:'Đạm', tinBot:'Tinh bột' };
+const tagClasses  = { rauCu:'n-miss', canh:'n-miss', dam:'n-ok', tinBot:'n-ok' };
+
+function updateNutritionTags() {
+  const tags = document.getElementById('nutritionTags');
+  tags.innerHTML = Object.entries(filled).map(([g, ok]) =>
+    `<span class="n-tag ${ok ? 'n-ok' : 'n-miss'}">${ok ? '✓' : '✗'} ${groupLabels[g]}</span>`
+  ).join('');
+}
+
+function updateScore() {
+  score = Math.min(score, 100);
+  document.getElementById('scoreVal').textContent = Math.round(score) + ' / 100';
+  document.getElementById('scoreFill').style.width = score + '%';
+  const t = scoreThresholds.find(t => score >= t.min);
+  const hint = document.getElementById('scoreHint');
+  hint.textContent = t.hint;
+  hint.style.color = t.color;
+}
+
+function focusGroup(g) {
+  document.querySelectorAll('.ing-btn').forEach(b => {
+    b.style.outline = b.dataset.group === g ? '2px solid #7D3C98' : '';
+  });
+}
+
+function addIng(btn) {
+  const group = btn.dataset.group;
+  const cell = document.getElementById('cell-' + group);
+  if (!cell || cell.classList.contains('filled')) {
+    // Tìm ô canh hoặc rauCu còn trống
+    const alt = group === 'dam' ? 'rauCu' : group;
+    const altCell = document.getElementById('cell-' + alt);
+    if (altCell && !altCell.classList.contains('filled')) {
+      fillCell(altCell, alt, btn);
+    }
+    return;
+  }
+  fillCell(cell, group, btn);
+}
+
+function fillCell(cell, group, btn) {
+  const icon = btn.dataset.icon;
+  const name = btn.dataset.name;
+  const pts  = parseInt(btn.dataset.score);
+  cell.classList.add('filled');
+  cell.innerHTML = `<div class="cell-icon">${icon}</div><div class="cell-label">${name}</div><div class="cell-group">${groupLabels[group]}</div>`;
+  btn.classList.add('used');
+  filled[group] = true;
+  score = Math.min(score + pts, 100);
+  updateScore();
+  updateNutritionTags();
+}
+
+function sendProposal() {
+  const name = document.getElementById('trayName').value.trim() || 'Khay cơm của em';
+  document.getElementById('sentTitle').textContent = `✅ Đã gửi "${name}"!`;
+  document.getElementById('sentSub').textContent = 'Bếp trưởng sẽ nhận vào sáng thứ Hai 7:00 · +20 XP 🌱';
+  document.getElementById('sentBox').classList.add('show');
+  document.getElementById('sendBtn').disabled = true;
+  document.getElementById('sendBtn').textContent = '✅ Đã gửi cho bếp trưởng!';
+  document.querySelector('.screen-content').scrollTo({ top:9999, behavior:'smooth' });
+}
+
+function shareFamily() {
+  const name = document.getElementById('trayName').value.trim() || 'Khay cơm của em';
+  const sentBox = document.getElementById('sentBox');
+  document.getElementById('sentTitle').textContent = `🏠 Đã gửi cho ba mẹ!`;
+  document.getElementById('sentSub').textContent = `Ba mẹ nhận gợi ý nấu "${name}" tối nay · +10 XP 🌱`;
+  sentBox.classList.add('show');
+  document.getElementById('familyBtn').disabled = true;
+  document.getElementById('familyBtn').textContent = '✅ Đã gửi cho ba mẹ!';
+  document.querySelector('.screen-content').scrollTo({ top:9999, behavior:'smooth' });
+}
+
+// Init
+updateNutritionTags();
+updateScore();
+</script>
+</body>
+</html>

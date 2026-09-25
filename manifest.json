@@ -1,0 +1,14 @@
+{
+  "name": "MoodMeal Magic Tray",
+  "short_name": "MoodMeal",
+  "description": "Giải pháp khám phá và hình thành thói quen ăn đa dạng ở học sinh tiểu học",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#0E6655",
+  "theme_color": "#0E6655",
+  "lang": "vi",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
