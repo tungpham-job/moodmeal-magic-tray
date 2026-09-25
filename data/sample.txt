@@ -1,8 +1,6 @@
 # MOODMEAL MAGIC TRAY — Dữ liệu mẫu demo
-# Chỉnh sửa file này để thay dữ liệu khi demo
-
 [nhanVat]
-ten=Minh Đức
+ten=Bảo Trúc
 level=2
 tenLevel=Người khám phá
 xp=185
