@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👨‍👩‍👧</text></svg>">
+  <title>MoodMeal — Phụ huynh</title>
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/parent.css">
+</head>
+<body class="page-parent">
+<div class="parent-layout">
+
+  <!-- ══ APP BAR ══ -->
+  <div class="app-bar">
+    <div class="app-bar-brand">
+      <span class="app-bar-icon">🍱</span>
+      <div>
+        <div class="app-bar-title" id="parentName">Phụ huynh</div>
+        <div class="app-bar-sub">Phụ huynh của <span id="childName">...</span></div>
+      </div>
+    </div>
+    <button class="app-bar-logout" onclick="auth.logout()">🚪 Đăng xuất</button>
+  </div>
+
+  <!-- ══ PAGE BODY ══ -->
+  <div class="page-body">
+
+    <!-- ══════════════════════════════════
+         SECTION ① — Tiến trình của con
+    ══════════════════════════════════ -->
+    <div>
+      <div class="section-heading">📈 Tiến trình của con</div>
+      <div class="p-card" id="sec1">
+
+        <!-- Character card -->
+        <div class="char-card-header">
+          <div class="char-avatar-lg" id="childAvatar">🧒</div>
+          <div style="flex:1">
+            <div class="char-name-lg"  id="childNameCard">...</div>
+            <div class="char-level-lg" id="childLevelCard">⭐ Level 2 · Người khám phá</div>
+            <div class="xp-bar-parent">
+              <div class="xp-row">
+                <span id="childXpLabel">185 / 300 XP</span>
+                <span>Level 3 →</span>
+              </div>
+              <div class="xp-track-p">
+                <div class="xp-fill-p" id="childXpFill" style="width:62%"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Badges -->
+        <div style="padding:12px 16px 4px">
+          <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:6px">
+            🏅 Danh hiệu đã đạt
+          </div>
+        </div>
+        <div class="badges-grid" id="badgesGrid">
+          <!-- rendered by JS -->
+        </div>
+
+        <!-- FAS chart -->
+        <div style="border-top:1px solid var(--border-light);margin-top:4px;padding-top:4px">
+          <div class="fas-select-wrap">
+            <span class="fas-select-label">Xem hành trình:</span>
+            <select class="fas-select" id="fasFood" onchange="renderFasChart(this.value)">
+              <option>Đang tải...</option>
+            </select>
+          </div>
+          <div class="fas-chart-parent">
+            <div class="fas-bars-parent" id="fasBarsParent">
+              <!-- rendered by JS -->
+            </div>
+            <div class="fas-axis">
+              <span>FAS 1.0 — Không thích</span>
+              <span>FAS 4.0 — Rất thích</span>
+            </div>
+            <div class="fas-fag-note" id="fasFagNote" style="display:none"></div>
+          </div>
+        </div>
+
+      </div><!-- /sec1 -->
+    </div>
+
+    <!-- ══════════════════════════════════
+         SECTION ② — Gợi ý nấu ăn hôm nay
+    ══════════════════════════════════ -->
+    <div>
+      <div class="section-heading">🍳 Gợi ý nấu ăn hôm nay</div>
+      <div class="p-card">
+        <div class="suggest-card-header">
+          <div class="suggest-card-title">🎨 Khay cơm con gửi cho ba mẹ</div>
+          <div class="suggest-card-sub">Con thiết kế sau bữa trưa — ba mẹ thử nấu tối nay nhé!</div>
+        </div>
+
+        <!-- Tray preview (dynamic) -->
+        <div class="tray-preview" id="trayPreviewWrap">
+          <div class="no-tray-placeholder">
+            🌱 Đang tải dữ liệu...
+          </div>
+        </div>
+
+        <!-- Confirm buttons -->
+        <div class="confirm-actions" id="confirmActions" style="display:none">
+          <button class="btn-confirm-yes" id="btnConfirmYes" onclick="confirmCooked()">
+            ✅ Con đã ăn ở nhà tối nay!
+          </button>
+          <button class="btn-confirm-no" id="btnConfirmNo" onclick="notCooked()">
+            Tối nay chưa nấu được
+          </button>
+        </div>
+
+        <!-- Result message -->
+        <div class="confirm-result" id="confirmResult"></div>
+
+        <!-- Padding bottom -->
+        <div style="height:6px"></div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════
+         SECTION ③ — Lịch sử xác nhận
+    ══════════════════════════════════ -->
+    <div>
+      <div class="section-heading">📅 Lịch sử 2 tuần gần nhất</div>
+      <div class="p-card">
+        <div class="timeline" id="historyTimeline">
+          <!-- rendered by JS -->
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /page-body -->
+</div><!-- /parent-layout -->
+
+<!-- Toast -->
+<div class="p-toast" id="pToast"></div>
+
+<!-- Scripts -->
+<script src="../js/auth.js"></script>
+<script src="js/parent.js"></script>
+</body>
+</html>

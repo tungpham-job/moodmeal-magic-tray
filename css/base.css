@@ -1,0 +1,319 @@
+/* ═══════════════════════════════════════════════
+   base.css — MOODMEAL MAGIC TRAY v3
+   Shared: CSS variables · reset · typography
+   Dùng chung cho tất cả giao diện (login, school,
+   student, parent). Mỗi role import thêm file CSS
+   riêng của mình.
+═══════════════════════════════════════════════ */
+
+/* ── 1. CSS Variables ────────────────────────── */
+:root {
+  /* Brand green */
+  --green-dark:        #0E6655;
+  --green-primary:     #2E7D32;
+  --green-primary-hov: #1B5E20;
+  --green-mid:         #1E8449;
+  --green-accent:      #4CAF50;
+  --green-light:       #D5F5E3;
+  --green-pale:        #EAFAF1;
+  --green-xp:          #6DEBB0;
+
+  /* Blue */
+  --blue-dark:         #154360;
+  --blue-mid:          #1F618D;
+  --blue-light:        #D6EAF8;
+
+  /* Purple */
+  --purple-dark:       #4A235A;
+  --purple-mid:        #7D3C98;
+  --purple-light:      #F4ECF7;
+
+  /* Neutral */
+  --white:             #FFFFFF;
+  --bg-app:            #F0F2F5;
+  --bg-card:           #FFFFFF;
+  --border:            #CFD8DC;
+  --border-light:      #E8ECF0;
+
+  /* Text */
+  --text-main:         #2C3E50;
+  --text-muted:        #607D8B;
+  --text-light:        #90A4AE;
+
+  /* Status */
+  --error:             #D32F2F;
+  --warning:           #E67E22;
+  --success:           #1E8449;
+
+  /* Login page */
+  --bg-login-start:    #E8F5E9;
+  --bg-login-end:      #C8E6C9;
+  --shadow-login:      rgba(46, 125, 50, 0.15);
+
+  /* Misc */
+  --radius-sm:         8px;
+  --radius-md:         12px;
+  --radius-lg:         16px;
+  --radius-xl:         20px;
+  --shadow-card:       0 4px 16px rgba(0, 0, 0, 0.08);
+  --shadow-elevated:   0 10px 30px rgba(0, 0, 0, 0.12);
+  --font:              'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --transition:        0.2s ease;
+}
+
+/* ── 2. Reset ─────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--font);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-main);
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font-family: var(--font);
+  cursor: pointer;
+}
+
+input, textarea, select {
+  font-family: var(--font);
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+/* ── 3. Typography helpers ───────────────────── */
+.text-muted   { color: var(--text-muted); }
+.text-success { color: var(--success); }
+.text-error   { color: var(--error); }
+.text-center  { text-align: center; }
+.fw-600       { font-weight: 600; }
+.fw-700       { font-weight: 700; }
+
+/* ── 4. Login page layout ────────────────────── */
+/* Dùng cho login.html; school/parent/student
+   có layout riêng trong CSS của từng role.     */
+
+body.page-login {
+  background: linear-gradient(135deg, var(--bg-login-start), var(--bg-login-end));
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 16px;
+}
+
+.login-container {
+  background: var(--bg-card);
+  width: 100%;
+  max-width: 420px;
+  padding: 32px 24px;
+  border-radius: var(--radius-xl);
+  box-shadow: 0 10px 30px var(--shadow-login);
+  text-align: center;
+}
+
+/* Logo */
+.logo-icon {
+  font-size: 56px;
+  line-height: 1;
+  display: inline-block;
+  margin-bottom: 8px;
+  animation: logo-bounce 2s infinite ease-in-out;
+}
+
+@keyframes logo-bounce {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-8px); }
+}
+
+.app-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--green-primary);
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.app-tagline {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+/* Form */
+.login-form {
+  margin-top: 24px;
+  text-align: left;
+}
+
+.form-group {
+  margin-bottom: 18px;
+}
+
+.form-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-main);
+  margin-bottom: 6px;
+}
+
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.form-input {
+  width: 100%;
+  padding: 12px 16px;
+  padding-right: 44px;
+  font-size: 14px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-md);
+  outline: none;
+  background: #FAFAFA;
+  transition: border-color var(--transition), background var(--transition);
+}
+
+.form-input:focus {
+  border-color: var(--green-accent);
+  background: var(--white);
+}
+
+.form-input.input-error {
+  border-color: var(--error);
+}
+
+.toggle-password {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  font-size: 16px;
+  color: var(--text-muted);
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color var(--transition);
+}
+
+.toggle-password:hover {
+  color: var(--text-main);
+}
+
+/* Error message */
+.error-message {
+  color: var(--error);
+  font-size: 13px;
+  font-weight: 600;
+  min-height: 20px;
+  margin-bottom: 14px;
+  text-align: center;
+  display: none;
+}
+
+.error-message.show {
+  display: block;
+}
+
+/* Submit button */
+.btn-submit {
+  width: 100%;
+  padding: 14px;
+  background: var(--green-primary);
+  color: #FFFFFF;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 16px;
+  font-weight: 700;
+  transition: background var(--transition), transform 0.1s ease;
+  box-shadow: 0 4px 12px rgba(46, 125, 50, 0.3);
+}
+
+.btn-submit:hover  { background: var(--green-primary-hov); }
+.btn-submit:active { transform: scale(0.98); }
+
+.btn-submit:disabled {
+  background: var(--text-light);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* Demo hint box */
+.demo-info {
+  margin-top: 24px;
+  padding: 14px;
+  background: #F1F8E9;
+  border: 1px dashed #AED581;
+  border-radius: var(--radius-md);
+  font-size: 12px;
+  text-align: left;
+}
+
+.demo-info-title {
+  font-weight: 700;
+  color: var(--green-primary);
+  margin-bottom: 8px;
+}
+
+.demo-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+  color: #424242;
+  gap: 8px;
+}
+
+.demo-item:last-child { margin-bottom: 0; }
+
+.demo-role {
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.demo-item code {
+  background: #E8F5E9;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  color: var(--green-primary);
+  white-space: nowrap;
+}
+
+/* Quick-fill button */
+.demo-item .btn-fill {
+  background: none;
+  border: 1px solid #AED581;
+  border-radius: 6px;
+  font-size: 10px;
+  color: var(--green-primary);
+  padding: 2px 6px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background var(--transition);
+}
+
+.demo-item .btn-fill:hover {
+  background: #C5E1A5;
+}

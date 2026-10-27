@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎨</text></svg>">
+  <title>Thiết kế Khay – MoodMeal</title>
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/student.css">
+</head>
+<body class="page-student">
+<div class="phone-frame">
+  <div class="status-bar"><div class="status-notch"></div></div>
+
+  <!-- Header -->
+  <div class="screen-header header-purple">
+    <h2>🎨 Khay cơm của em</h2>
+    <div class="sub" id="s3Header">... · Level 2 · 185 / 300 XP</div>
+    <div class="xp-bar-wrap" style="margin-top:6px">
+      <div class="xp-track"><div class="xp-fill" style="width:62%"></div></div>
+    </div>
+  </div>
+
+  <div class="screen-content">
+    <!-- Khay 2x2 -->
+    <div class="tray-section-label">Khay hôm nay</div>
+    <div class="tray-grid">
+      <div class="tray-cell filled" id="cell-tinBot" data-group="tinBot" onclick="cellClick('tinBot')">
+        <div class="cell-icon">🍚</div>
+        <div class="cell-label">Cơm trắng</div>
+        <div class="cell-group">Tinh bột</div>
+        <button class="cell-remove" onclick="removeCell(event,'tinBot')">✕</button>
+      </div>
+      <div class="tray-cell filled" id="cell-dam" data-group="dam" onclick="cellClick('dam')">
+        <div class="cell-icon">🥩</div>
+        <div class="cell-label">Thịt kho</div>
+        <div class="cell-group">Đạm</div>
+        <button class="cell-remove" onclick="removeCell(event,'dam')">✕</button>
+      </div>
+      <div class="tray-cell" id="cell-rauCu" data-group="rauCu" onclick="cellClick('rauCu')">
+        <div class="cell-plus">+</div>
+        <div class="cell-label">Rau củ</div>
+      </div>
+      <div class="tray-cell" id="cell-canh" data-group="canh" onclick="cellClick('canh')">
+        <div class="cell-plus">+</div>
+        <div class="cell-label">Canh</div>
+      </div>
+    </div>
+
+    <!-- Nutrition tags -->
+    <div class="nutrition-ring" id="nutritionTags"></div>
+
+    <!-- Score -->
+    <div class="score-section">
+      <div class="score-row">
+        <span class="score-label">Điểm dinh dưỡng</span>
+        <span class="score-val" id="scoreVal">65 / 100</span>
+      </div>
+      <div class="score-track"><div class="score-fill" id="scoreFill" style="width:65%"></div></div>
+      <div class="score-hint" id="scoreHint"></div>
+    </div>
+
+    <!-- Nguyên liệu -->
+    <div class="ing-section">
+      <div class="ing-label">Nguyên liệu đã mở khóa — bấm để thêm</div>
+      <div class="ing-row" id="ingRow">
+        <button class="ing-btn" data-group="tinBot" data-icon="🍚" data-name="Cơm trắng" data-score="12" onclick="addIng(this)">🍚 <span style="font-size:8px;color:#888">Cơm trắng</span></button>
+        <button class="ing-btn" data-group="tinBot" data-icon="🍞" data-name="Bánh mì"   data-score="10" onclick="addIng(this)">🍞 <span style="font-size:8px;color:#888">Bánh mì</span></button>
+        <button class="ing-btn" data-group="dam"    data-icon="🥩" data-name="Thịt kho"  data-score="12" onclick="addIng(this)">🥩 <span style="font-size:8px;color:#888">Thịt kho</span></button>
+        <button class="ing-btn" data-group="dam"    data-icon="🐟" data-name="Cá hấp"    data-score="12" onclick="addIng(this)">🐟 <span style="font-size:8px;color:#888">Cá hấp</span></button>
+        <button class="ing-btn" data-group="rauCu"  data-icon="🥦" data-name="Bông cải"  data-score="15" onclick="addIng(this)">🥦</button>
+        <button class="ing-btn" data-group="rauCu"  data-icon="🥕" data-name="Cà rốt"    data-score="12" onclick="addIng(this)">🥕</button>
+        <button class="ing-btn" data-group="rauCu"  data-icon="🍅" data-name="Cà chua"   data-score="10" onclick="addIng(this)">🍅</button>
+        <button class="ing-btn" data-group="canh"   data-icon="🍲" data-name="Canh chua" data-score="10" onclick="addIng(this)">🍲</button>
+        <button class="ing-btn" data-group="canh"   data-icon="🥬" data-name="Canh rau"  data-score="8"  onclick="addIng(this)">🥬</button>
+        <button class="ing-btn" data-group="dam"    data-icon="🥚" data-name="Trứng"     data-score="6"  onclick="addIng(this)">🥚</button>
+      </div>
+    </div>
+
+    <!-- Tên khay -->
+    <input type="text" class="name-input" id="trayName"
+      placeholder="Đặt tên sáng tạo cho khay cơm... 🌈">
+
+    <!-- Chỉ giữ nút gửi cho ba mẹ (bỏ gửi bếp trưởng) -->
+    <button class="btn btn-purple" id="familyBtn" onclick="shareFamily()" style="margin-bottom:6px">
+      🏠 Gửi cho ba mẹ nấu tối nay
+    </button>
+
+    <!-- Sent confirmation -->
+    <div class="sent-box" id="sentBox">
+      <div class="sb-icon">✅</div>
+      <div class="sb-title" id="sentTitle">Đã gửi cho ba mẹ!</div>
+      <div class="sb-sub"   id="sentSub">Ba mẹ sẽ nhận ngay · +10 XP 🌱</div>
+    </div>
+
+    <div class="gap"></div>
+  </div>
+
+  <nav class="bottom-nav">
+    <a href="index.html"   class="nav-item"><span class="nav-icon">🏠</span>Trang chủ</a>
+    <a href="screen1.html" class="nav-item"><span class="nav-icon">🌍</span>Hành tinh</a>
+    <a href="screen2.html" class="nav-item"><span class="nav-icon">🍱</span>Thử món</a>
+    <a href="screen3.html" class="nav-item"><span class="nav-icon">🎨</span>Khay cơm</a>
+  </nav>
+</div>
+
+<script src="../js/auth.js"></script>
+<script src="js/nav.js"></script>
+<script src="js/screen3.js"></script>
+<script>
+  const SESSION = auth.check('student');
+  if (SESSION) {
+    document.getElementById('s3Header').textContent =
+      `${SESSION.name} · Level 2 · 185 / 300 XP`;
+  }
+</script>
+</body>
+</html>

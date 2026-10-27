@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍱</text></svg>">
+  <title>MoodMeal Magic Tray</title>
+  <link rel="stylesheet" href="../css/base.css">
+  <link rel="stylesheet" href="../css/student.css">
+</head>
+<body class="page-student">
+<div class="phone-frame">
+  <div class="status-bar"><div class="status-notch"></div></div>
+
+  <div class="screen-content">
+    <!-- Hero -->
+    <div class="home-hero">
+      <div class="hero-title">🍱 MOODMEAL MAGIC TRAY</div>
+      <div class="hero-sub">🌱 Mỗi lần thử – Một lần khám phá</div>
+      <div class="hero-divider"></div>
+      <div class="char-row">
+        <div class="char-avatar" id="heroAvatar">🧒</div>
+        <div>
+          <div class="char-name"  id="heroName">...</div>
+          <div class="char-level" id="heroLevel">⭐ Level 2 · Người khám phá</div>
+        </div>
+        <button onclick="auth.logout()" style="
+          margin-left:auto; flex-shrink:0;
+          background:rgba(255,255,255,0.15);
+          border:1px solid rgba(255,255,255,0.3);
+          color:#fff; border-radius:8px;
+          padding:5px 10px; font-size:11px; font-weight:600;
+          cursor:pointer; font-family:inherit;
+          transition:background 0.15s;
+        " onmouseover="this.style.background='rgba(255,255,255,0.25)'"
+           onmouseout="this.style.background='rgba(255,255,255,0.15)'">
+          🚪 Đăng xuất
+        </button>
+      </div>
+      <div class="xp-bar-wrap" style="margin-top:10px">
+        <span class="xp-label" id="xpLabel">... · Level 2 · 185 / 300 XP</span>
+        <div class="xp-track"><div class="xp-fill" style="width:62%"></div></div>
+      </div>
+    </div>
+
+    <!-- Mission banner -->
+    <div class="mission-banner" id="missionBanner">
+      <div class="mission-icon">🎯</div>
+      <div>
+        <p id="missionTitle">Mục tiêu hôm nay</p>
+        <span id="missionSub">Khám phá thực đơn và thử món mới nhé!</span>
+      </div>
+    </div>
+
+    <!-- Thực đơn hôm nay (dynamic) -->
+    <div class="section-label">Thực đơn bữa trưa hôm nay</div>
+    <div class="menu-grid" id="menuGrid">
+      <!-- rendered by JS -->
+    </div>
+
+    <!-- Điều hướng -->
+    <div class="section-label">Chọn session hôm nay</div>
+    <div class="nav-cards">
+      <a href="screen1.html" class="nav-card nav-card-green">
+        <span class="nc-icon">🌍</span>
+        <div><div class="nc-title">Bản đồ Hành tinh</div><div class="nc-sub">Xem tiến trình khám phá thực phẩm</div></div>
+        <span class="nc-arr">›</span>
+      </a>
+      <a href="screen2.html" class="nav-card nav-card-blue">
+        <span class="nc-icon">🍱</span>
+        <div><div class="nc-title">Thử món & Đánh giá</div><div class="nc-sub">Bấm emoji sau khi thử · Nhận XP ngay</div></div>
+        <span class="nc-arr">›</span>
+      </a>
+      <a href="screen3.html" class="nav-card nav-card-purple">
+        <span class="nc-icon">🎨</span>
+        <div><div class="nc-title">Thiết kế Khay cơm</div><div class="nc-sub">Thiết kế khay · Gửi gợi ý cho ba mẹ</div></div>
+        <span class="nc-arr">›</span>
+      </a>
+    </div>
+    <div class="gap"></div>
+  </div>
+
+  <nav class="bottom-nav">
+    <a href="index.html"   class="nav-item"><span class="nav-icon">🏠</span>Trang chủ</a>
+    <a href="screen1.html" class="nav-item"><span class="nav-icon">🌍</span>Hành tinh</a>
+    <a href="screen2.html" class="nav-item"><span class="nav-icon">🍱</span>Thử món</a>
+    <a href="screen3.html" class="nav-item"><span class="nav-icon">🎨</span>Khay cơm</a>
+  </nav>
+</div>
+
+<script src="../js/auth.js"></script>
+<script src="js/nav.js"></script>
+<script>
+  /* Auth guard */
+  const SESSION = auth.check('student');
+
+  /* Populate name from session */
+  if (SESSION) {
+    document.getElementById('heroName').textContent  = SESSION.name;
+    document.getElementById('xpLabel').textContent   = `${SESSION.name} · Level 2 · 185 / 300 XP`;
+  }
+
+  /* Render today's menu from mm_daily_menu */
+  (function renderMenu() {
+    const today = new Date().toISOString().split('T')[0];
+    const groupIcons = { 'Tinh bột':'🍚', 'Đạm':'🥩', 'Rau củ':'🥦', 'Canh':'🍲' };
+
+    let menu = [];
+    try { menu = JSON.parse(localStorage.getItem('mm_daily_menu')) || []; } catch {}
+
+    const todayItems = menu.filter(m => m.date === today);
+    const grid = document.getElementById('menuGrid');
+
+    if (!todayItems.length) {
+      grid.innerHTML = `<div style="color:#aaa;font-size:12px;padding:8px 0;text-align:center">
+        Hôm nay chưa có thực đơn. BGH sẽ cập nhật sớm! 🌱</div>`;
+      return;
+    }
+
+    grid.innerHTML = todayItems.map(m => `
+      <div class="menu-item">
+        <span class="m-icon">${groupIcons[m.group] || '🍽️'}</span>
+        <div>
+          <div class="m-name">${m.name}</div>
+          <div class="m-group">${m.group}</div>
+        </div>
+        ${m.isNew ? '<span class="m-new">MỚI!</span>' : ''}
+      </div>`).join('');
+
+    /* Mission banner: highlight new item if any */
+    const newItem = todayItems.find(m => m.isNew);
+    if (newItem) {
+      document.getElementById('missionTitle').textContent = 'Mục tiêu hôm nay';
+      document.getElementById('missionSub').textContent   =
+        `Thử "${newItem.name}" → +15 XP · Khám phá ${newItem.planet}!`;
+    }
+  })();
+</script>
+</body>
+</html>

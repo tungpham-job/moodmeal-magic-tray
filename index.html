@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍱</text></svg>">
+  <title>MOODMEAL MAGIC TRAY — Đăng nhập</title>
+  <link rel="stylesheet" href="css/base.css">
+</head>
+<body class="page-login">
+
+  <div class="login-container">
+
+    <!-- Logo -->
+    <div class="logo-container">
+      <div class="logo-icon">🍱</div>
+      <h1 class="app-title">MOODMEAL MAGIC TRAY</h1>
+      <p class="app-tagline">🌱 Mỗi lần thử – Một lần khám phá</p>
+    </div>
+
+    <!-- Form đăng nhập -->
+    <form id="loginForm" class="login-form" onsubmit="handleLogin(event)">
+
+      <div class="form-group">
+        <label for="username" class="form-label">Tên đăng nhập / Mã ID</label>
+        <div class="input-wrapper">
+          <input
+            type="text"
+            id="username"
+            class="form-input"
+            placeholder="Nhập tài khoản của bạn..."
+            required
+            autocomplete="username"
+          />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="password" class="form-label">Mật khẩu</label>
+        <div class="input-wrapper">
+          <input
+            type="password"
+            id="password"
+            class="form-input"
+            placeholder="Nhập mật khẩu..."
+            required
+            autocomplete="current-password"
+          />
+          <button type="button" class="toggle-password" onclick="togglePwd()" title="Hiện/Ẩn mật khẩu">
+            👁️
+          </button>
+        </div>
+      </div>
+
+      <!-- Lỗi inline -->
+      <div id="errorMsg" class="error-message"></div>
+
+      <!-- Submit -->
+      <button type="submit" id="btnSubmit" class="btn-submit">Đăng Nhập</button>
+
+    </form>
+
+    <!-- Demo hint -->
+    <div class="demo-info">
+      <div class="demo-info-title">💡 Tài khoản thử nghiệm:</div>
+
+      <div class="demo-item">
+        <span class="demo-role">🏫 Ban Giám Hiệu</span>
+        <code>admin / admin2026</code>
+        <button class="btn-fill" onclick="fillDemo('admin','admin2026')">Dùng</button>
+      </div>
+      <div class="demo-item">
+        <span class="demo-role">🧒 Học sinh</span>
+        <code>phambaotruc / hs001</code>
+        <button class="btn-fill" onclick="fillDemo('phambaotruc','hs001')">Dùng</button>
+      </div>
+      <div class="demo-item">
+        <span class="demo-role">👩 Phụ huynh</span>
+        <code>phbaotruc / ph001</code>
+        <button class="btn-fill" onclick="fillDemo('phbaotruc','ph001')">Dùng</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- auth.js phải load TRƯỚC script bên dưới -->
+  <script src="js/auth.js"></script>
+  <script>
+
+    /* Nếu đã có session hợp lệ → redirect thẳng, không hiện form */
+    (function checkExistingSession() {
+      const session = auth.getSession();
+      if (!session) return;
+      const map = { admin: 'school/index.html', student: 'student/index.html', parent: 'parent/index.html' };
+      if (map[session.role]) window.location.href = map[session.role];
+    })();
+
+    /* Toggle hiện/ẩn password */
+    function togglePwd() {
+      const el = document.getElementById('password');
+      el.type = el.type === 'password' ? 'text' : 'password';
+    }
+
+    /* Điền nhanh tài khoản demo */
+    function fillDemo(id, pass) {
+      document.getElementById('username').value = id;
+      document.getElementById('password').value = pass;
+      document.getElementById('errorMsg').classList.remove('show');
+    }
+
+    /* Xử lý đăng nhập */
+    function handleLogin(event) {
+      event.preventDefault();
+
+      const id   = document.getElementById('username').value.trim();
+      const pass = document.getElementById('password').value.trim();
+      const err  = document.getElementById('errorMsg');
+      const btn  = document.getElementById('btnSubmit');
+
+      err.classList.remove('show');
+      err.textContent = '';
+
+      /* Feedback loading */
+      btn.disabled    = true;
+      btn.textContent = 'Đang đăng nhập...';
+
+      /* Giả lập async (thay bằng fetch api.gs ở production) */
+      setTimeout(() => {
+        const result = auth.login(id, pass);
+
+        if (result.ok) {
+          btn.textContent = '✅ Thành công! Đang chuyển trang...';
+          window.location.href = result.redirect;
+        } else {
+          err.textContent = result.error;
+          err.classList.add('show');
+          btn.disabled    = false;
+          btn.textContent = 'Đăng Nhập';
+          document.getElementById('username').classList.add('input-error');
+          document.getElementById('password').classList.add('input-error');
+        }
+      }, 300);
+    }
+
+    /* Xóa trạng thái lỗi khi người dùng gõ lại */
+    ['username', 'password'].forEach(id => {
+      document.getElementById(id).addEventListener('input', () => {
+        document.getElementById(id).classList.remove('input-error');
+        const err = document.getElementById('errorMsg');
+        err.classList.remove('show');
+        err.textContent = '';
+      });
+    });
+
+  </script>
+</body>
+</html>
