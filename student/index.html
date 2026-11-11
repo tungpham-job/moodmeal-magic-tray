@@ -102,7 +102,7 @@
 
   /* Render today's menu from mm_daily_menu */
   (function renderMenu() {
-    const today = new Date().toISOString().split('T')[0];
+    const today = toLocalDateStr(new Date());
     const groupIcons = { 'Tinh bột':'🍚', 'Đạm':'🥩', 'Rau củ':'🥦', 'Canh':'🍲' };
 
     let menu = [];

@@ -109,7 +109,7 @@
         <!-- Tab: Thực đơn -->
         <div class="tab-panel active" id="tab-menu">
           <div style="display:flex;gap:8px;margin-bottom:16px">
-            <button class="btn btn-primary" onclick="openAddMenu(new Date().toISOString().split('T')[0])">+ Thêm món hôm nay</button>
+            <button class="btn btn-primary" onclick="openAddMenu(toLocalDateStr(new Date()))">+ Thêm món hôm nay</button>
             <button class="btn btn-secondary" onclick="renderMenuTab()">🔄 Làm mới</button>
           </div>
           <div id="weekGrid"></div>

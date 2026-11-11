@@ -90,6 +90,16 @@ const STORAGE_KEY_SESSION  = 'mm_session';
   }
 })();
 
+/* ── Tiện ích: ngày dạng YYYY-MM-DD theo giờ LOCAL ───
+   Dùng thay cho toISOString().split('T')[0] (trả về ngày UTC,
+   bị lệch 1 ngày ở UTC+7 khi giờ local < 07:00). */
+function toLocalDateStr(d) {
+  const yyyy = d.getFullYear();
+  const mm   = String(d.getMonth() + 1).padStart(2, '0');
+  const dd   = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
 /* ── 3. Đối tượng auth (public API) ─────────── */
 const auth = {
 

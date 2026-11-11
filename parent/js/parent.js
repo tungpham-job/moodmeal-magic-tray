@@ -102,18 +102,20 @@ function renderFasChart(foodName) {
   const bars    = document.getElementById('fasBarsParent');
   const fagNote = document.getElementById('fasFagNote');
 
-  // Build 4 slots
-  const slots = Array.from({ length: 4 }, (_, i) => entries[i] ?? null);
+  // Build 4 slots — hiện 4 lần thử gần nhất (nếu > 4 lần thì trượt cửa sổ)
+  const shown = entries.slice(-4);
+  const base  = shown.length ? shown[0].attempt : 1;
+  const slots = Array.from({ length: 4 }, (_, i) => shown[i] ?? null);
   bars.innerHTML = slots.map((e, i) => {
     const val = e ? e.score : null;
     const pct = val ? (val / 4) * 100 : 0;
-    const isCurrent = i === entries.length - 1 && e !== null;
+    const isCurrent = i === shown.length - 1 && e !== null;
     return `
       <div class="fas-bar-wrap-p">
         <div class="fas-bar-val-p">${val !== null ? val.toFixed(1) : '—'}</div>
         <div class="fas-bar-p ${isCurrent ? 'current' : ''} ${!val ? 'empty' : ''}"
              style="height:${pct}%"></div>
-        <div class="fas-bar-lbl-p">Lần ${i + 1}</div>
+        <div class="fas-bar-lbl-p">Lần ${base + i}</div>
       </div>`;
   }).join('');
 
@@ -147,10 +149,10 @@ function renderSection2() {
 
   if (!TRAY_ITEM) {
     // Kiểm tra có khay đã xác nhận hôm nay không
-    const today     = new Date().toISOString().split('T')[0];
+    const today     = toLocalDateStr(new Date());
     const confirmed = myTrays.find(t =>
       t.parentConfirmed === true &&
-      t.confirmedAt?.startsWith(today)
+      t.confirmedAt && toLocalDateStr(new Date(t.confirmedAt)) === today
     );
 
     if (confirmed) {

@@ -13,6 +13,45 @@ const emojiMap = {
 let selected  = null;
 let tryAgain  = false;
 
+/* Món đang đánh giá (cố định trong demo; sẽ lấy từ thực đơn ở bước sau).
+   foodName trùng với dữ liệu mẫu để Báo cáo FAS / Phụ huynh gom cùng món. */
+const CURRENT_FOOD = { id: 'bong-cai', name: 'Bông cải xanh' };
+
+/* Ghi 1 dòng vào mm_fas_log: số lần thử (attempt) = lần lớn nhất đã có của
+   học sinh + món này, cộng 1. `score` là giá trị FAS hiển thị cho bé (khớp dữ
+   liệu mẫu); `rating` giữ nguyên mức emoji gốc (1–4) để tính lại sau này. */
+function writeFasLog(rating, score) {
+  const session = auth.getSession();
+  if (!session) return null;
+
+  let log = [];
+  try { log = JSON.parse(localStorage.getItem('mm_fas_log')) || []; } catch (e) {}
+
+  const attempts = log
+    .filter(r => r.studentId === session.userId && r.foodId === CURRENT_FOOD.id)
+    .map(r => r.attempt);
+
+  const entry = {
+    studentId: session.userId,
+    foodId:    CURRENT_FOOD.id,
+    foodName:  CURRENT_FOOD.name,
+    attempt:   (attempts.length ? Math.max(...attempts) : 0) + 1,
+    score,
+    rating,
+    tryAgain,
+    timestamp: new Date().toISOString(),
+  };
+
+  try {
+    log.push(entry);
+    localStorage.setItem('mm_fas_log', JSON.stringify(log));
+  } catch (e) {
+    console.warn('Could not write mm_fas_log', e);
+    return null;
+  }
+  return entry;
+}
+
 /* Hiển thị giờ thật */
 (function setDate() {
   const now  = new Date();
@@ -47,6 +86,7 @@ function toggleTryAgain() {
 function confirmEval() {
   if (!selected) return;
   const data = emojiMap[selected];
+  const entry = writeFasLog(selected, data.val);
 
   const btn = document.getElementById('confirmBtn');
   btn.disabled    = true;
@@ -64,7 +104,7 @@ function confirmEval() {
   document.getElementById('fasChart').classList.add('show');
   document.getElementById('fasNote').textContent   = data.note;
   document.getElementById('fasStatus').textContent =
-    `✅ FAS lần 4: ${data.val}/4 — Đã ghi nhận!`;
+    `✅ FAS lần ${entry ? entry.attempt : 4}: ${data.val}/4 — Đã ghi nhận!`;
 
   setTimeout(() => {
     document.querySelector('.screen-content').scrollTo({ top: 9999, behavior: 'smooth' });

@@ -116,7 +116,7 @@
 
   /* Dynamic mission from today's new menu item */
   (function setMission() {
-    const today = new Date().toISOString().split('T')[0];
+    const today = toLocalDateStr(new Date());
     let menu = [];
     try { menu = JSON.parse(localStorage.getItem('mm_daily_menu')) || []; } catch {}
     const newItem = menu.find(m => m.date === today && m.isNew);
