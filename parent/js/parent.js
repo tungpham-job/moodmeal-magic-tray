@@ -52,13 +52,8 @@ function renderSection1() {
   // Character card header
   document.getElementById('childAvatar').textContent = STUDENT.avatar || '🧒';
   document.getElementById('childNameCard').textContent  = STUDENT.name;
-  document.getElementById('childLevelCard').textContent = '⭐ Level 2 · Người khám phá';
-  // XP (hardcode demo — sẽ lấy từ Sheets ở Bước 5)
-  document.getElementById('childXpLabel').textContent = '185 / 300 XP';
-  document.getElementById('childXpFill').style.width  = '62%';
-
-  // Badges
-  renderBadges();
+  // Level, XP và danh hiệu: đọc dữ liệu thật của con
+  renderChildCard();
 
   // FAS chart: populate dropdown
   const fasLog  = load('mm_fas_log', []);
@@ -72,19 +67,33 @@ function renderSection1() {
   if (foods.length) renderFasChart(foods[0]);
 }
 
+/* Level, thanh XP và danh hiệu của con (đọc XP thật theo bảng của BGH) */
+function renderChildCard() {
+  if (!STUDENT) return;
+  const info = getLevelInfo(getStudentXp(STUDENT.id));
+  document.getElementById('childLevelCard').textContent = `⭐ Level ${info.level} · ${info.name}`;
+  document.getElementById('childXpLabel').textContent   = info.label;
+  document.getElementById('childXpFill').style.width    = info.pct + '%';
+  document.getElementById('childNextLevel').textContent = info.nextLevel ? `Level ${info.nextLevel} →` : '';
+  renderBadges();
+}
+
+function formatYmd(ymd) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ymd || '');
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : '';
+}
+
 function renderBadges() {
-  const badges    = load('mm_badges', []);
-  const badgesLog = load('mm_badges_log', []); // {studentId, badgeId, awardedDate}
-  const myBadges  = badgesLog.filter(b => b.studentId === STUDENT?.id).map(b => b.badgeId);
+  if (!STUDENT) return;
+  evaluateAutoBadges(STUDENT.id);               // tự cấp danh hiệu "Tự động" đã đủ điều kiện
+  const earned = {};
+  getEarnedBadges(STUDENT.id).forEach(e => { earned[e.def.id] = e; });
 
-  // Demo: coi badge b01, b02 là đã đạt
-  const demoEarned = ['b01', 'b02'];
-
-  document.getElementById('badgesGrid').innerHTML = badges.map(b => {
-    const earned = myBadges.includes(b.id) || demoEarned.includes(b.id);
-    const dateStr = earned ? '21/10/2026' : '';
+  document.getElementById('badgesGrid').innerHTML = getBadgeDefs().filter(b => b.active).map(b => {
+    const e = earned[b.id];
+    const dateStr = e ? formatYmd(e.awardedDate) : '';
     return `
-      <div class="badge-chip ${earned ? 'earned' : 'locked'}"
+      <div class="badge-chip ${e ? 'earned' : 'locked'}"
            title="${b.name}: ${b.desc}${dateStr ? ' · ' + dateStr : ''}">
         <span class="b-icon">${b.icon}</span>
         <span class="b-name">${b.name}</span>
@@ -92,6 +101,26 @@ function renderBadges() {
       </div>`;
   }).join('');
 }
+
+/* Tên và ảnh đại diện của con (BGH có thể đổi) */
+function refreshStudentInfo() {
+  if (!SESSION) return;
+  const acc = auth.getAccounts().find(a => a.id === SESSION.linkedId);
+  if (!acc) return;
+  STUDENT = acc;
+  document.getElementById('childName').textContent      = acc.name;
+  document.getElementById('childNameCard').textContent  = acc.name;
+  document.getElementById('childAvatar').textContent    = acc.avatar || '🧒';
+}
+
+/* XP, danh hiệu hoặc thông tin của con đổi ở tab khác (học sinh, BGH) → cập nhật ngay */
+window.addEventListener('storage', e => {
+  const keys = ['mm_xp_log', 'mm_xp_config', 'mm_badges_log', 'mm_badges', 'mm_fas_log', 'mm_accounts'];
+  if (e.key !== null && keys.indexOf(e.key) === -1) return;
+  if (!STUDENT) return;
+  if (e.key === null || e.key === 'mm_accounts') refreshStudentInfo();
+  renderChildCard();
+});
 
 function renderFasChart(foodName) {
   const fasLog = load('mm_fas_log', []);
@@ -205,6 +234,11 @@ function confirmCooked() {
   const now = new Date().toISOString();
   updateTrayLog(TRAY_ITEM.id, { parentConfirmed: true, confirmedAt: now });
 
+  // Cộng XP "Ba mẹ xác nhận đã nấu" cho con theo bảng của BGH (mỗi khay chỉ cộng một lần)
+  const xpRes  = STUDENT ? awardXp(STUDENT.id, 'parent_confirm', TRAY_ITEM.id) : null;
+  const gained = xpRes ? xpRes.awarded : 0;
+  const lvText = xpRes && xpRes.leveledUp ? ` Con lên Level ${xpRes.after.level}!` : '';
+
   // UI
   const btnYes = document.getElementById('btnConfirmYes');
   const btnNo  = document.getElementById('btnConfirmNo');
@@ -212,10 +246,10 @@ function confirmCooked() {
   btnYes.disabled = true;
   btnNo.disabled  = true;
   btnYes.textContent = `✅ Đã xác nhận lúc ${formatClock(now)}`;
-  result.textContent = '🎉 Con nhận +20 XP! Cảm ơn ba mẹ đã ủng hộ con khám phá ẩm thực!';
+  result.textContent = `🎉 Con nhận +${gained} XP!${lvText} Cảm ơn ba mẹ đã ủng hộ con khám phá ẩm thực!`;
   result.className   = 'confirm-result show yes';
 
-  showToast('✅ Đã xác nhận! Con nhận +20 XP 🌱');
+  showToast(`✅ Đã xác nhận! Con nhận +${gained} XP 🌱${lvText}`);
   // Refresh timeline
   setTimeout(renderSection3, 400);
 }

@@ -178,11 +178,18 @@ function shareFamily() {
   const btn     = document.getElementById('familyBtn');
   const sentBox = document.getElementById('sentBox');
 
-  writeTrayLog(name);
+  const entry   = writeTrayLog(name);
+  const session = auth.getSession();
+
+  /* Cộng XP "Gửi khay cơm cho ba mẹ" theo bảng của BGH */
+  const xpRes = session ? awardXp(session.userId, 'send_tray', entry.id) : null;
+  if (session) refreshXpDisplay(session.userId, session.name);
+  const gained = xpRes ? xpRes.awarded : 0;
 
   document.getElementById('sentTitle').textContent = '🏠 Đã gửi cho ba mẹ!';
   document.getElementById('sentSub').textContent   =
-    `Ba mẹ nhận gợi ý nấu "${name}" tối nay · +10 XP 🌱`;
+    `Ba mẹ nhận gợi ý nấu "${name}" tối nay` + (gained ? ` · +${gained} XP 🌱` : '') +
+    (xpRes && xpRes.leveledUp ? ' ' + levelUpText(xpRes) : '');
   sentBox.classList.add('show');
 
   btn.disabled    = true;

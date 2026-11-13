@@ -1,7 +1,8 @@
 /* ═══════════════════════════════════════════
    screen2.js — Thử món & Đánh giá
-   Món đánh giá = món mục tiêu hôm nay từ thực đơn BGH
-   (cần js/today.js load trước file này)
+   Hiện MỌI món trong thực đơn hôm nay (BGH thiết lập) để bé cuộn xuống
+   và đánh giá từng món. Mỗi món có phần đánh giá, TRY AGAIN, nút xác nhận
+   và biểu đồ riêng.  (cần js/today.js load trước file này)
 ═══════════════════════════════════════════ */
 
 /* Giá trị FAS hiển thị cho bé theo mức emoji (khớp dữ liệu mẫu) */
@@ -12,68 +13,141 @@ const emojiMap = {
   1: { val: 2.4 },
 };
 
-let selected  = null;
-let tryAgain  = false;
+/* Danh sách món hôm nay; mỗi phần tử giữ trạng thái đánh giá của riêng món đó */
+let FOODS = [];
 
-/* Món đang đánh giá: lấy từ thực đơn hôm nay (null nếu hôm nay chưa có món) */
-let CURRENT_FOOD = null;
-
-function initFood() {
-  const target  = getTodayTarget();
+function initFoods() {
   const session = auth.getSession();
+  const seen = {};
 
-  if (!target) { renderNoFood(); return; }
+  FOODS = getTodayMenu()
+    .filter(item => {                         // bỏ món trùng tên trong cùng một ngày
+      const n = normFood(item.name);
+      if (seen[n]) return false;
+      seen[n] = true;
+      return true;
+    })
+    .map(item => {
+      const canon   = canonicalFood(item.name);
+      const history = session ? foodHistory(session.userId, canon.name) : [];
+      const nextAttempt = (history.length ? Math.max(...history.map(h => h.attempt)) : 0) + 1;
+      return {
+        item, id: canon.id, name: canon.name, group: item.group, planet: item.planet,
+        history, nextAttempt, selected: null, tryAgain: false, done: false,
+      };
+    });
 
-  const canon   = canonicalFood(target.name);
-  const history = session ? foodHistory(session.userId, canon.name) : [];
-  const nextAttempt = (history.length ? Math.max(...history.map(h => h.attempt)) : 0) + 1;
-
-  CURRENT_FOOD = {
-    id: canon.id, name: canon.name, group: target.group, planet: target.planet,
-    history, nextAttempt,
-  };
-
-  document.getElementById('foodIcon').textContent  = foodIcon(target);
-  document.getElementById('foodBadge').textContent = history.length ? `Lần thử thứ ${nextAttempt}` : 'Lần thử đầu tiên!';
-  document.getElementById('foodName').textContent  = target.name;
-  document.getElementById('foodGroup').textContent = `${target.group} · Hôm nay có trong thực đơn`;
-  document.getElementById('fasChartTitle').textContent = `📈 Hành trình khám phá ${target.name}`;
+  renderFoods();
 }
 
-/* Hôm nay BGH chưa lập thực đơn: không có món để đánh giá */
-function renderNoFood() {
-  document.getElementById('foodIcon').textContent  = '🍽️';
-  document.getElementById('foodBadge').style.display = 'none';
-  document.getElementById('foodName').textContent  = 'Hôm nay chưa có món để thử';
-  document.getElementById('foodGroup').textContent = 'BGH sẽ cập nhật thực đơn sớm!';
-  document.getElementById('foodXp').style.display  = 'none';
-  document.querySelectorAll('.emoji-btn').forEach(b => { b.disabled = true; b.style.opacity = 0.5; });
-  const ta = document.getElementById('tryAgainBtn');
-  ta.disabled = true; ta.style.opacity = 0.5;
+/* ── Vẽ danh sách ─────────────────────────────── */
+function foodBlockHtml(f, i, total) {
+  const badge = f.history.length ? `Lần thử thứ ${f.nextAttempt}` : 'Lần thử đầu tiên!';
+  const tag   = f.item.isNew ? 'Món mới hôm nay' : 'Hôm nay có trong thực đơn';
+  const faces = [[4, '❤️', 'Rất thích'], [3, '🙂', 'Thích'], [2, '😐', 'Chưa quen'], [1, '🙁', 'Không thích']]
+    .map(([v, e, l]) => `<button class="emoji-btn" data-val="${v}" onclick="pickEmoji(${i}, this)"><span class="e-icon">${e}</span><span class="e-label">${l}</span></button>`)
+    .join('');
+  const divider = i > 0 ? 'border-top:6px solid #F0F2F5;margin-top:10px;padding-top:2px;' : '';
+
+  return `
+  <div class="food-block" id="food-${i}" style="${divider}">
+    ${total > 1 ? `<div class="section-label">Món ${i + 1} / ${total}</div>` : ''}
+    <div class="food-card" style="margin-top:${total > 1 ? 2 : 10}px">
+      <div class="food-img">
+        <span style="font-size:56px">${escHtml(foodIcon(f.item))}</span>
+        <div class="food-badge">${badge}</div>
+      </div>
+      <div class="food-info">
+        <div class="food-name">${escHtml(f.item.name)}</div>
+        <div class="food-group">${escHtml(f.group)} · ${tag}</div>
+        <div class="food-xp">${f.history.length
+          ? `⭐ +${xpAmount('emoji_rate')} XP khi đánh giá`
+          : `⭐ +${xpAmount('first_try') + xpAmount('emoji_rate')} XP khi thử và đánh giá`}</div>
+      </div>
+    </div>
+
+    <div class="emoji-label">Sau khi thử, em cảm thấy thế nào?</div>
+    <div class="emoji-row">${faces}</div>
+
+    <div class="gap"></div>
+
+    <button class="btn btn-secondary" id="tryAgainBtn-${i}" onclick="toggleTryAgain(${i})" style="margin-bottom:6px">
+      <span>⭐</span> Muốn thử lại lần sau (TRY AGAIN)
+    </button>
+
+    <button class="confirm-btn" id="confirmBtn-${i}" onclick="confirmEval(${i})" disabled>
+      ✓ Xác nhận đánh giá
+    </button>
+
+    <div class="toast" id="toast-${i}"></div>
+
+    <div class="fas-chart" id="fasChart-${i}">
+      <div class="fas-chart-title">📈 Hành trình khám phá ${escHtml(f.item.name)}</div>
+      <div class="fas-bars" id="fasBars-${i}" style="height:auto;min-height:56px"></div>
+      <div class="fas-track-label">
+        <span>FAS: 1.0 (Không thích)</span>
+        <span>FAS: 4.0 (Rất thích)</span>
+      </div>
+      <div id="fasNote-${i}" style="margin-top:8px;font-size:10px;color:#1E8449;font-weight:600"></div>
+    </div>
+
+    <div class="gap2"></div>
+    <div style="text-align:center;padding:4px 12px 8px;font-size:10px;color:#aaa" id="fasStatus-${i}">
+      FAS lần này sẽ được ghi tự động sau khi xác nhận
+    </div>
+  </div>`;
 }
 
-/* Ghi 1 dòng vào mm_fas_log: số lần thử (attempt) = lần lớn nhất đã có của
-   học sinh + món này (so khớp theo tên), cộng 1. `score` là giá trị FAS hiển
-   thị cho bé (khớp dữ liệu mẫu); `rating` giữ nguyên mức emoji gốc (1–4);
-   `planet` là hành tinh của món để tính tiến trình khám phá. */
-function writeFasLog(rating, score) {
+function renderFoods() {
+  const list = document.getElementById('foodList');
+
+  if (!FOODS.length) {                         // hôm nay BGH chưa lập thực đơn
+    document.getElementById('evalSummary').textContent = '';
+    list.innerHTML = `
+      <div class="food-card">
+        <div class="food-img"><span style="font-size:56px">🍽️</span></div>
+        <div class="food-info">
+          <div class="food-name">Hôm nay chưa có món để thử</div>
+          <div class="food-group">BGH sẽ cập nhật thực đơn sớm!</div>
+        </div>
+      </div>`;
+    return;
+  }
+
+  list.innerHTML = FOODS.map((f, i) => foodBlockHtml(f, i, FOODS.length)).join('');
+  updateSummary();
+}
+
+function updateSummary() {
+  const done = FOODS.filter(f => f.done).length;
+  const el = document.getElementById('evalSummary');
+  el.textContent = done === FOODS.length
+    ? `🎉 Đã đánh giá xong ${FOODS.length} món hôm nay!`
+    : `Hôm nay có ${FOODS.length} món · đã đánh giá ${done}/${FOODS.length}`;
+}
+
+/* ── Ghi 1 dòng vào mm_fas_log ─────────────────
+   attempt = lần lớn nhất đã có của học sinh + món này (so khớp theo tên) + 1.
+   `score` là FAS hiển thị cho bé (khớp dữ liệu mẫu); `rating` giữ mức emoji
+   gốc (1–4); `planet` là hành tinh của món để tính tiến trình khám phá. */
+function writeFasLog(f, rating, score) {
   const session = auth.getSession();
-  if (!session || !CURRENT_FOOD) return null;
+  if (!session || !f) return null;
 
   const log = readJson('mm_fas_log', []);
   const attempts = log
-    .filter(r => r.studentId === session.userId && normFood(r.foodName) === normFood(CURRENT_FOOD.name))
+    .filter(r => r.studentId === session.userId && normFood(r.foodName) === normFood(f.name))
     .map(r => r.attempt);
 
   const entry = {
     studentId: session.userId,
-    foodId:    CURRENT_FOOD.id,
-    foodName:  CURRENT_FOOD.name,
-    planet:    CURRENT_FOOD.planet,
+    foodId:    f.id,
+    foodName:  f.name,
+    planet:    f.planet,
     attempt:   (attempts.length ? Math.max(...attempts) : 0) + 1,
     score,
     rating,
-    tryAgain,
+    tryAgain:  f.tryAgain,
     timestamp: new Date().toISOString(),
   };
 
@@ -99,19 +173,22 @@ function writeFasLog(rating, score) {
     `${days[now.getDay()]}, ${dd}/${mm}/${now.getFullYear()} · ${hh}:${min}`;
 })();
 
-function pickEmoji(btn) {
-  if (!CURRENT_FOOD) return;
-  document.querySelectorAll('.emoji-btn').forEach((b) => b.classList.remove('selected'));
+/* ── Tương tác theo từng món (i = vị trí trong FOODS) ── */
+function pickEmoji(i, btn) {
+  const f = FOODS[i];
+  if (!f || f.done) return;
+  document.querySelectorAll(`#food-${i} .emoji-btn`).forEach(b => b.classList.remove('selected'));
   btn.classList.add('selected');
-  selected = parseInt(btn.dataset.val);
-  document.getElementById('confirmBtn').disabled = false;
+  f.selected = parseInt(btn.dataset.val);
+  document.getElementById(`confirmBtn-${i}`).disabled = false;
 }
 
-function toggleTryAgain() {
-  if (!CURRENT_FOOD) return;
-  tryAgain = !tryAgain;
-  const btn = document.getElementById('tryAgainBtn');
-  if (tryAgain) {
+function toggleTryAgain(i) {
+  const f = FOODS[i];
+  if (!f || f.done) return;
+  f.tryAgain = !f.tryAgain;
+  const btn = document.getElementById(`tryAgainBtn-${i}`);
+  if (f.tryAgain) {
     btn.innerHTML = '<span>✅</span> Đã đặt nhắc nhở thử lại!';
     btn.classList.add('done');
   } else {
@@ -121,10 +198,10 @@ function toggleTryAgain() {
 }
 
 /* Biểu đồ hành trình: tối đa 3 lần thử gần nhất của món này + lần hôm nay */
-function renderFasBars(prev, val) {
+function renderFasBars(i, prev, val) {
   const bars = prev.slice(-3).map(e => ({ label: `Lần ${e.attempt}`, val: Number(e.score), cur: false }));
   bars.push({ label: 'Hôm nay', val, cur: true });
-  document.getElementById('fasBars').innerHTML = bars.map(b => `
+  document.getElementById(`fasBars-${i}`).innerHTML = bars.map(b => `
     <div class="fas-bar-wrap">
       <div class="fas-bar-val">${b.val.toFixed(1)}</div>
       <div class="fas-bar${b.cur ? ' current' : ''}" style="height:${Math.max(4, Math.round((b.val / 4) * 36))}px"></div>
@@ -146,31 +223,51 @@ function fasNote(prev, val) {
   return `FAS giảm nhẹ (${last.toFixed(1)} → ${val.toFixed(1)}) · Không sao, thử lần sau sẽ khác! 🌱`;
 }
 
-function confirmEval() {
-  if (!selected || !CURRENT_FOOD) return;
-  const data  = emojiMap[selected];
-  const prev  = CURRENT_FOOD.history;          // các lần thử trước hôm nay
-  const entry = writeFasLog(selected, data.val);
+function confirmEval(i) {
+  const f = FOODS[i];
+  if (!f || f.done || !f.selected) return;
 
-  const btn = document.getElementById('confirmBtn');
+  const data  = emojiMap[f.selected];
+  const prev  = f.history;                     // các lần thử trước hôm nay
+  const entry = writeFasLog(f, f.selected, data.val);
+  f.done = true;
+
+  /* Cộng XP theo bảng của BGH: thử món lần đầu, đánh giá emoji, TRY AGAIN */
+  const session = auth.getSession();
+  let xpRes = null;
+  if (session && entry) {
+    const ref  = `${f.id}#${entry.attempt}`;
+    const list = [];
+    if (!prev.length) list.push(['first_try', f.id]);
+    list.push(['emoji_rate', ref]);
+    if (f.tryAgain) list.push(['try_again', ref]);
+    xpRes = awardXpBatch(session.userId, list);
+    refreshXpDisplay(session.userId, session.name);
+  }
+
+  const btn = document.getElementById(`confirmBtn-${i}`);
   btn.disabled    = true;
   btn.textContent = '✅ Đã ghi nhận!';
+  document.querySelectorAll(`#food-${i} .emoji-btn`).forEach(b => { b.disabled = true; });
+  document.getElementById(`tryAgainBtn-${i}`).disabled = true;
 
-  renderFasBars(prev, data.val);
+  renderFasBars(i, prev, data.val);
 
-  const toast = document.getElementById('toast');
-  toast.textContent = `⭐ +15 XP! FAS lần này: ${data.val}/4 🌱`;
-  if (tryAgain) toast.textContent += ' · TRY AGAIN đã đặt!';
+  const toast = document.getElementById(`toast-${i}`);
+  toast.textContent = `⭐ +${xpRes ? xpRes.awarded : 0} XP! FAS lần này: ${data.val}/4 🌱`;
+  if (f.tryAgain) toast.textContent += ' · TRY AGAIN đã đặt!';
+  if (xpRes && xpRes.leveledUp) toast.textContent += ' ' + levelUpText(xpRes);
   toast.classList.add('show');
 
-  document.getElementById('fasChart').classList.add('show');
-  document.getElementById('fasNote').textContent   = fasNote(prev, data.val);
-  document.getElementById('fasStatus').textContent =
-    `✅ FAS lần ${entry ? entry.attempt : CURRENT_FOOD.nextAttempt}: ${data.val}/4 — Đã ghi nhận!`;
+  document.getElementById(`fasChart-${i}`).classList.add('show');
+  document.getElementById(`fasNote-${i}`).textContent   = fasNote(prev, data.val);
+  document.getElementById(`fasStatus-${i}`).textContent =
+    `✅ FAS lần ${entry ? entry.attempt : f.nextAttempt}: ${data.val}/4 — Đã ghi nhận!`;
 
-  setTimeout(() => {
-    document.querySelector('.screen-content').scrollTo({ top: 9999, behavior: 'smooth' });
-  }, 300);
+  updateSummary();
+
+  const chart = document.getElementById(`fasChart-${i}`);
+  setTimeout(() => { if (chart.scrollIntoView) chart.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }, 300);
 }
 
-initFood();
+initFoods();

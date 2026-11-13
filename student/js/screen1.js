@@ -29,7 +29,7 @@ function renderMission() {
   let tail = '';
   if (p && p.state === 'unlocking') tail = ` · Mở khóa Hành tinh ${p.name}!`;
   else if (p)                       tail = ` · Khám phá thêm Hành tinh ${p.name}!`;
-  subEl.textContent = `Thử "${target.name}" hôm nay → +15 XP${tail} 🌱`;
+  subEl.textContent = `Thử "${target.name}" hôm nay → +${xpAmount('first_try')} XP${tail} 🌱`;
 }
 
 /* Lưới 4 hành tinh */

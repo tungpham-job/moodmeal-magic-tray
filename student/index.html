@@ -89,6 +89,7 @@
 </div>
 
 <script src="../js/auth.js"></script>
+<script src="../js/xp.js"></script>
 <script src="js/nav.js"></script>
 <script>
   /* Auth guard */
@@ -97,7 +98,7 @@
   /* Populate name from session */
   if (SESSION) {
     document.getElementById('heroName').textContent  = SESSION.name;
-    document.getElementById('xpLabel').textContent   = `${SESSION.name} · Level 2 · 185 / 300 XP`;
+    refreshXpDisplay(SESSION.userId, SESSION.name);
   }
 
   /* Render today's menu from mm_daily_menu */
@@ -132,7 +133,7 @@
     if (newItem) {
       document.getElementById('missionTitle').textContent = 'Mục tiêu hôm nay';
       document.getElementById('missionSub').textContent   =
-        `Thử "${newItem.name}" → +15 XP · Khám phá ${newItem.planet}!`;
+        `Thử "${newItem.name}" → +${xpAmount('first_try')} XP · Khám phá ${newItem.planet}!`;
     }
   })();
 </script>
