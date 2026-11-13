@@ -203,9 +203,16 @@ function switchModule(name) {
 /* ══════════════════════════════════════════════
    MODULE ① — TÀI KHOẢN
 ══════════════════════════════════════════════ */
+function escAttr(t) {
+  return String(t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
 function renderAccounts() {
   const accounts = auth.getAccounts();
   const tbody = document.getElementById('accountsTbody');
+
+  // Tự cấp danh hiệu "Tự động" cho học sinh đã đủ điều kiện
+  accounts.filter(a => a.role === 'student').forEach(a => evaluateAutoBadges(a.id));
 
   tbody.innerHTML = accounts.map(acc => {
     const linked = accounts.find(a => a.id === acc.linkedId);
@@ -213,12 +220,27 @@ function renderAccounts() {
     const statusBadge = acc.locked ? 'badge-red' : 'badge-green';
     const statusText  = acc.locked ? '🔒 Tạm khóa' : '✅ Hoạt động';
 
+    // XP / Level / Danh hiệu: chỉ có với học sinh, tính trực tiếp từ dữ liệu hiện tại
+    let statCells = '<td style="color:#aaa">—</td><td style="color:#aaa">—</td><td style="color:#aaa">—</td>';
+    if (acc.role === 'student') {
+      const info   = getLevelInfo(getStudentXp(acc.id));
+      const earned = getEarnedBadges(acc.id);
+      const icons  = earned.length
+        ? earned.map(b => `<span title="${escAttr(b.def.name)}${b.awardedDate ? ' · ' + b.awardedDate : ''}" style="font-size:18px;margin-right:2px">${b.def.icon}</span>`).join('')
+        : '<span style="color:#aaa">—</span>';
+      statCells = `
+        <td><strong>${info.xp}</strong> <span style="color:#888;font-size:11px">XP</span></td>
+        <td><span class="badge badge-blue">Level ${info.level} · ${escAttr(info.name)}</span></td>
+        <td>${icons}</td>`;
+    }
+
     return `
       <tr data-id="${acc.id}">
         <td><code style="font-size:12px">${acc.id}</code></td>
         <td><strong>${acc.name}</strong></td>
         <td><span class="badge ${roleBadge}">${roleLabel(acc.role)}</span></td>
         <td>${linked ? linked.name : '<span style="color:#aaa">—</span>'}</td>
+        ${statCells}
         <td><span class="badge ${statusBadge}" style="font-size:10px">${statusText}</span></td>
         <td>
           <div style="display:flex;gap:4px">
@@ -235,6 +257,53 @@ function roleLabel(role) {
   return { admin: '🏫 BGH', student: '🧒 Học sinh', parent: '👨 Phụ huynh' }[role] || role;
 }
 
+/* ── Phần XP / Level / Danh hiệu trong form (chỉ học sinh) ── */
+function sortedLevels() {
+  return getXpConfig().levels.slice().sort((a, b) => a.xpFrom - b.xpFrom);
+}
+
+function fillLevelSelect() {
+  document.getElementById('accFormLevel').innerHTML = sortedLevels().map((l, i) =>
+    `<option value="${i}" data-from="${l.xpFrom}">Level ${l.level} · ${escAttr(l.name)} (từ ${l.xpFrom} XP)</option>`).join('');
+}
+
+/* Đổi XP → Level tự khớp bảng "Cấu hình Level" */
+function syncLevelFromXp() {
+  const xp = parseInt(document.getElementById('accFormXp').value, 10);
+  if (isNaN(xp)) return;
+  let idx = 0;
+  sortedLevels().forEach((l, i) => { if (xp >= l.xpFrom) idx = i; });
+  document.getElementById('accFormLevel').value = String(idx);
+}
+
+/* Chọn Level → XP đặt về mốc thấp nhất của level đó */
+function syncXpFromLevel() {
+  const opt = document.getElementById('accFormLevel').selectedOptions[0];
+  if (opt) document.getElementById('accFormXp').value = opt.dataset.from;
+}
+
+function renderBadgeChecks(studentId) {
+  if (studentId) evaluateAutoBadges(studentId);
+  const have = studentId ? getEarnedBadges(studentId).map(e => e.def.id) : [];
+  document.getElementById('accFormBadges').innerHTML = getBadgeDefs().filter(d => d.active).map(d => `
+    <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
+      <input type="checkbox" class="accBadgeChk" value="${d.id}" ${have.indexOf(d.id) !== -1 ? 'checked' : ''}>
+      <span>${d.icon} ${escAttr(d.name)}</span>
+      <span style="font-size:11px;color:#888">· ${d.auto ? 'tự động' : 'duyệt tay'}</span>
+    </label>`).join('');
+}
+
+function toggleStudentStats(role, studentId) {
+  const wrap = document.getElementById('studentStatsWrap');
+  wrap.style.display = role === 'student' ? 'block' : 'none';
+  if (role !== 'student') return;
+  fillLevelSelect();
+  const xpEl = document.getElementById('accFormXp');
+  if (xpEl.value === '') xpEl.value = studentId ? getStudentXp(studentId) : 0;
+  syncLevelFromXp();
+  renderBadgeChecks(studentId);
+}
+
 /* Mở modal thêm tài khoản */
 function openAddAccount() {
   document.getElementById('modalAccountTitle').textContent = 'Thêm tài khoản';
@@ -242,9 +311,12 @@ function openAddAccount() {
   document.getElementById('accFormName').value = '';
   document.getElementById('accFormPass').value = '';
   document.getElementById('accFormRole').value = 'student';
+  document.getElementById('accFormRole').disabled = false;
   document.getElementById('accFormId').readOnly = false;
   document.getElementById('accEditId').value = '';
+  document.getElementById('accFormXp').value = '0';
   renderLinkedSelect('student');
+  toggleStudentStats('student', null);
   openModal('modalAccount');
 }
 
@@ -260,7 +332,10 @@ function openEditAccount(id) {
   document.getElementById('accFormName').value = acc.name;
   document.getElementById('accFormPass').value = acc.pass;
   document.getElementById('accFormRole').value = acc.role;
+  document.getElementById('accFormRole').disabled = acc.id === 'admin';   // không đổi vai trò tài khoản admin
+  document.getElementById('accFormXp').value = acc.role === 'student' ? getStudentXp(acc.id) : '';
   renderLinkedSelect(acc.role, acc.linkedId);
+  toggleStudentStats(acc.role, acc.id);
   openModal('modalAccount');
 }
 
@@ -282,7 +357,10 @@ function renderLinkedSelect(role, selectedId = '') {
 }
 
 document.addEventListener('change', e => {
-  if (e.target.id === 'accFormRole') renderLinkedSelect(e.target.value);
+  if (e.target.id === 'accFormRole') {
+    renderLinkedSelect(e.target.value);
+    toggleStudentStats(e.target.value, document.getElementById('accEditId').value || null);
+  }
 });
 
 function saveAccount() {
@@ -295,33 +373,71 @@ function saveAccount() {
 
   if (!id || !name || !pass) { showToast('Vui lòng điền đầy đủ thông tin!', 'error'); return; }
 
+  const isStudent = role === 'student';
+  let xpVal = null;
+  if (isStudent) {
+    xpVal = parseInt(document.getElementById('accFormXp').value, 10);
+    if (isNaN(xpVal) || xpVal < 0) { showToast('XP phải là số từ 0 trở lên!', 'error'); return; }
+  }
+
   const accounts = auth.getAccounts();
+  let nameChanged = false;
 
   if (editId) {
     // Sửa
     const idx = accounts.findIndex(a => a.id === editId);
     if (idx === -1) return;
+    nameChanged = accounts[idx].name !== name;
+    const currentXp = isStudent ? getStudentXp(editId) : null;
     accounts[idx] = { ...accounts[idx], name, pass, role, linkedId: linked || null };
-    // Cập nhật liên kết phía đối diện
+    // BGH đặt tổng XP: giữ sổ XP, chỉnh XP nền cho khớp
+    if (isStudent && xpVal !== currentXp) accounts[idx].xp = xpBaseForTotal(editId, xpVal);
+    // Cập nhật liên kết hai phía
     updateLinkedId(accounts, editId, linked);
   } else {
     // Thêm mới
     if (accounts.find(a => a.id === id)) { showToast('ID đã tồn tại!', 'error'); return; }
     const newAcc = { id, pass, role, name, linkedId: linked || null, avatar: '🧒', locked: false };
+    if (isStudent) newAcc.xp = xpVal;          // học sinh mới bắt đầu từ XP BGH nhập (mặc định 0)
     accounts.push(newAcc);
     updateLinkedId(accounts, id, linked);
   }
 
   auth.saveAccounts(accounts);
+
+  if (isStudent) {
+    const wanted = [...document.querySelectorAll('.accBadgeChk:checked')].map(c => c.value);
+    setStudentBadges(id, wanted);
+  }
+  if (editId && nameChanged) syncTrayNames(editId, name);
+
   closeModal('modalAccount');
   renderAccounts();
   showToast(editId ? 'Đã cập nhật tài khoản!' : 'Đã thêm tài khoản mới!');
 }
 
+/* Đổi tên học sinh → cập nhật tên trong các khay đã gửi */
+function syncTrayNames(studentId, name) {
+  const log = loadKey(KEY.TRAY_LOG, null);
+  if (!Array.isArray(log)) return;
+  let changed = false;
+  log.forEach(t => { if (t.studentId === studentId && t.studentName !== name) { t.studentName = name; changed = true; } });
+  if (changed) saveKey(KEY.TRAY_LOG, log);
+}
+
+/* Liên kết phụ huynh ↔ học sinh hai chiều: gỡ liên kết cũ, đặt liên kết mới */
 function updateLinkedId(accounts, myId, linkedId) {
+  accounts.forEach(a => {
+    if (a.id !== myId && a.linkedId === myId && a.id !== linkedId) a.linkedId = null;
+  });
   if (!linkedId) return;
   const target = accounts.find(a => a.id === linkedId);
-  if (target) target.linkedId = myId;
+  if (!target) return;
+  if (target.linkedId && target.linkedId !== myId) {
+    const old = accounts.find(a => a.id === target.linkedId);
+    if (old && old.linkedId === target.id) old.linkedId = null;
+  }
+  target.linkedId = myId;
 }
 
 function toggleLock(id) {
@@ -332,7 +448,7 @@ function toggleLock(id) {
   acc.locked = !acc.locked;
   auth.saveAccounts(accounts);
   renderAccounts();
-  showToast(acc.locked ? 'Đã khóa tài khoản.' : 'Đã mở khóa tài khoản.');
+  showToast(acc.locked ? 'Đã khóa tài khoản. Phiên đang đăng nhập của tài khoản này sẽ bị đăng xuất.' : 'Đã mở khóa tài khoản.');
 }
 
 function confirmDelete(id) {
@@ -360,7 +476,7 @@ function importCSV() {
     const [id, name, pass] = parts;
     if (!id || !name || !pass) return;
     if (accounts.find(a => a.id === id)) return; // bỏ qua trùng
-    accounts.push({ id, name, pass, role: 'student', linkedId: null, avatar: '🧒', locked: false });
+    accounts.push({ id, name, pass, role: 'student', linkedId: null, avatar: '🧒', locked: false, xp: 0 });
     added++;
   });
 
@@ -1101,3 +1217,11 @@ function formatTime(iso) {
   const days = ['CN','T2','T3','T4','T5','T6','T7'];
   return `${days[d.getDay()]} ${d.getDate()}/${d.getMonth()+1} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
 }
+
+/* XP, danh hiệu hoặc tài khoản đổi ở tab khác (học sinh, phụ huynh) → bảng tài khoản tự cập nhật */
+window.addEventListener('storage', e => {
+  const keys = ['mm_xp_log', 'mm_xp_config', 'mm_badges_log', 'mm_badges', 'mm_fas_log', 'mm_accounts', 'mm_tray_log'];
+  if (e.key !== null && keys.indexOf(e.key) === -1) return;
+  const panel = document.getElementById('module-accounts');
+  if (panel && panel.classList.contains('active')) renderAccounts();
+});

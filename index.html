@@ -87,6 +87,16 @@
   <script src="js/auth.js"></script>
   <script>
 
+    /* Hiện lý do nếu vừa bị đăng xuất (tài khoản bị khóa, bị xóa, đổi vai trò) */
+    (function showFlash() {
+      const msg = sessionStorage.getItem('mm_flash');
+      if (!msg) return;
+      sessionStorage.removeItem('mm_flash');
+      const err = document.getElementById('errorMsg');
+      err.textContent = msg;
+      err.classList.add('show');
+    })();
+
     /* Nếu đã có session hợp lệ → redirect thẳng, không hiện form */
     (function checkExistingSession() {
       const session = auth.getSession();

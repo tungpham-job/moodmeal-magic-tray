@@ -82,6 +82,7 @@ const SEED_ACCOUNTS = [
 
 const STORAGE_KEY_ACCOUNTS = 'mm_accounts';
 const STORAGE_KEY_SESSION  = 'mm_session';
+const STORAGE_KEY_FLASH    = 'mm_flash';   // thông báo hiện ở trang đăng nhập sau khi bị đăng xuất
 
 /* ── 2. Khởi tạo seed vào localStorage ───────── */
 (function initSeed() {
@@ -142,12 +143,21 @@ const auth = {
       return null;
     }
 
-    if (requiredRole && session.role !== requiredRole) {
+    // Đối chiếu với tài khoản hiện tại: bị khóa, bị xóa hoặc đổi vai trò → kết thúc phiên;
+    // đổi tên, ảnh đại diện, liên kết → cập nhật vào phiên.
+    const state = this._validate(session);
+    if (!state.ok) {
+      this._endSession(state.reason);
+      return null;
+    }
+    this._sig = state.sig;
+
+    if (requiredRole && state.session.role !== requiredRole) {
       this._redirectToLogin();
       return null;
     }
 
-    return session;
+    return state.session;
   },
 
   /*
@@ -163,6 +173,16 @@ const auth = {
 
     if (!user) {
       return { ok: false, error: 'Tên đăng nhập hoặc mật khẩu không chính xác!' };
+    }
+
+    if (user.locked) {
+      return { ok: false, error: 'Tài khoản đã bị tạm khóa. Vui lòng liên hệ Ban Giám Hiệu.' };
+    }
+
+    // Ghi lần đăng nhập đầu tiên của học sinh (dùng cho danh hiệu "Người mới")
+    if (user.role === 'student' && !user.firstLoginAt) {
+      user.firstLoginAt = new Date().toISOString();
+      this.saveAccounts(accounts);
     }
 
     const session = {
@@ -190,6 +210,44 @@ const auth = {
     this._redirectToLogin();
   },
 
+  /* Đối chiếu phiên với tài khoản hiện tại trong danh sách tài khoản */
+  _validate(session) {
+    const acc = this.getAccounts().find(a => a.id === session.userId);
+    if (!acc) {
+      return { ok: false, reason: 'Tài khoản không còn tồn tại. Vui lòng liên hệ Ban Giám Hiệu.' };
+    }
+    if (acc.locked) {
+      return { ok: false, reason: 'Tài khoản đã bị tạm khóa. Vui lòng liên hệ Ban Giám Hiệu.' };
+    }
+    if (acc.role !== session.role) {
+      return { ok: false, reason: 'Thông tin tài khoản đã được thay đổi. Vui lòng đăng nhập lại.' };
+    }
+    const fresh = { role: acc.role, userId: acc.id, name: acc.name, avatar: acc.avatar, linkedId: acc.linkedId };
+    if (JSON.stringify(fresh) !== JSON.stringify(session)) {
+      sessionStorage.setItem(STORAGE_KEY_SESSION, JSON.stringify(fresh));
+    }
+    return { ok: true, session: fresh, sig: JSON.stringify([acc.name, acc.avatar, acc.linkedId, acc.xp]) };
+  },
+
+  /* Kết thúc phiên (kèm lý do hiện ở trang đăng nhập) */
+  _endSession(reason) {
+    sessionStorage.removeItem(STORAGE_KEY_SESSION);
+    if (reason) sessionStorage.setItem(STORAGE_KEY_FLASH, reason);
+    if (document.body && document.body.classList.contains('page-login')) return;
+    this._redirectToLogin();
+  },
+
+  /* Theo dõi thay đổi tài khoản từ tab khác (vd BGH khóa, sửa thông tin) */
+  _watch() {
+    const session = this.getSession();
+    if (!session || !this._sig) return;       // chỉ theo dõi trang đã qua auth.check
+    const state = this._validate(session);
+    if (!state.ok) { this._endSession(state.reason); return; }
+    if (state.sig !== this._sig) this._reload();
+  },
+
+  _reload() { window.location.reload(); },
+
   /* Xác định đường dẫn index.html (login) từ thư mục hiện tại.
    * Cấu trúc cố định:
    *   root/index.html         ← trang đăng nhập
@@ -209,3 +267,9 @@ const auth = {
   }
 
 };
+
+/* Khi BGH khóa, xóa hoặc sửa tài khoản ở tab khác: áp dụng ngay cho tab đang đăng nhập */
+window.addEventListener('storage', e => {
+  if (e.key === null || e.key === STORAGE_KEY_ACCOUNTS) auth._watch();
+});
+window.addEventListener('focus', () => auth._watch());

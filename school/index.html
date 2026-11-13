@@ -85,6 +85,9 @@
                   <th>Họ tên</th>
                   <th>Vai trò</th>
                   <th>Liên kết</th>
+                  <th>XP</th>
+                  <th>Level</th>
+                  <th>Danh hiệu</th>
                   <th>Trạng thái</th>
                   <th>Thao tác</th>
                 </tr>
@@ -334,6 +337,27 @@
       <div class="form-group-s" id="linkedWrap">
         <label class="form-label-s" id="linkedLabel">Phụ huynh liên kết</label>
         <select class="form-control" id="accFormLinked"></select>
+      </div>
+
+      <!-- Chỉ hiện với vai trò Học sinh -->
+      <div id="studentStatsWrap" style="display:none">
+        <div class="form-row">
+          <div class="form-group-s">
+            <label class="form-label-s">XP hiện có</label>
+            <input class="form-control" type="number" min="0" id="accFormXp" oninput="syncLevelFromXp()">
+          </div>
+          <div class="form-group-s">
+            <label class="form-label-s">Level</label>
+            <select class="form-control" id="accFormLevel" onchange="syncXpFromLevel()"></select>
+          </div>
+        </div>
+        <div class="form-group-s">
+          <label class="form-label-s">Danh hiệu</label>
+          <div id="accFormBadges" style="display:flex;flex-direction:column;gap:6px"></div>
+          <div style="font-size:11px;color:#888;margin-top:6px">
+            Bỏ chọn một danh hiệu để thu hồi; danh hiệu đã thu hồi sẽ không được tự cấp lại.
+          </div>
+        </div>
       </div>
     </div>
     <div class="modal-footer">
@@ -643,6 +667,8 @@
 
 <!-- ══ SCRIPTS ══ -->
 <script src="../js/auth.js"></script>
+<script src="../js/xp.js"></script>
+<script src="../js/badges.js"></script>
 <script src="js/school.js"></script>
 <script>
   /* Filter accounts table by search */
