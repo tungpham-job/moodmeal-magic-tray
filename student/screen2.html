@@ -26,13 +26,13 @@
     <!-- Thẻ món -->
     <div class="food-card">
       <div class="food-img">
-        <span style="font-size:56px">🥦</span>
-        <div class="food-badge">Lần thử đầu tiên!</div>
+        <span style="font-size:56px" id="foodIcon">🍽️</span>
+        <div class="food-badge" id="foodBadge">Lần thử đầu tiên!</div>
       </div>
       <div class="food-info">
-        <div class="food-name">Bông cải xanh xào tỏi</div>
-        <div class="food-group">Rau củ · Hôm nay có trong thực đơn</div>
-        <div class="food-xp">⭐ +15 XP khi thử</div>
+        <div class="food-name" id="foodName">...</div>
+        <div class="food-group" id="foodGroup">...</div>
+        <div class="food-xp" id="foodXp">⭐ +15 XP khi thử</div>
       </div>
     </div>
 
@@ -55,21 +55,12 @@
       ✓ Xác nhận đánh giá
     </button>
 
-    <div class="toast" id="toast">🌱 +15 XP! Hành tinh Xanh đang sáng lên!</div>
+    <div class="toast" id="toast">🌱 +15 XP!</div>
 
     <!-- FAS Chart -->
     <div class="fas-chart" id="fasChart">
-      <div class="fas-chart-title">📈 Hành trình khám phá bông cải xanh</div>
-      <div class="fas-bars">
-        <div class="fas-bar-wrap"><div class="fas-bar-val">2.0</div><div class="fas-bar" style="height:25%"></div><div class="fas-bar-label">Lần 1</div></div>
-        <div class="fas-bar-wrap"><div class="fas-bar-val">2.3</div><div class="fas-bar" style="height:32%"></div><div class="fas-bar-label">Lần 2</div></div>
-        <div class="fas-bar-wrap"><div class="fas-bar-val">2.6</div><div class="fas-bar" style="height:42%"></div><div class="fas-bar-label">Lần 3</div></div>
-        <div class="fas-bar-wrap">
-          <div class="fas-bar-val" id="currentVal">3.0</div>
-          <div class="fas-bar current" style="height:60%" id="currentBar"></div>
-          <div class="fas-bar-label">Hôm nay</div>
-        </div>
-      </div>
+      <div class="fas-chart-title" id="fasChartTitle">📈 Hành trình khám phá món</div>
+      <div class="fas-bars" id="fasBars" style="height:auto;min-height:56px"></div>
       <div class="fas-track-label">
         <span>FAS: 1.0 (Không thích)</span>
         <span>FAS: 4.0 (Rất thích)</span>
@@ -93,6 +84,7 @@
 
 <script src="../js/auth.js"></script>
 <script src="js/nav.js"></script>
+<script src="js/today.js"></script>
 <script src="js/screen2.js"></script>
 <script>
   const SESSION = auth.check('student');
