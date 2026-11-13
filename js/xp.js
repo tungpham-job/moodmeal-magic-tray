@@ -138,10 +138,19 @@ function refreshXpDisplay(studentId, name) {
   return info;
 }
 
-/* Tab khác (phụ huynh, BGH) đổi XP hoặc bảng cấu hình → cập nhật ngay trên màn Học sinh */
-window.addEventListener('storage', e => {
-  if (['mm_xp_log', 'mm_xp_config', 'mm_accounts'].indexOf(e.key) === -1) return;
+/* Đọc lại XP mới nhất cho học sinh đang đăng nhập (an toàn với trang không có thanh XP) */
+function refreshXpFromSession() {
   let session = null;
   try { session = JSON.parse(sessionStorage.getItem('mm_session')); } catch (err) {}
   if (session && session.role === 'student') refreshXpDisplay(session.userId, session.name);
+}
+
+/* Tab khác (phụ huynh, BGH) đổi XP hoặc bảng cấu hình → cập nhật ngay trên màn Học sinh */
+window.addEventListener('storage', e => {
+  if (['mm_xp_log', 'mm_xp_config', 'mm_accounts'].indexOf(e.key) === -1) return;
+  refreshXpFromSession();
 });
+
+/* Quay lại trang bằng nút Back (trang lấy từ bộ nhớ đệm) hoặc quay lại tab → đọc lại XP */
+window.addEventListener('pageshow', refreshXpFromSession);
+window.addEventListener('focus', refreshXpFromSession);
