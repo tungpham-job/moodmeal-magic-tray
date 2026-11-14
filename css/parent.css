@@ -102,22 +102,21 @@ body.page-parent {
 /* ── 6. Character card header ────────────────── */
 .char-card-header {
   background: linear-gradient(135deg, var(--green-dark), var(--green-mid));
-  padding: 14px 14px 12px;
+  padding: 16px 16px 14px;
   color: #fff;
 }
-.char-row-p { display: flex; align-items: center; gap: 12px; }
+.char-row-p { display: flex; align-items: center; gap: 10px; }
 
 .char-avatar-lg {
-  width: 48px; height: 48px;
+  width: 40px; height: 40px;
   border-radius: 50%;
   background: rgba(255,255,255,0.2);
   display: flex; align-items: center; justify-content: center;
-  font-size: 24px; flex-shrink: 0;
-  border: 2px solid rgba(255,255,255,0.35);
+  font-size: 20px; flex-shrink: 0;
 }
 
-.char-name-lg  { font-size: 14px; font-weight: 700; }
-.char-level-lg { font-size: 10px; opacity: 0.85; margin-top: 2px; }
+.char-name-lg  { font-size: 13px; font-weight: 600; }
+.char-level-lg { font-size: 10px; opacity: 0.8; }
 
 /* Thanh XP + ngày giờ: giống Trang chủ học sinh */
 .xp-line { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
