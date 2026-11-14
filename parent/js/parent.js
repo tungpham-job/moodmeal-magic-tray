@@ -104,11 +104,13 @@ function dayTrend(items) {
 
 function initFasCalendar() {
   FAS_DAYS = buildFasDays();
-  const dates = Object.keys(FAS_DAYS).sort();
+  // Luôn mở đúng tháng hiện tại; chọn sẵn ngày đánh giá gần nhất TRONG tháng này (nếu có)
+  const now = new Date();
+  FAS_MONTH = new Date(now.getFullYear(), now.getMonth(), 1);
+  const prefix = toLocalDateStr(FAS_MONTH).slice(0, 7);          // 'YYYY-MM'
+  const dates  = Object.keys(FAS_DAYS).filter(d => d.slice(0, 7) === prefix).sort();
   FAS_SEL_DATE = dates.length ? dates[dates.length - 1] : null;
   FAS_SEL_FOOD = FAS_SEL_DATE ? FAS_DAYS[FAS_SEL_DATE][0].foodName : null;
-  const base = FAS_SEL_DATE ? new Date(FAS_SEL_DATE + 'T00:00:00') : new Date();
-  FAS_MONTH = new Date(base.getFullYear(), base.getMonth(), 1);
   renderFasCalendar();
   renderFasDay();
 }
@@ -176,7 +178,9 @@ function renderFasDay() {
   const box   = document.getElementById('fasDay');
   const items = FAS_SEL_DATE ? FAS_DAYS[FAS_SEL_DATE] : null;
   if (!items) {
-    box.innerHTML = '<div class="fas-day-empty">Con chưa đánh giá món nào. Hành trình sẽ hiện ở đây 🌱</div>';
+    box.innerHTML = Object.keys(FAS_DAYS).length
+      ? '<div class="fas-day-empty">Bấm vào ngày có đánh dấu màu để xem hành trình 🌱</div>'
+      : '<div class="fas-day-empty">Con chưa đánh giá món nào. Hành trình sẽ hiện ở đây 🌱</div>';
     document.getElementById('fasBarsParent').innerHTML = '';
     document.getElementById('fasFagNote').style.display = 'none';
     return;
