@@ -209,7 +209,7 @@ body.page-login {
   background: none;
   border: none;
   font-size: 16px;
-  color: var(--text-muted);
+  color: var(--green-primary);
   padding: 4px;
   display: flex;
   align-items: center;
