@@ -63,12 +63,9 @@
 
         <!-- FAS chart -->
         <div style="border-top:1px solid var(--border-light);margin-top:4px;padding-top:4px">
-          <div class="fas-select-wrap">
-            <span class="fas-select-label">Xem hành trình:</span>
-            <select class="fas-select" id="fasFood" onchange="renderFasChart(this.value)">
-              <option>Đang tải...</option>
-            </select>
-          </div>
+          <!-- Lịch tháng: ngày con đánh giá món (bấm để xem hành trình) -->
+          <div class="fas-cal" id="fasCal"></div>
+          <div class="fas-day" id="fasDay"></div>
           <div class="fas-chart-parent">
             <div class="fas-bars-parent" id="fasBarsParent">
               <!-- rendered by JS -->

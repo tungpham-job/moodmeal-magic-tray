@@ -55,16 +55,144 @@ function renderSection1() {
   // Level, XP và danh hiệu: đọc dữ liệu thật của con
   renderChildCard();
 
-  // FAS chart: populate dropdown
-  const fasLog  = load('mm_fas_log', []);
-  const myLog   = fasLog.filter(r => r.studentId === STUDENT.id);
-  const foods   = [...new Set(myLog.map(r => r.foodName))];
-  const sel     = document.getElementById('fasFood');
-  sel.innerHTML = foods.length
-    ? foods.map(f => `<option value="${f}">${f}</option>`).join('')
-    : '<option value="">Chưa có dữ liệu</option>';
+  // Hành trình FAS: lịch tháng, mặc định tháng + ngày đánh giá gần nhất
+  initFasCalendar();
+}
 
-  if (foods.length) renderFasChart(foods[0]);
+/* ══════════════════════════════════════════════
+   Lịch hành trình FAS (thay combobox chọn món)
+   - Mỗi lần đánh giá so với lần thử trước của chính món đó:
+     up (tăng) · down (giảm) · same (giữ nguyên / thử lần đầu)
+   - Ngày: tăng → xanh lá ▲, giảm → cam ▼, có cả hai → vàng ▲▼, còn lại → xanh dương •
+══════════════════════════════════════════════ */
+let FAS_DAYS     = {};    // { 'YYYY-MM-DD': [{ foodName, score, attempt, trend }] }
+let FAS_MONTH    = null;  // ngày 1 của tháng đang xem
+let FAS_SEL_DATE = null;
+let FAS_SEL_FOOD = null;
+
+const FAS_TREND_MARK = { up: '▲', down: '▼', mixed: '▲▼', same: '•' };
+
+function buildFasDays() {
+  const myLog = load('mm_fas_log', []).filter(r => r.studentId === STUDENT?.id);
+  const byFood = {};
+  myLog.forEach(r => { (byFood[r.foodName] = byFood[r.foodName] || []).push(r); });
+
+  const days = {};
+  Object.values(byFood).forEach(list => {
+    list.sort((a, b) => a.attempt - b.attempt);
+    list.forEach((r, i) => {
+      const prev  = i > 0 ? list[i - 1].score : null;
+      const trend = prev === null || Math.abs(r.score - prev) < 0.001 ? 'same'
+                  : (r.score > prev ? 'up' : 'down');
+      const date  = toLocalDateStr(new Date(r.timestamp));
+      (days[date] = days[date] || []).push({ foodName: r.foodName, score: r.score, attempt: r.attempt, trend });
+    });
+  });
+  // Mỗi món chỉ giữ lần đánh giá cuối cùng trong ngày
+  Object.keys(days).forEach(d => {
+    const last = {};
+    days[d].forEach(e => { if (!last[e.foodName] || e.attempt > last[e.foodName].attempt) last[e.foodName] = e; });
+    days[d] = Object.values(last);
+  });
+  return days;
+}
+
+function dayTrend(items) {
+  const up = items.some(e => e.trend === 'up'), down = items.some(e => e.trend === 'down');
+  return up && down ? 'mixed' : up ? 'up' : down ? 'down' : 'same';
+}
+
+function initFasCalendar() {
+  FAS_DAYS = buildFasDays();
+  const dates = Object.keys(FAS_DAYS).sort();
+  FAS_SEL_DATE = dates.length ? dates[dates.length - 1] : null;
+  FAS_SEL_FOOD = FAS_SEL_DATE ? FAS_DAYS[FAS_SEL_DATE][0].foodName : null;
+  const base = FAS_SEL_DATE ? new Date(FAS_SEL_DATE + 'T00:00:00') : new Date();
+  FAS_MONTH = new Date(base.getFullYear(), base.getMonth(), 1);
+  renderFasCalendar();
+  renderFasDay();
+}
+
+function shiftFasMonth(dir) {
+  FAS_MONTH = new Date(FAS_MONTH.getFullYear(), FAS_MONTH.getMonth() + dir, 1);
+  renderFasCalendar();
+}
+
+function selectFasDate(date) {
+  if (!FAS_DAYS[date]) return;
+  FAS_SEL_DATE = date;
+  FAS_SEL_FOOD = FAS_DAYS[date][0].foodName;
+  renderFasCalendar();
+  renderFasDay();
+}
+
+function selectFasFood(i) {
+  const items = FAS_DAYS[FAS_SEL_DATE] || [];
+  if (!items[i]) return;
+  FAS_SEL_FOOD = items[i].foodName;
+  renderFasDay();
+}
+
+function renderFasCalendar() {
+  const y = FAS_MONTH.getFullYear(), m = FAS_MONTH.getMonth();
+  const offset   = (new Date(y, m, 1).getDay() + 6) % 7;   // T2 = 0
+  const nDays    = new Date(y, m + 1, 0).getDate();
+  const todayStr = toLocalDateStr(new Date());
+
+  let cells = '';
+  for (let i = 0; i < offset; i++) cells += '<div class="fas-cal-cell blank"></div>';
+  for (let d = 1; d <= nDays; d++) {
+    const date  = toLocalDateStr(new Date(y, m, d));
+    const items = FAS_DAYS[date];
+    const trend = items ? dayTrend(items) : '';
+    const cls   = ['fas-cal-cell', items ? 'has ' + trend : '', date === todayStr ? 'today' : '',
+                   date === FAS_SEL_DATE ? 'sel' : ''].join(' ');
+    cells += items
+      ? `<button class="${cls}" onclick="selectFasDate('${date}')" title="${items.length} món đã đánh giá">
+           <span class="fas-cal-num">${d}</span><span class="fas-cal-mark">${FAS_TREND_MARK[trend]}</span></button>`
+      : `<div class="${cls}"><span class="fas-cal-num">${d}</span></div>`;
+  }
+
+  document.getElementById('fasCal').innerHTML = `
+    <div class="fas-cal-head">
+      <span class="fas-cal-title">📅 Hành trình thử món</span>
+      <div class="fas-cal-nav">
+        <button class="fas-cal-btn" onclick="shiftFasMonth(-1)" aria-label="Tháng trước">◀</button>
+        <span class="fas-cal-month">Tháng ${m + 1}/${y}</span>
+        <button class="fas-cal-btn" onclick="shiftFasMonth(1)" aria-label="Tháng sau">▶</button>
+      </div>
+    </div>
+    <div class="fas-cal-grid">
+      ${['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'].map(n => `<div class="fas-cal-wd">${n}</div>`).join('')}
+      ${cells}
+    </div>
+    <div class="fas-cal-legend">
+      <span><i class="lg up"></i>FAS tăng</span><span><i class="lg down"></i>FAS giảm</span><span><i class="lg mixed"></i>Có tăng, có giảm</span>
+      <span><i class="lg same"></i>Lần đầu / giữ nguyên</span>
+    </div>`;
+}
+
+function renderFasDay() {
+  const box   = document.getElementById('fasDay');
+  const items = FAS_SEL_DATE ? FAS_DAYS[FAS_SEL_DATE] : null;
+  if (!items) {
+    box.innerHTML = '<div class="fas-day-empty">Con chưa đánh giá món nào. Hành trình sẽ hiện ở đây 🌱</div>';
+    document.getElementById('fasBarsParent').innerHTML = '';
+    document.getElementById('fasFagNote').style.display = 'none';
+    return;
+  }
+  const dn = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
+  const d  = new Date(FAS_SEL_DATE + 'T00:00:00');
+  box.innerHTML = `
+    <div class="fas-day-title">${dn[d.getDay()]}, ${formatYmd(FAS_SEL_DATE)} · ${items.length} món</div>
+    <div class="fas-day-chips">
+      ${items.map((e, i) => `
+        <button class="fas-food-chip ${e.trend} ${e.foodName === FAS_SEL_FOOD ? 'active' : ''}" onclick="selectFasFood(${i})">
+          <span class="fas-food-mark">${FAS_TREND_MARK[e.trend]}</span>${e.foodName}
+        </button>`).join('')}
+    </div>`;
+  const sel = items.find(e => e.foodName === FAS_SEL_FOOD) || items[0];
+  renderFasChart(sel.foodName, sel.attempt);
 }
 
 /* Level, thanh XP và danh hiệu của con (đọc XP thật theo bảng của BGH) */
@@ -122,10 +250,12 @@ window.addEventListener('storage', e => {
   renderChildCard();
 });
 
-function renderFasChart(foodName) {
+/* uptoAttempt: chỉ tính các lần thử đến lần này (lần của ngày được chọn) */
+function renderFasChart(foodName, uptoAttempt) {
   const fasLog = load('mm_fas_log', []);
   const entries = fasLog
     .filter(r => r.studentId === STUDENT?.id && r.foodName === foodName)
+    .filter(r => uptoAttempt == null || r.attempt <= uptoAttempt)
     .sort((a, b) => a.attempt - b.attempt);
 
   const bars    = document.getElementById('fasBarsParent');

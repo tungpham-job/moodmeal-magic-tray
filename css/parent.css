@@ -165,6 +165,57 @@ body.page-parent {
 }
 .fas-select:focus { border-color: var(--green-accent); }
 
+/* Lịch hành trình FAS (thay combobox chọn món) */
+.fas-cal { padding: 10px 14px 4px; }
+.fas-cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.fas-cal-title { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; }
+.fas-cal-nav   { display: flex; align-items: center; gap: 4px; }
+.fas-cal-month { font-size: 11px; font-weight: 700; color: var(--text-main); min-width: 78px; text-align: center; }
+.fas-cal-btn {
+  width: 24px; height: 24px; padding: 0;
+  border: 1.5px solid var(--border-light); border-radius: 6px;
+  background: var(--white); font-size: 9px; color: var(--text-main); cursor: pointer;
+}
+.fas-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+.fas-cal-wd   { text-align: center; font-size: 9px; font-weight: 700; color: var(--text-muted); padding: 2px 0; }
+.fas-cal-cell {
+  height: 32px; border-radius: 7px; border: 1.5px solid transparent;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  font-family: var(--font); background: none; padding: 0; color: #B0BEC5;
+}
+.fas-cal-cell.blank { visibility: hidden; }
+.fas-cal-num  { font-size: 11px; font-weight: 600; line-height: 1.1; }
+.fas-cal-mark { font-size: 8px; line-height: 1; font-weight: 700; }
+.fas-cal-cell.today { border-color: var(--border); }
+.fas-cal-cell.has   { cursor: pointer; }
+.fas-cal-cell.up    { background: var(--green-light); color: var(--green-dark); }
+.fas-cal-cell.down  { background: #FDEBD0; color: #B9770E; }
+.fas-cal-cell.mixed { background: #FCF3CF; color: #9A7D0A; }
+.fas-cal-cell.same  { background: var(--blue-light); color: var(--blue-mid); }
+.fas-cal-cell.sel   { border-color: var(--green-dark); box-shadow: 0 0 0 1px var(--green-dark); }
+.fas-cal-legend { display: flex; flex-wrap: wrap; gap: 4px 10px; margin-top: 6px; font-size: 9px; color: var(--text-muted); }
+.fas-cal-legend .lg { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 3px; vertical-align: -1px; }
+.fas-cal-legend .lg.up   { background: var(--green-light); border: 1px solid var(--green-mid); }
+.fas-cal-legend .lg.down { background: #FDEBD0; border: 1px solid #E67E22; }
+.fas-cal-legend .lg.mixed { background: #FCF3CF; border: 1px solid #D4AC0D; }
+.fas-cal-legend .lg.same { background: var(--blue-light); border: 1px solid var(--blue-mid); }
+
+.fas-day { padding: 6px 14px 2px; }
+.fas-day-title { font-size: 11px; font-weight: 700; color: var(--text-main); margin-bottom: 5px; }
+.fas-day-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.fas-food-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px 9px; border-radius: 12px; cursor: pointer;
+  border: 1.5px solid var(--border-light); background: var(--white);
+  font-family: var(--font); font-size: 11px; color: var(--text-main);
+}
+.fas-food-chip.active { border-color: var(--green-mid); background: var(--green-pale); font-weight: 600; }
+.fas-food-mark { font-size: 9px; font-weight: 700; }
+.fas-food-chip.up   .fas-food-mark { color: var(--green-mid); }
+.fas-food-chip.down .fas-food-mark { color: #E67E22; }
+.fas-food-chip.same .fas-food-mark { color: var(--blue-mid); }
+.fas-day-empty { font-size: 11px; color: var(--text-muted); text-align: center; padding: 6px 0; }
+
 .fas-chart-parent { padding: 4px 14px 12px; }
 .fas-bars-parent  { display: flex; align-items: flex-end; gap: 8px; height: 70px; }
 .fas-bar-wrap-p   { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; }
