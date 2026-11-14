@@ -46,7 +46,7 @@
             required
             autocomplete="current-password"
           />
-          <button type="button" class="toggle-password" onclick="togglePwd()" title="Hiện/Ẩn mật khẩu">
+          <button type="button" class="toggle-password" onclick="togglePwd(this)" title="Hiện/Ẩn mật khẩu">
             ◉
           </button>
         </div>
@@ -111,9 +111,10 @@
     })();
 
     /* Toggle hiện/ẩn password */
-    function togglePwd() {
+    function togglePwd(btn) {
       const el = document.getElementById('password');
       el.type = el.type === 'password' ? 'text' : 'password';
+      if (btn) btn.textContent = el.type === 'password' ? '◉' : '○';   // ◉ = đang ẩn, ○ = đang hiện
     }
 
     /* Điền nhanh tài khoản demo */
