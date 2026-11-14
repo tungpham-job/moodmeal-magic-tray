@@ -69,6 +69,7 @@
         <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
           <button class="btn btn-primary" onclick="openAddAccount()">+ Thêm tài khoản</button>
           <button class="btn btn-secondary" onclick="openModal('modalImport')">📋 Import CSV</button>
+          <button class="btn btn-secondary" style="margin-left:auto" onclick="refreshTab('accounts')">↻ Làm mới</button>
         </div>
 
         <div class="content-card">
@@ -113,13 +114,16 @@
         <div class="tab-panel active" id="tab-menu">
           <div style="display:flex;gap:8px;margin-bottom:16px">
             <button class="btn btn-primary" onclick="openAddMenu(toLocalDateStr(new Date()))">+ Thêm món hôm nay</button>
-            <button class="btn btn-secondary" onclick="renderMenuTab()">🔄 Làm mới</button>
+            <button class="btn btn-secondary" style="margin-left:auto" onclick="refreshTab('menu')">↻ Làm mới</button>
           </div>
           <div id="weekGrid"></div>
         </div>
 
         <!-- Tab: XP & Level -->
         <div class="tab-panel" id="tab-xp">
+          <div style="display:flex;gap:8px;margin-bottom:16px">
+            <button class="btn btn-secondary" style="margin-left:auto" onclick="refreshTab('xp')">↻ Làm mới</button>
+          </div>
           <div class="content-card" style="margin-bottom:20px">
             <div class="content-card-header">
               <span class="content-card-title">Cấu hình Level</span>
@@ -159,6 +163,7 @@
         <div class="tab-panel" id="tab-badges">
           <div style="display:flex;gap:8px;margin-bottom:16px">
             <button class="btn btn-primary" onclick="openAddBadge()">+ Thêm danh hiệu</button>
+            <button class="btn btn-secondary" style="margin-left:auto" onclick="refreshTab('badges')">↻ Làm mới</button>
           </div>
 
           <div class="content-card" style="margin-bottom:20px">
@@ -190,6 +195,7 @@
         <div class="tab-panel" id="tab-criteria">
           <div style="display:flex;gap:8px;margin-bottom:16px">
             <button class="btn btn-primary" onclick="openAddCriteria()">+ Tạo bộ tiêu chí</button>
+            <button class="btn btn-secondary" style="margin-left:auto" onclick="refreshTab('criteria')">↻ Làm mới</button>
           </div>
           <div id="criteriaList"></div>
         </div>
@@ -199,6 +205,9 @@
            MODULE ③ — BÁO CÁO FAS
       ══════════════════════════════════ -->
       <div class="module-panel" id="module-report">
+        <div style="display:flex;gap:8px;margin-bottom:16px">
+          <button class="btn btn-secondary" style="margin-left:auto" onclick="refreshTab('report')">↻ Làm mới</button>
+        </div>
         <!-- Stat cards -->
         <div class="stats-row">
           <div class="stat-card">
@@ -265,6 +274,7 @@
             <option value="">— Chọn bộ tiêu chí để chấm —</option>
           </select>
           <button class="btn btn-secondary" onclick="openModal('modalBatch')">⚡ Chấm hàng loạt</button>
+          <button class="btn btn-secondary" style="margin-left:auto" onclick="refreshTab('proposals')">↻ Làm mới</button>
         </div>
 
         <div class="content-card">

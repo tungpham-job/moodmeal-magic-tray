@@ -1247,6 +1247,22 @@ document.addEventListener('click', e => {
 /* ══════════════════════════════════════════════
    TOAST
 ══════════════════════════════════════════════ */
+/* Nút "↻ Làm mới": đọc lại dữ liệu từ localStorage và vẽ lại đúng tab/module đang xem */
+function refreshTab(kind) {
+  const fn = {
+    accounts:  renderAccounts,
+    menu:      renderMenuTab,
+    xp:        renderXPTab,
+    badges:    renderBadgesTab,
+    criteria:  renderCriteriaTab,
+    report:    renderReport,
+    proposals: renderProposals,
+  }[kind];
+  if (!fn) return;
+  fn();
+  showToast('Đã làm mới');
+}
+
 function showToast(msg, type = 'success') {
   const container = document.getElementById('toastContainer');
   const toast = document.createElement('div');
