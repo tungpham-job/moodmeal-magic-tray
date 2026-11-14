@@ -5,12 +5,12 @@
    và biểu đồ riêng.  (cần js/today.js load trước file này)
 ═══════════════════════════════════════════ */
 
-/* Giá trị FAS hiển thị cho bé theo mức emoji (khớp dữ liệu mẫu) */
+/* Điểm FAS theo mức emoji: ❤️ 4 · 🙂 3 · 😐 2 · 🙁 1 */
 const emojiMap = {
-  4: { val: 3.0 },
-  3: { val: 2.8 },
-  2: { val: 2.6 },
-  1: { val: 2.4 },
+  4: { val: 4.0 },
+  3: { val: 3.0 },
+  2: { val: 2.0 },
+  1: { val: 1.0 },
 };
 
 /* Danh sách món hôm nay; mỗi phần tử giữ trạng thái đánh giá của riêng món đó */
@@ -44,7 +44,7 @@ function initFoods() {
 function foodBlockHtml(f, i, total) {
   const badge = f.history.length ? `Lần thử thứ ${f.nextAttempt}` : 'Lần thử đầu tiên!';
   const tag   = f.item.isNew ? 'Món mới hôm nay' : 'Hôm nay có trong thực đơn';
-  const faces = [[4, '❤️', 'Rất thích'], [3, '🙂', 'Thích'], [2, '😐', 'Chưa quen'], [1, '🙁', 'Không thích']]
+  const faces = [[4, '❤️', 'Rất thích'], [3, '🙂', 'Có thể ăn'], [2, '😐', 'Chưa quen'], [1, '🙁', 'Không thích']]
     .map(([v, e, l]) => `<button class="emoji-btn" data-val="${v}" onclick="pickEmoji(${i}, this)"><span class="e-icon">${e}</span><span class="e-label">${l}</span></button>`)
     .join('');
   const divider = i > 0 ? 'border-top:6px solid #F0F2F5;margin-top:10px;padding-top:2px;' : '';
@@ -128,7 +128,7 @@ function updateSummary() {
 
 /* ── Ghi 1 dòng vào mm_fas_log ─────────────────
    attempt = lần lớn nhất đã có của học sinh + món này (so khớp theo tên) + 1.
-   `score` là FAS hiển thị cho bé (khớp dữ liệu mẫu); `rating` giữ mức emoji
+   `score` là điểm FAS (❤️ 4 · 🙂 3 · 😐 2 · 🙁 1); `rating` giữ mức emoji
    gốc (1–4); `planet` là hành tinh của món để tính tiến trình khám phá. */
 function writeFasLog(f, rating, score) {
   const session = auth.getSession();

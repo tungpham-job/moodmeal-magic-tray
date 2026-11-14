@@ -68,15 +68,15 @@ const DEFAULT_CRITERIA = [
 
 /* ── Seed: FAS log (demo) ────────────────────── */
 const DEFAULT_FAS_LOG = [
-  { studentId:'phambaotruc', foodId:'bong-cai', foodName:'Bông cải xanh', attempt:1, score:2.0, tryAgain:true,  timestamp:'2026-10-07T12:00:00' },
-  { studentId:'phambaotruc', foodId:'bong-cai', foodName:'Bông cải xanh', attempt:2, score:2.3, tryAgain:true,  timestamp:'2026-10-09T12:00:00' },
-  { studentId:'phambaotruc', foodId:'bong-cai', foodName:'Bông cải xanh', attempt:3, score:2.6, tryAgain:true,  timestamp:'2026-10-14T12:00:00' },
-  { studentId:'phambaotruc', foodId:'bong-cai', foodName:'Bông cải xanh', attempt:4, score:3.0, tryAgain:false, timestamp:'2026-10-21T12:00:00' },
-  { studentId:'nguyenminhan', foodId:'ca-rot',   foodName:'Cà rốt',        attempt:1, score:1.5, tryAgain:true,  timestamp:'2026-10-08T12:00:00' },
-  { studentId:'nguyenminhan', foodId:'ca-rot',   foodName:'Cà rốt',        attempt:2, score:2.0, tryAgain:true,  timestamp:'2026-10-15T12:00:00' },
-  { studentId:'nguyenminhan', foodId:'ca-rot',   foodName:'Cà rốt',        attempt:3, score:2.5, tryAgain:false, timestamp:'2026-10-22T12:00:00' },
-  { studentId:'tranthanhkhoa', foodId:'rau-muong', foodName:'Rau muống',   attempt:1, score:3.2, tryAgain:false, timestamp:'2026-10-10T12:00:00' },
-  { studentId:'tranthanhkhoa', foodId:'rau-muong', foodName:'Rau muống',   attempt:2, score:3.5, tryAgain:false, timestamp:'2026-10-17T12:00:00' },
+  { studentId:'phambaotruc', foodId:'bong-cai', foodName:'Bông cải xanh', attempt:1, score:1, rating:1, tryAgain:true,  timestamp:'2026-10-07T12:00:00' },
+  { studentId:'phambaotruc', foodId:'bong-cai', foodName:'Bông cải xanh', attempt:2, score:2, rating:2, tryAgain:true,  timestamp:'2026-10-09T12:00:00' },
+  { studentId:'phambaotruc', foodId:'bong-cai', foodName:'Bông cải xanh', attempt:3, score:2, rating:2, tryAgain:true,  timestamp:'2026-10-14T12:00:00' },
+  { studentId:'phambaotruc', foodId:'bong-cai', foodName:'Bông cải xanh', attempt:4, score:3, rating:3, tryAgain:false, timestamp:'2026-10-21T12:00:00' },
+  { studentId:'nguyenminhan', foodId:'ca-rot',   foodName:'Cà rốt',        attempt:1, score:1, rating:1, tryAgain:true,  timestamp:'2026-10-08T12:00:00' },
+  { studentId:'nguyenminhan', foodId:'ca-rot',   foodName:'Cà rốt',        attempt:2, score:2, rating:2, tryAgain:true,  timestamp:'2026-10-15T12:00:00' },
+  { studentId:'nguyenminhan', foodId:'ca-rot',   foodName:'Cà rốt',        attempt:3, score:2, rating:2, tryAgain:false, timestamp:'2026-10-22T12:00:00' },
+  { studentId:'tranthanhkhoa', foodId:'rau-muong', foodName:'Rau muống',   attempt:1, score:3, rating:3, tryAgain:false, timestamp:'2026-10-10T12:00:00' },
+  { studentId:'tranthanhkhoa', foodId:'rau-muong', foodName:'Rau muống',   attempt:2, score:4, rating:4, tryAgain:false, timestamp:'2026-10-17T12:00:00' },
 ];
 
 /* ── Seed: Tray log (demo) ───────────────────── */
