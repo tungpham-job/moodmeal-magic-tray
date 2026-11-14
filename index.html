@@ -79,6 +79,11 @@
         <code>phbaotruc / ph001</code>
         <button class="btn-fill" onclick="fillDemo('phbaotruc','ph001')">Dùng</button>
       </div>
+
+      <div class="demo-reset">
+        <button type="button" class="btn-reset" id="btnReset" onclick="resetDemoData()">🔄 Đặt lại dữ liệu demo</button>
+        <div class="demo-reset-hint">Xóa dữ liệu thử nghiệm trên trình duyệt này</div>
+      </div>
     </div>
 
   </div>
@@ -116,6 +121,20 @@
       document.getElementById('username').value = id;
       document.getElementById('password').value = pass;
       document.getElementById('errorMsg').classList.remove('show');
+    }
+
+    /* Đặt lại dữ liệu demo: chỉ xóa các khóa mm_* của MoodMeal (không đụng dữ liệu trang khác
+       cùng tên miền), rồi tải lại. Tài khoản mẫu tự tạo lại ở auth.js; thực đơn, FAS, khay mẫu
+       tự tạo khi mở trang BGH → mở tab BGH trước khi demo. */
+    function resetDemoData() {
+      if (!confirm('Xóa toàn bộ dữ liệu demo trên trình duyệt này và tạo lại dữ liệu mẫu?')) return;
+      [localStorage, sessionStorage].forEach(store => {
+        Object.keys(store).filter(k => k.indexOf('mm_') === 0).forEach(k => store.removeItem(k));
+      });
+      const btn = document.getElementById('btnReset');
+      btn.disabled = true;
+      btn.textContent = '✅ Đã đặt lại';
+      setTimeout(() => window.location.reload(), 600);
     }
 
     /* Xử lý đăng nhập */

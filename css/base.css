@@ -317,3 +317,24 @@ body.page-login {
 .demo-item .btn-fill:hover {
   background: #C5E1A5;
 }
+
+/* Nút "Đặt lại dữ liệu demo" — cùng kiểu nút "Dùng", nằm giữa cuối khung */
+.demo-reset {
+  margin-top: 12px; padding-top: 10px;
+  border-top: 1px dashed #AED581;
+  text-align: center;
+}
+.demo-reset .btn-reset {
+  background: none;
+  border: 1px solid #AED581;
+  border-radius: 6px;
+  font-size: 11px;
+  color: var(--green-primary);
+  padding: 4px 14px;
+  cursor: pointer;
+}
+.demo-reset .btn-reset:hover   { background: #C5E1A5; }
+.demo-reset .btn-reset:disabled { cursor: default; opacity: 0.8; }
+.demo-reset-hint {
+  margin-top: 6px; font-size: 11px; color: var(--text-muted);
+}
