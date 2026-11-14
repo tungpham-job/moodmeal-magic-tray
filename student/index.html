@@ -120,7 +120,7 @@
 
     grid.innerHTML = todayItems.map(m => `
       <div class="menu-item">
-        <span class="m-icon">${groupIcons[m.group] || '🍽️'}</span>
+        <span class="m-icon">${m.icon || groupIcons[m.group] || '🍽️'}</span>
         <div>
           <div class="m-name">${m.name}</div>
           <div class="m-group">${m.group}</div>
