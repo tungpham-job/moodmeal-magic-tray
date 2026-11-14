@@ -206,8 +206,12 @@ function startChildDate() {
   if (!el) return;
   const days = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
   const pad  = n => String(n).padStart(2, '0');
+  const cookEl = document.getElementById('cookDate');
+  const wd = ['CN', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'];
   const showNow = () => {
     const d = new Date();
+    if (cookEl) cookEl.textContent =
+      `(${wd[d.getDay()]}, ${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()})`;
     el.textContent =
       `${days[d.getDay()]}, ${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} · ${pad(d.getHours())}:${pad(d.getMinutes())}`;
   };

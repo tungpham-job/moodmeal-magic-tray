@@ -254,7 +254,7 @@ function renderAccounts() {
 }
 
 function roleLabel(role) {
-  return { admin: '🏫 BGH', student: '🧒 Học sinh', parent: '👨 Phụ huynh' }[role] || role;
+  return { admin: '🏫 BGH', student: '🧒 Học sinh', parent: '👨‍👩‍👧 Phụ huynh' }[role] || role;
 }
 
 /* ── Phần XP / Level / Danh hiệu trong form (chỉ học sinh) ── */
