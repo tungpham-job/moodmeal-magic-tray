@@ -38,9 +38,10 @@
         </button>
       </div>
       <div class="xp-bar-wrap" style="margin-top:10px">
-        <span class="xp-label" id="xpLabel">... · Level 2 · 185 / 300 XP</span>
+        <span class="xp-label" id="xpLabel">185 / 300 XP</span>
         <div class="xp-track"><div class="xp-fill" style="width:62%"></div></div>
       </div>
+      <div id="dateDisplay" style="margin-top:6px;font-size:10.5px;opacity:0.85">--</div>
     </div>
 
     <!-- Mission banner -->
@@ -100,6 +101,20 @@
     document.getElementById('heroName').textContent  = SESSION.name;
     refreshXpDisplay(SESSION.userId, SESSION.name);
   }
+
+  /* Ngày giờ hiện tại dưới thanh XP (cập nhật mỗi 30 giây) */
+  function updateDateDisplay() {
+    const now  = new Date();
+    const days = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
+    const dd   = String(now.getDate()).padStart(2, '0');
+    const mm   = String(now.getMonth() + 1).padStart(2, '0');
+    const hh   = String(now.getHours()).padStart(2, '0');
+    const min  = String(now.getMinutes()).padStart(2, '0');
+    document.getElementById('dateDisplay').textContent =
+      `${days[now.getDay()]}, ${dd}/${mm}/${now.getFullYear()} · ${hh}:${min}`;
+  }
+  updateDateDisplay();
+  setInterval(updateDateDisplay, 30000);
 
   /* Render today's menu from mm_daily_menu */
   (function renderMenu() {

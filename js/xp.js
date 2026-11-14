@@ -132,7 +132,8 @@ function refreshXpDisplay(studentId, name) {
   const text = `${name} · Level ${info.level} · ${info.label}`;
   const set = (id, t) => { const el = document.getElementById(id); if (el) el.textContent = t; };
 
-  ['xpLabel', 's1Header', 's2Header', 's3Header'].forEach(id => set(id, text));
+  ['s1Header', 's2Header', 's3Header'].forEach(id => set(id, text));
+  set('xpLabel', info.label);   // Trang chủ: chỉ hiện "x / mốc XP" (tên và level đã có ở khối avatar)
   set('heroLevel', `⭐ Level ${info.level} · ${info.name}`);
   document.querySelectorAll('.xp-fill').forEach(el => { el.style.width = info.pct + '%'; });
   return info;
