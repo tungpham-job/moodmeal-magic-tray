@@ -129,11 +129,11 @@ function levelUpText(res) {
 /* ── Hiển thị trên các màn Học sinh ───────────── */
 function refreshXpDisplay(studentId, name) {
   const info = getLevelInfo(getStudentXp(studentId));
-  const text = `${name} · Level ${info.level} · ${info.label}`;
+  const text = `${name} · Level ${info.level}`;
   const set = (id, t) => { const el = document.getElementById(id); if (el) el.textContent = t; };
 
-  ['s1Header', 's2Header', 's3Header'].forEach(id => set(id, text));
-  set('xpLabel', info.label);   // Trang chủ: chỉ hiện "x / mốc XP" (tên và level đã có ở khối avatar)
+  ['s1Header', 's2Header', 's3Header'].forEach(id => set(id, text));   // "Tên · Level N"
+  set('xpLabel', info.label);   // chỉ "x / mốc XP" (tên và level đã có ở dòng trên / khối avatar)
   set('heroLevel', `⭐ Level ${info.level} · ${info.name}`);
   document.querySelectorAll('.xp-fill').forEach(el => { el.style.width = info.pct + '%'; });
   return info;

@@ -161,18 +161,6 @@ function writeFasLog(f, rating, score) {
   return entry;
 }
 
-/* Hiển thị giờ thật */
-(function setDate() {
-  const now  = new Date();
-  const days = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
-  const dd   = String(now.getDate()).padStart(2, '0');
-  const mm   = String(now.getMonth() + 1).padStart(2, '0');
-  const hh   = String(now.getHours()).padStart(2, '0');
-  const min  = String(now.getMinutes()).padStart(2, '0');
-  document.getElementById('dateDisplay').textContent =
-    `${days[now.getDay()]}, ${dd}/${mm}/${now.getFullYear()} · ${hh}:${min}`;
-})();
-
 /* ── Tương tác theo từng món (i = vị trí trong FOODS) ── */
 function pickEmoji(i, btn) {
   const f = FOODS[i];
