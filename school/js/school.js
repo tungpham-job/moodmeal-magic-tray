@@ -541,17 +541,18 @@ function renderMenuTab() {
   if (menuView === 'week') {
     const first = days[0].d, last = days[6].d;
     title = `Tuần ${dm(first)} – ${dm(last)}/${last.getFullYear()}`;
+    const heads = days.map(({ d, date }) =>
+      `<div class="cal-band-cell ${date === todayStr ? 'today' : ''} ${isWeekend(d) ? 'weekend' : ''}">${dayNames[d.getDay()]} ${dm(d)}</div>`).join('');
     const cols = days.map(({ d, date }) => `
         <div class="week-col">
-          <div class="week-col-header ${date === todayStr ? 'today' : ''} ${isWeekend(d) ? 'weekend' : ''}">${dayNames[d.getDay()]} ${dm(d)}</div>
           ${chipsOf(date)}
           <button class="add-menu-btn" onclick="openAddMenu('${date}')">+ Thêm món</button>
         </div>`).join('');
-    body = `<div class="week-grid week-grid-7">${cols}</div>`;
+    body = `<div class="cal-band">${heads}</div><div class="week-grid week-grid-7">${cols}</div>`;
   } else {
     title = `Tháng ${menuAnchor.getMonth() + 1}/${menuAnchor.getFullYear()}`;
     const heads = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'].map((n, i) =>
-      `<div class="month-head ${i >= 5 ? 'weekend' : ''}">${n}</div>`).join('');
+      `<div class="cal-band-cell ${i >= 5 ? 'weekend' : ''}">${n}</div>`).join('');
     const cells = days.map(({ d, date, inMonth }) => `
         <div class="month-cell ${inMonth ? '' : 'out'} ${date === todayStr ? 'today' : ''}">
           <div class="month-cell-head">
@@ -560,7 +561,7 @@ function renderMenuTab() {
           </div>
           ${chipsOf(date)}
         </div>`).join('');
-    body = `<div class="month-wrap"><div class="month-grid">${heads}${cells}</div></div>`;
+    body = `<div class="month-wrap"><div class="cal-band">${heads}</div><div class="month-grid">${cells}</div></div>`;
   }
 
   const unit = menuView === 'week' ? 'Tuần' : 'Tháng';

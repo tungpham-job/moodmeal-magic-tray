@@ -466,20 +466,30 @@ textarea.form-control { resize: vertical; min-height: 80px; }
 .menu-view-title { font-size: 13px; font-weight: 700; color: var(--text-main); min-width: 150px; text-align: center; }
 
 .week-grid.week-grid-7 { grid-template-columns: repeat(7, minmax(0, 1fr)); }
-.week-col-header.weekend { color: var(--warning); }
-.week-col-header.today   { color: var(--green-dark); }
+/* Hàng tiêu đề T2–CN: một dải liền màu xanh ngọc đậm (dùng chung tuần + tháng).
+   Cùng số cột và khoảng cách với lưới bên dưới để các cột thẳng hàng. */
+.cal-band {
+  display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 10px;
+  background: var(--green-dark); border-radius: var(--radius-sm);
+  padding: 3px 0; margin-bottom: 8px;
+}
+.cal-band-cell {
+  text-align: center; font-size: 11px; font-weight: 700;
+  text-transform: uppercase; color: var(--white);
+  padding: 6px 4px; border-radius: 6px;
+}
+.cal-band-cell.weekend { color: #FAC775; }
+.cal-band-cell.today   { background: var(--white); color: var(--green-dark); }
+.month-wrap .cal-band {
+  grid-template-columns: repeat(7, minmax(110px, 1fr)); gap: 6px;
+  min-width: 770px; margin-bottom: 6px;
+}
 
 .month-wrap { overflow-x: auto; }
 .month-grid {
   display: grid; grid-template-columns: repeat(7, minmax(110px, 1fr));
   gap: 6px; min-width: 770px;
 }
-.month-head {
-  text-align: center; font-size: 11px; font-weight: 700;
-  color: var(--text-muted); padding: 6px 0;
-  background: var(--bg-app); border-radius: var(--radius-sm);
-}
-.month-head.weekend { color: var(--warning); }
 .month-cell {
   min-height: 92px; padding: 5px;
   border: 1px solid var(--border-light); border-radius: var(--radius-sm);
