@@ -447,6 +447,59 @@ textarea.form-control { resize: vertical; min-height: 80px; }
 }
 .add-menu-btn:hover { border-color: var(--green-accent); color: var(--green-primary); }
 
+/* Chế độ xem Theo tuần / Theo tháng */
+.menu-view-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 10px; margin-bottom: 14px;
+}
+.view-toggle {
+  display: inline-flex; background: var(--bg-app);
+  border-radius: var(--radius-sm); padding: 3px; gap: 3px;
+}
+.view-toggle-btn {
+  border: none; background: none; cursor: pointer;
+  padding: 6px 12px; border-radius: 6px;
+  font-size: 12px; font-weight: 600; color: var(--text-muted);
+}
+.view-toggle-btn.active { background: var(--white); color: var(--green-primary); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.menu-view-nav   { display: flex; align-items: center; gap: 6px; }
+.menu-view-title { font-size: 13px; font-weight: 700; color: var(--text-main); min-width: 150px; text-align: center; }
+
+.week-grid.week-grid-7 { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.week-col-header.weekend { color: var(--warning); }
+.week-col-header.today   { color: var(--green-dark); }
+
+.month-wrap { overflow-x: auto; }
+.month-grid {
+  display: grid; grid-template-columns: repeat(7, minmax(110px, 1fr));
+  gap: 6px; min-width: 770px;
+}
+.month-head {
+  text-align: center; font-size: 11px; font-weight: 700;
+  color: var(--text-muted); padding: 6px 0;
+  background: var(--bg-app); border-radius: var(--radius-sm);
+}
+.month-head.weekend { color: var(--warning); }
+.month-cell {
+  min-height: 92px; padding: 5px;
+  border: 1px solid var(--border-light); border-radius: var(--radius-sm);
+  background: var(--white);
+}
+.month-cell.out   { background: var(--bg-app); opacity: 0.55; }
+.month-cell.today { border-color: var(--green-accent); background: var(--green-pale); }
+.month-cell-head  { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+.month-cell-date  { font-size: 12px; font-weight: 700; color: var(--text-main); }
+.month-cell-date.weekend { color: var(--warning); }
+.month-add-btn {
+  width: 20px; height: 20px; line-height: 16px; padding: 0;
+  border: 1.5px dashed var(--border); border-radius: 6px;
+  background: none; color: var(--text-muted); font-size: 13px; cursor: pointer;
+}
+.month-add-btn:hover { border-color: var(--green-accent); color: var(--green-primary); }
+.month-cell .menu-chip { font-size: 11px; padding: 3px 5px; gap: 4px; margin-bottom: 3px; }
+.month-cell .menu-chip-icon { font-size: 13px; }
+.month-cell .menu-chip-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+
 /* ── 16. Inline edit (XP table) ─────────────── */
 .inline-input {
   width: 70px;

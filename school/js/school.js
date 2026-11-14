@@ -511,45 +511,91 @@ function switchSettingsTab(tab) {
   if (renders[tab]) renders[tab]();
 }
 
-/* Tab 1 — Thực đơn */
+/* Tab 1 — Thực đơn
+   Hai chế độ xem: Theo tuần (1 tuần T2–CN) và Theo tháng (lịch 7 cột).
+   Mặc định luôn là Theo tuần khi mở trang (không lưu lựa chọn). */
+let menuView   = 'week';      // 'week' | 'month'
+let menuAnchor = new Date();  // một ngày bất kỳ trong tuần/tháng đang xem
+
 function renderMenuTab() {
   const menu     = loadKey(KEY.MENU, DEFAULT_MENU);
-  const weekDays = getWeekDays();
   const grid     = document.getElementById('weekGrid');
+  const todayStr = toLocalDateStr(new Date());
+  const dayNames = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+  const isWeekend = d => d.getDay() === 0 || d.getDay() === 6;
+  const dm = d => `${d.getDate()}/${d.getMonth() + 1}`;
 
-  // Tách 2 tuần
-  const week1 = weekDays.slice(0, 5);
-  const week2 = weekDays.slice(5, 10);
-
-  function renderWeek(days, weekLabel) {
-    const cols = days.map(({ date, label, isToday }) => {
-      const dayItems = menu.filter(m => m.date === date);
-      const chips = dayItems.map(m => `
+  function chipsOf(date) {
+    return menu.filter(m => m.date === date).map(m => `
         <div class="menu-chip" title="Nhóm: ${m.group} · Hành tinh: ${m.planet}">
           <span class="menu-chip-icon">${m.icon || groupIcon(m.group)}</span>
           <span class="menu-chip-name">${m.name}</span>
           ${m.isNew ? '<span class="menu-chip-new">MỚI</span>' : ''}
           <button class="btn btn-ghost btn-icon" style="padding:0;font-size:11px" onclick="deleteMenuItem('${m.id}')">✕</button>
         </div>`).join('');
-      return `
-        <div class="week-col">
-          <div class="week-col-header ${isToday ? 'today' : ''}">${label}</div>
-          ${chips}
-          <button class="add-menu-btn" onclick="openAddMenu('${date}')">+ Thêm món</button>
-        </div>`;
-    }).join('');
-
-    return `
-      <div style="margin-bottom:16px">
-        <div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;
-                    letter-spacing:0.5px;margin-bottom:8px;padding:0 2px">${weekLabel}</div>
-        <div class="week-grid">${cols}</div>
-      </div>`;
   }
 
-  grid.innerHTML =
-    renderWeek(week1, '📅 Tuần này') +
-    renderWeek(week2, '📅 Tuần sau');
+  const days = getMenuDays(menuView, menuAnchor);
+  let title, body;
+
+  if (menuView === 'week') {
+    const first = days[0].d, last = days[6].d;
+    title = `Tuần ${dm(first)} – ${dm(last)}/${last.getFullYear()}`;
+    const cols = days.map(({ d, date }) => `
+        <div class="week-col">
+          <div class="week-col-header ${date === todayStr ? 'today' : ''} ${isWeekend(d) ? 'weekend' : ''}">${dayNames[d.getDay()]} ${dm(d)}</div>
+          ${chipsOf(date)}
+          <button class="add-menu-btn" onclick="openAddMenu('${date}')">+ Thêm món</button>
+        </div>`).join('');
+    body = `<div class="week-grid week-grid-7">${cols}</div>`;
+  } else {
+    title = `Tháng ${menuAnchor.getMonth() + 1}/${menuAnchor.getFullYear()}`;
+    const heads = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'].map((n, i) =>
+      `<div class="month-head ${i >= 5 ? 'weekend' : ''}">${n}</div>`).join('');
+    const cells = days.map(({ d, date, inMonth }) => `
+        <div class="month-cell ${inMonth ? '' : 'out'} ${date === todayStr ? 'today' : ''}">
+          <div class="month-cell-head">
+            <span class="month-cell-date ${isWeekend(d) ? 'weekend' : ''}">${d.getDate()}</span>
+            <button class="month-add-btn" onclick="openAddMenu('${date}')" title="Thêm món ngày ${dm(d)}">+</button>
+          </div>
+          ${chipsOf(date)}
+        </div>`).join('');
+    body = `<div class="month-wrap"><div class="month-grid">${heads}${cells}</div></div>`;
+  }
+
+  const unit = menuView === 'week' ? 'Tuần' : 'Tháng';
+  grid.innerHTML = `
+    <div class="menu-view-bar">
+      <div class="view-toggle">
+        <button class="view-toggle-btn ${menuView === 'week'  ? 'active' : ''}" onclick="setMenuView('week')">📅 Theo tuần</button>
+        <button class="view-toggle-btn ${menuView === 'month' ? 'active' : ''}" onclick="setMenuView('month')">🗓️ Theo tháng</button>
+      </div>
+      <div class="menu-view-nav">
+        <button class="btn btn-secondary btn-sm" onclick="shiftMenuView(-1)" title="${unit} trước">◀</button>
+        <span class="menu-view-title">${title}</span>
+        <button class="btn btn-secondary btn-sm" onclick="shiftMenuView(1)" title="${unit} sau">▶</button>
+        <button class="btn btn-ghost btn-sm" onclick="menuGoToday()">Hôm nay</button>
+      </div>
+    </div>
+    ${body}`;
+}
+
+function setMenuView(view) {
+  menuView = view;
+  renderMenuTab();
+}
+
+function shiftMenuView(dir) {
+  const a = menuAnchor;
+  menuAnchor = menuView === 'week'
+    ? new Date(a.getFullYear(), a.getMonth(), a.getDate() + 7 * dir)
+    : new Date(a.getFullYear(), a.getMonth() + dir, 1);
+  renderMenuTab();
+}
+
+function menuGoToday() {
+  menuAnchor = new Date();
+  renderMenuTab();
 }
 
 function groupIcon(group) {
@@ -564,27 +610,28 @@ function toLocalDateStr(d) {
   return `${yyyy}-${mm}-${dd}`;
 }
 
-function getWeekDays() {
-  const today    = new Date();
-  const todayStr = toLocalDateStr(today);
+/* Danh sách ngày cần hiển thị (tuần bắt đầu Thứ Hai, gồm cả T7 và CN)
+   - week : 7 ngày T2–CN của tuần chứa `anchor`
+   - month: các tuần trọn vẹn phủ tháng chứa `anchor` (ngày ngoài tháng có inMonth = false) */
+function getMenuDays(view, anchor) {
+  const y = anchor.getFullYear(), m = anchor.getMonth();
+  const monOffset = d => (d.getDay() + 6) % 7;   // T2 = 0 … CN = 6
+  let start, count;
 
-  // Thứ Hai của tuần hiện tại (local)
-  const mon = new Date(today);
-  mon.setDate(today.getDate() - ((today.getDay() + 6) % 7));
+  if (view === 'week') {
+    start = new Date(y, m, anchor.getDate() - monOffset(anchor));
+    count = 7;
+  } else {
+    const first = new Date(y, m, 1);
+    const last  = new Date(y, m + 1, 0);
+    start = new Date(y, m, 1 - monOffset(first));
+    count = monOffset(first) + last.getDate() + (6 - monOffset(last));
+  }
 
-  const dayNames = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
   const days = [];
-
-  for (let i = 0; i < 10; i++) {
-    const d = new Date(mon);
-    d.setDate(mon.getDate() + (i < 5 ? i : i + 2)); // bỏ T7+CN giữa 2 tuần
-    const dateStr = toLocalDateStr(d);               // ← dùng local, không dùng UTC
-    days.push({
-      date:          dateStr,
-      label:         `${dayNames[d.getDay()]} ${d.getDate()}/${d.getMonth() + 1}`,
-      isToday:       dateStr === todayStr,
-      isFirstOfWeek: i === 0 || i === 5,
-    });
+  for (let i = 0; i < count; i++) {
+    const d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i);
+    days.push({ d, date: toLocalDateStr(d), inMonth: d.getMonth() === m });   // ← dùng local, không dùng UTC
   }
   return days;
 }
