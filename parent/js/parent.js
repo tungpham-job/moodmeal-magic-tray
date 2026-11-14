@@ -238,6 +238,7 @@ function confirmCooked() {
   const xpRes  = STUDENT ? awardXp(STUDENT.id, 'parent_confirm', TRAY_ITEM.id) : null;
   const gained = xpRes ? xpRes.awarded : 0;
   const lvText = xpRes && xpRes.leveledUp ? ` Con lên Level ${xpRes.after.level}!` : '';
+  renderChildCard();   // cập nhật ngay thẻ XP / Level của con
 
   // UI
   const btnYes = document.getElementById('btnConfirmYes');
