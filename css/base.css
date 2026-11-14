@@ -325,6 +325,7 @@ body.page-login {
   text-align: center;
 }
 .demo-reset .btn-reset {
+  font-family: inherit;
   background: none;
   border: 1px solid #AED581;
   border-radius: 6px;
