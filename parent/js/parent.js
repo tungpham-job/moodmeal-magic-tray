@@ -34,6 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
   renderSection1();
   renderSection2();
   renderSection3();
+  startChildDate();
 });
 
 /* ══════════════════════════════════════════════
@@ -199,6 +200,21 @@ function renderFasDay() {
   renderFasChart(sel.foodName, sel.attempt);
 }
 
+/* Ngày giờ hiện tại dưới thanh XP của con (cập nhật mỗi 30 giây) */
+function startChildDate() {
+  const el = document.getElementById('childDate');
+  if (!el) return;
+  const days = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
+  const pad  = n => String(n).padStart(2, '0');
+  const showNow = () => {
+    const d = new Date();
+    el.textContent =
+      `${days[d.getDay()]}, ${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} · ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  };
+  showNow();
+  setInterval(showNow, 30000);
+}
+
 /* Level, thanh XP và danh hiệu của con (đọc XP thật theo bảng của BGH) */
 function renderChildCard() {
   if (!STUDENT) return;
@@ -206,7 +222,6 @@ function renderChildCard() {
   document.getElementById('childLevelCard').textContent = `⭐ Level ${info.level} · ${info.name}`;
   document.getElementById('childXpLabel').textContent   = info.label;
   document.getElementById('childXpFill').style.width    = info.pct + '%';
-  document.getElementById('childNextLevel').textContent = info.nextLevel ? `Level ${info.nextLevel} →` : '';
   renderBadges();
 }
 
