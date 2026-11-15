@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍱</text></svg>">
   <title>MOODMEAL MAGIC TRAY — Đăng nhập</title>
-  <link rel="stylesheet" href="css/base.css?v=20261114b">
+  <link rel="stylesheet" href="css/base.css?v=20261115h">
 </head>
 <body class="page-login">
 
@@ -80,16 +80,25 @@
         <button class="btn-fill" onclick="fillDemo('phbaotruc','ph001')">Dùng</button>
       </div>
 
+      <div class="demo-date">
+        <div class="demo-date-label">📅 Ngày hôm nay (để test)</div>
+        <div class="demo-date-row">
+          <input type="date" id="demoDate" onchange="setDemoDate(this.value)">
+          <button type="button" class="btn-fill" id="btnRealDate" onclick="clearDemoDate()" style="display:none">Về ngày thật</button>
+        </div>
+        <div class="demo-reset-hint" id="demoDateNote"></div>
+      </div>
+
       <div class="demo-reset">
         <button type="button" class="btn-reset" id="btnReset" onclick="resetDemoData()">↻ Đặt lại dữ liệu demo</button>
-        <div class="demo-reset-hint">Xóa dữ liệu thử nghiệm trên trình duyệt này</div>
+        <div class="demo-reset-hint">Xóa dữ liệu thử nghiệm và về ngày thật</div>
       </div>
     </div>
 
   </div>
 
   <!-- auth.js phải load TRƯỚC script bên dưới -->
-  <script src="js/auth.js"></script>
+  <script src="js/auth.js?v=20261115h"></script>
   <script>
 
     /* Hiện lý do nếu vừa bị đăng xuất (tài khoản bị khóa, bị xóa, đổi vai trò) */
@@ -123,6 +132,40 @@
       document.getElementById('password').value = pass;
       document.getElementById('errorMsg').classList.remove('show');
     }
+
+    /* Chọn "Ngày hôm nay" để test: áp dụng ngay (lưu mm_demo_date; các trang khác đọc khi tải).
+       Chọn đúng ngày thật hoặc bấm "Về ngày thật" → bỏ giả lập. */
+    function realTodayStr() { return toLocalDateStr(new (window.MM_RealDate || Date)()); }
+
+    function renderDemoDate() {
+      const sim  = localStorage.getItem('mm_demo_date');
+      const inp  = document.getElementById('demoDate');
+      const note = document.getElementById('demoDateNote');
+      inp.value = sim || realTodayStr();
+      document.getElementById('btnRealDate').style.display = sim ? '' : 'none';
+      if (sim) {
+        const d = new (window.MM_RealDate || Date)(+sim.slice(0, 4), +sim.slice(5, 7) - 1, +sim.slice(8, 10));
+        const names = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
+        const dd = ('0' + d.getDate()).slice(-2), mm = ('0' + (d.getMonth() + 1)).slice(-2);
+        note.className = 'demo-date-warn';
+        note.textContent = `⚠️ Hệ thống đang chạy như hôm nay là ${names[d.getDay()]}, ${dd}/${mm}/${d.getFullYear()}`;
+      } else {
+        note.className = 'demo-reset-hint';
+        note.textContent = 'Đang dùng ngày thật của máy · chọn ngày khác để giả lập';
+      }
+    }
+
+    function setDemoDate(v) {
+      if (!v || v === realTodayStr()) localStorage.removeItem('mm_demo_date');
+      else localStorage.setItem('mm_demo_date', v);
+      renderDemoDate();
+    }
+
+    function clearDemoDate() {
+      localStorage.removeItem('mm_demo_date');
+      renderDemoDate();
+    }
+    renderDemoDate();
 
     /* Đặt lại dữ liệu demo: chỉ xóa các khóa mm_* của MoodMeal (không đụng dữ liệu trang khác
        cùng tên miền), rồi tải lại. Tài khoản mẫu tự tạo lại ở auth.js; thực đơn, FAS, khay mẫu

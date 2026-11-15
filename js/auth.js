@@ -7,6 +7,36 @@
      auth.logout();                         // xóa session → login
 ═══════════════════════════════════════════════ */
 
+/* ── 0. Đồng hồ demo ─────────────────────────────
+   Trang đăng nhập cho phép chọn "Ngày hôm nay" để test (khóa mm_demo_date = YYYY-MM-DD).
+   Khi có khóa này, `new Date()` / `Date.now()` trả về NGÀY ĐÃ CHỌN + GIỜ PHÚT THẬT của máy,
+   nên mọi trang (BGH, Học sinh, Phụ huynh) chạy như thể hôm nay là ngày đó.
+   Phải nằm đầu file này (auth.js được nạp trước các script khác).
+   Ngày thật vẫn lấy được bằng `new MM_RealDate()`. */
+(function installDemoClock() {
+  const RealDate = window.Date;
+  window.MM_RealDate = RealDate;
+  let ds = null;
+  try { ds = localStorage.getItem('mm_demo_date'); } catch (e) { return; }
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ds || '');
+  if (!m) return;
+  const y = +m[1], mo = +m[2] - 1, d = +m[3];
+
+  function nowMs() {
+    const r = new RealDate();
+    return new RealDate(y, mo, d, r.getHours(), r.getMinutes(), r.getSeconds(), r.getMilliseconds()).getTime();
+  }
+  function DemoDate(...args) {
+    if (!(this instanceof DemoDate)) return new RealDate(nowMs()).toString();
+    return args.length === 0 ? new RealDate(nowMs()) : new RealDate(...args);
+  }
+  DemoDate.prototype = RealDate.prototype;
+  DemoDate.now   = nowMs;
+  DemoDate.parse = RealDate.parse;
+  DemoDate.UTC   = RealDate.UTC;
+  window.Date = DemoDate;
+})();
+
 /* ── 1. Seed accounts (Demo) ─────────────────── */
 /*
    Production: thay bằng API call đến api.gs
