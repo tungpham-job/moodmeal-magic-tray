@@ -337,11 +337,22 @@ function renderSection2() {
       t.confirmedAt && toLocalDateStr(new Date(t.confirmedAt)) === today
     );
 
+    const declined = myTrays.find(t =>
+      t.parentConfirmed === false && t.respondedAt &&
+      toLocalDateStr(new Date(t.respondedAt)) === today
+    );
+
     if (confirmed) {
       wrap.innerHTML = `
         <div class="no-tray-placeholder">
           ✅ Ba mẹ đã xác nhận khay cơm hôm nay!<br>
           <span style="font-size:12px;color:#aaa">"${confirmed.trayName}"</span>
+        </div>`;
+    } else if (declined) {
+      wrap.innerHTML = `
+        <div class="no-tray-placeholder">
+          🌱 Ba mẹ đã báo tối nay chưa nấu được khay cơm.<br>
+          <span style="font-size:12px;color:#aaa">"${declined.trayName}" · Mỗi khay chỉ phản hồi một lần</span>
         </div>`;
     } else {
       wrap.innerHTML = `
@@ -381,9 +392,20 @@ function groupLabel(g) {
   return { tinBot: 'Tinh bột', dam: 'Đạm', rauCu: 'Rau củ', canh: 'Canh' }[g] || g;
 }
 
+/* Mỗi khay chỉ được phản hồi một lần: đọc lại từ nhật ký (phòng bấm hai lần hoặc đã trả lời ở tab khác) */
+function trayAlreadyAnswered() {
+  const cur = load('mm_tray_log', []).find(t => t.id === TRAY_ITEM.id);
+  if (cur && cur.parentConfirmed !== null && cur.parentConfirmed !== undefined) {
+    showToast('Khay này ba mẹ đã phản hồi rồi');
+    renderSection2();
+    return true;
+  }
+  return false;
+}
+
 /* Bấm xác nhận đã nấu */
 function confirmCooked() {
-  if (!TRAY_ITEM) return;
+  if (!TRAY_ITEM || trayAlreadyAnswered()) return;
   const now = new Date().toISOString();
   updateTrayLog(TRAY_ITEM.id, { parentConfirmed: true, confirmedAt: now });
 
@@ -410,8 +432,8 @@ function confirmCooked() {
 
 /* Bấm chưa nấu được */
 function notCooked() {
-  if (!TRAY_ITEM) return;
-  updateTrayLog(TRAY_ITEM.id, { parentConfirmed: false });
+  if (!TRAY_ITEM || trayAlreadyAnswered()) return;
+  updateTrayLog(TRAY_ITEM.id, { parentConfirmed: false, respondedAt: new Date().toISOString() });
 
   const btnYes = document.getElementById('btnConfirmYes');
   const btnNo  = document.getElementById('btnConfirmNo');

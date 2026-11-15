@@ -172,8 +172,33 @@ function writeTrayLog(trayName) {
   return entry;
 }
 
+/* ── Mỗi ngày chỉ gửi 1 khay cơm ────────────── */
+function trayToday() {
+  const session = auth.getSession();
+  if (!session) return null;
+  const today = toLocalDateStr(new Date());
+  try {
+    return (JSON.parse(localStorage.getItem('mm_tray_log')) || []).find(t =>
+      t.studentId === session.userId && t.sentAt && toLocalDateStr(new Date(t.sentAt)) === today) || null;
+  } catch (e) { return null; }
+}
+
+function lockTrayIfSentToday() {
+  const t = trayToday();
+  if (!t) return false;
+  const btn = document.getElementById('familyBtn');
+  btn.disabled    = true;
+  btn.textContent = '✅ Hôm nay em đã gửi khay cơm';
+  document.getElementById('sentTitle').textContent = '🏠 Hôm nay em đã gửi khay cơm rồi!';
+  document.getElementById('sentSub').textContent   =
+    `Khay "${t.trayName}" đã gửi cho ba mẹ · Mỗi ngày chỉ gửi 1 khay, mai em thiết kế khay mới nhé 🌱`;
+  document.getElementById('sentBox').classList.add('show');
+  return true;
+}
+
 /* ── Share with family (only action in v3) ───── */
 function shareFamily() {
+  if (lockTrayIfSentToday()) return;     // đã gửi hôm nay → không gửi thêm
   const name    = document.getElementById('trayName').value.trim() || 'Khay cơm của em';
   const btn     = document.getElementById('familyBtn');
   const sentBox = document.getElementById('sentBox');
@@ -203,3 +228,4 @@ function shareFamily() {
 updateNutritionTags();
 updateScore();
 highlightGroup('rauCu'); // gợi ý nhóm trống đầu tiên
+lockTrayIfSentToday();   // hôm nay đã gửi khay → khóa nút gửi

@@ -28,16 +28,67 @@ function initFoods() {
       return true;
     })
     .map(item => {
-      const canon   = canonicalFoodOf(item);
-      const history = session ? foodHistoryOf(session.userId, item) : [];
-      const nextAttempt = (history.length ? Math.max(...history.map(h => h.attempt)) : 0) + 1;
+      const canon = canonicalFoodOf(item);
+      const all   = session ? foodHistoryOf(session.userId, item) : [];
+      /* Đã đánh giá món này hôm nay → giữ kết quả, khóa không cho đánh giá lại */
+      const todayEntry = all.find(r => isToday(r.timestamp)) || null;
+      const history = todayEntry ? all.filter(r => r.attempt < todayEntry.attempt) : all;
+      const nextAttempt = (all.length ? Math.max(...all.map(h => h.attempt)) : 0) + 1;
       return {
         item, id: canon.id, name: canon.name, group: item.group, planet: item.planet,
-        history, nextAttempt, selected: null, tryAgain: false, done: false,
+        history, nextAttempt, selected: null, tryAgain: false, done: false, todayEntry,
       };
     });
 
   renderFoods();
+}
+
+/* Mốc thời gian có thuộc ngày hôm nay (giờ local) không */
+function isToday(ts) {
+  return toLocalDateStr(new Date(ts)) === toLocalDateStr(new Date());
+}
+
+/* Lần đánh giá hôm nay của học sinh với món f (đọc lại từ nhật ký) */
+function findTodayEntry(f) {
+  const session = auth.getSession();
+  if (!session) return null;
+  return readJson('mm_fas_log', []).find(r =>
+    r.studentId === session.userId && isToday(r.timestamp) &&
+    (r.foodId === f.id || normFood(r.foodName) === normFood(f.name))) || null;
+}
+
+/* Khôi phục giao diện "đã đánh giá hôm nay": khóa emoji, TRY AGAIN, nút xác nhận */
+function restoreDone(i, entry) {
+  const f = FOODS[i];
+  f.done      = true;
+  f.todayEntry = entry;
+  f.selected  = entry.rating || entry.score;
+  f.tryAgain  = !!entry.tryAgain;
+
+  const sel = document.querySelector(`#food-${i} .emoji-btn[data-val="${f.selected}"]`);
+  if (sel) sel.classList.add('selected');
+  document.querySelectorAll(`#food-${i} .emoji-btn`).forEach(b => { b.disabled = true; });
+
+  const ta = document.getElementById(`tryAgainBtn-${i}`);
+  if (f.tryAgain) { ta.innerHTML = '<span>✅</span> Đã đặt nhắc nhở thử lại!'; ta.classList.add('done'); }
+  ta.disabled = true;
+
+  const btn = document.getElementById(`confirmBtn-${i}`);
+  btn.disabled    = true;
+  btn.textContent = '✅ Đã ghi nhận!';
+
+  const bd = document.querySelector(`#food-${i} .food-badge`);
+  if (bd) bd.textContent = f.history.length ? `Lần thử thứ ${entry.attempt}` : 'Lần thử đầu tiên!';
+
+  const xp = document.querySelector(`#food-${i} .food-xp`);
+  if (xp) xp.textContent = '✅ Hôm nay em đã đánh giá món này rồi';
+
+  const val = Number(entry.score);
+  renderFasBars(i, f.history, val);
+  document.getElementById(`fasChart-${i}`).classList.add('show');
+  document.getElementById(`fasNote-${i}`).textContent   = fasNote(f.history, val);
+  document.getElementById(`fasStatus-${i}`).textContent =
+    `✅ FAS lần ${entry.attempt}: ${val}/4 — Mỗi món chỉ đánh giá 1 lần mỗi ngày, mai em thử tiếp nhé!`;
 }
 
 /* ── Vẽ danh sách ─────────────────────────────── */
@@ -115,6 +166,7 @@ function renderFoods() {
   }
 
   list.innerHTML = FOODS.map((f, i) => foodBlockHtml(f, i, FOODS.length)).join('');
+  FOODS.forEach((f, i) => { if (f.todayEntry) restoreDone(i, f.todayEntry); });
   updateSummary();
 }
 
@@ -215,6 +267,15 @@ function fasNote(prev, val) {
 function confirmEval(i) {
   const f = FOODS[i];
   if (!f || f.done || !f.selected) return;
+
+  /* Đã có đánh giá hôm nay (vd mở ở tab khác) → không ghi thêm, chỉ hiện kết quả đã có */
+  const existing = findTodayEntry(f);
+  if (existing) {
+    f.history = f.history.filter(r => r.attempt < existing.attempt);
+    restoreDone(i, existing);
+    updateSummary();
+    return;
+  }
 
   const data  = emojiMap[f.selected];
   const prev  = f.history;                     // các lần thử trước hôm nay
