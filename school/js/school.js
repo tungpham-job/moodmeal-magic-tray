@@ -660,7 +660,6 @@ function saveMenuItem() {
   const name   = document.getElementById('menuName').value.trim();
   const icon   = document.getElementById('menuIcon').value.trim();
   const group  = document.getElementById('menuGroup').value;
-  const planet = document.getElementById('menuPlanet').value;
   const isNew  = document.getElementById('menuIsNew').checked;
 
   const ingId = document.getElementById('menuIngredient').value;
@@ -710,20 +709,19 @@ function openAddMenu(date) {
 /* Danh sách nguyên liệu theo Nhóm + Hành tinh đang chọn trong form thêm món */
 function renderMenuIngredientPick() {
   const group  = document.getElementById('menuGroup').value;
-  const planet = document.getElementById('menuPlanet').value;
   const selId  = document.getElementById('menuIngredient').value;
   const list   = loadKey(KEY.INGREDIENTS, DEFAULT_INGREDIENTS)
-    .filter(g => g.active !== false && g.group === group && g.planet === planet);
+    .filter(g => g.active !== false && g.group === group);
   if (selId && !list.some(g => g.id === selId)) document.getElementById('menuIngredient').value = '';
   const box = document.getElementById('menuIngredientPick');
   if (!list.length) {
-    box.innerHTML = `<span style="font-size:12px;color:var(--text-muted)">Chưa có nguyên liệu thuộc nhóm "${group}" · hành tinh "${planet}" — hãy thêm ở tab Nguyên liệu.</span>`;
+    box.innerHTML = `<span style="font-size:12px;color:var(--text-muted)">Chưa có nguyên liệu thuộc nhóm "${group}" — hãy thêm ở tab Nguyên liệu.</span>`;
     return;
   }
   const cur = document.getElementById('menuIngredient').value;
   box.innerHTML = '<div style="display:flex;flex-wrap:wrap;gap:6px">' + list.map(g => `
     <button type="button" class="btn btn-sm ${g.id === cur ? 'btn-primary' : 'btn-secondary'}"
-      onclick="pickMenuIngredient('${g.id}')">${g.icon} ${escapeHtml(g.name)}${g.id === cur ? ' ✓' : ''}</button>`).join('') + '</div>';
+      title="Hành tinh ${escapeHtml(g.planet)}" onclick="pickMenuIngredient('${g.id}')">${g.icon} ${escapeHtml(g.name)}${g.id === cur ? ' ✓' : ''}</button>`).join('') + '</div>';
 }
 
 function pickMenuIngredient(id) {
