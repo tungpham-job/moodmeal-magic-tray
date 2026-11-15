@@ -158,7 +158,7 @@ function renderFasCalendar() {
 
   document.getElementById('fasCal').innerHTML = `
     <div class="fas-cal-head">
-      <span class="fas-cal-title">📅 Hành trình thử món</span>
+      <span class="fas-cal-title">📅 Hành trình thử nguyên liệu</span>
       <div class="fas-cal-nav">
         <button class="fas-cal-btn" onclick="shiftFasMonth(-1)" aria-label="Tháng trước">◀</button>
         <span class="fas-cal-month">Tháng ${m + 1}/${y}</span>
@@ -181,7 +181,7 @@ function renderFasDay() {
   if (!items) {
     box.innerHTML = Object.keys(FAS_DAYS).length
       ? '<div class="fas-day-empty">Bấm vào ngày có đánh dấu màu để xem hành trình 🌱</div>'
-      : '<div class="fas-day-empty">Con chưa đánh giá món nào. Hành trình sẽ hiện ở đây 🌱</div>';
+      : '<div class="fas-day-empty">Con chưa đánh giá nguyên liệu nào. Hành trình sẽ hiện ở đây 🌱</div>';
     document.getElementById('fasBarsParent').innerHTML = '';
     document.getElementById('fasFagNote').style.display = 'none';
     return;

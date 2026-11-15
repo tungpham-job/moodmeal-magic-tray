@@ -1189,14 +1189,14 @@ function renderReport() {
 
   const foods = [...new Set(fasLog.map(f => f.foodName))];
   const foodSel = document.getElementById('filterFood');
-  foodSel.innerHTML = '<option value="">— Tất cả món —</option>' +
+  foodSel.innerHTML = '<option value="">— Tất cả nguyên liệu —</option>' +
     foods.map(f => `<option value="${f}">${f}</option>`).join('');
 
   renderFasTable(fasLog, accounts, '', '');
 }
 
 function renderFasStats(fasLog, accounts) {
-  // FAS trung bình gần nhất mỗi học sinh × món
+  // FAS trung bình gần nhất mỗi học sinh × nguyên liệu
   const latestMap = {};
   fasLog.forEach(r => {
     const k = r.studentId + '_' + r.foodId;
@@ -1275,7 +1275,7 @@ function renderFasTable(fasLog, accounts, stuFilter, foodFilter) {
 function exportCSV() {
   const fasLog = loadKey(KEY.FAS_LOG, DEFAULT_FAS_LOG);
   const accounts = auth.getAccounts();
-  const header = 'Học sinh,Món ăn,Lần thử,FAS,TRY AGAIN,Thời gian';
+  const header = 'Học sinh,Nguyên liệu,Lần thử,FAS,TRY AGAIN,Thời gian';
   const rows = fasLog.map(r => {
     const acc = accounts.find(a => a.id === r.studentId);
     return [acc?.name || r.studentId, r.foodName, r.attempt, r.score, r.tryAgain ? 'Có' : 'Không', r.timestamp].join(',');
