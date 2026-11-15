@@ -125,7 +125,7 @@
           <div class="content-card" style="margin-bottom:20px">
             <div class="content-card-header">
               <span class="content-card-title">Cấu hình Level</span>
-              <span style="font-size:11px;color:#888">Chỉnh trực tiếp trên bảng → tự động lưu</span>
+              <button class="btn btn-secondary btn-sm" onclick="openEditLevels()">✏️ Sửa</button>
             </div>
             <div style="overflow-x:auto">
               <table class="data-table">
@@ -146,7 +146,7 @@
           <div class="content-card">
             <div class="content-card-header">
               <span class="content-card-title">XP theo hành động</span>
-              <span style="font-size:11px;color:#888">Chỉnh trực tiếp → tự động lưu</span>
+              <button class="btn btn-secondary btn-sm" onclick="openEditActions()">✏️ Sửa</button>
             </div>
             <div style="overflow-x:auto">
               <table class="data-table">
@@ -575,6 +575,46 @@
   </div>
 </div>
 
+<!-- Modal: Sửa cấu hình Level -->
+<div class="modal-overlay" id="modalXpLevels">
+  <div class="modal-box" style="max-width:620px">
+    <div class="modal-header">
+      <span class="modal-title">Sửa cấu hình Level</span>
+      <button class="modal-close" onclick="closeModal('modalXpLevels')">×</button>
+    </div>
+    <div class="modal-body">
+      <table class="data-table">
+        <thead><tr><th>Level</th><th>Tên level</th><th>XP từ</th><th>XP đến</th><th>NL mở khóa</th></tr></thead>
+        <tbody id="xpLevelsEditBody"></tbody>
+      </table>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modalXpLevels')">Hủy</button>
+      <button class="btn btn-primary" onclick="saveLevels()">Lưu thiết lập</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Sửa XP theo hành động -->
+<div class="modal-overlay" id="modalXpActions">
+  <div class="modal-box" style="max-width:480px">
+    <div class="modal-header">
+      <span class="modal-title">Sửa XP theo hành động</span>
+      <button class="modal-close" onclick="closeModal('modalXpActions')">×</button>
+    </div>
+    <div class="modal-body">
+      <table class="data-table">
+        <thead><tr><th>Hành động</th><th>XP nhận được</th></tr></thead>
+        <tbody id="xpActionsEditBody"></tbody>
+      </table>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modalXpActions')">Hủy</button>
+      <button class="btn btn-primary" onclick="saveActions()">Lưu thiết lập</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal: Tạo/Sửa tiêu chí chấm -->
 <div class="modal-overlay" id="modalCriteria">
   <div class="modal-box" style="max-width:580px">
@@ -677,7 +717,7 @@
 <script src="../js/auth.js"></script>
 <script src="../js/xp.js"></script>
 <script src="../js/badges.js"></script>
-<script src="js/school.js"></script>
+<script src="js/school.js?v=20261115b"></script>
 <script>
   /* Filter accounts table by search */
   function filterAccountsTable(q) {

@@ -695,43 +695,70 @@ function deleteMenuItem(id) {
 function renderXPTab() {
   const cfg = loadKey(KEY.XP_CONFIG, DEFAULT_XP_CONFIG);
 
-  // Bảng levels
-  document.getElementById('xpLevelsBody').innerHTML = cfg.levels.map((lv, i) => `
+  // Bảng levels (chỉ xem)
+  document.getElementById('xpLevelsBody').innerHTML = cfg.levels.map(lv => `
     <tr>
       <td>${lv.level}</td>
-      <td><input class="inline-input" style="width:150px" value="${lv.name}"
-          onchange="updateLevel(${i},'name',this.value)"></td>
-      <td><input class="inline-input" type="number" value="${lv.xpFrom}"
-          onchange="updateLevel(${i},'xpFrom',+this.value)"></td>
-      <td><input class="inline-input" type="number" value="${lv.xpTo}"
-          onchange="updateLevel(${i},'xpTo',+this.value)"></td>
-      <td><input class="inline-input" type="number" value="${lv.unlock}"
-          onchange="updateLevel(${i},'unlock',+this.value)"></td>
+      <td>${lv.name}</td>
+      <td>${lv.xpFrom}</td>
+      <td>${lv.xpTo}</td>
+      <td>${lv.unlock}</td>
     </tr>`).join('');
 
-  // Bảng actions
-  document.getElementById('xpActionsBody').innerHTML = cfg.actions.map((ac, i) => `
+  // Bảng actions (chỉ xem)
+  document.getElementById('xpActionsBody').innerHTML = cfg.actions.map(ac => `
     <tr>
       <td>${ac.label}</td>
-      <td>
-        <input class="inline-input" type="number" value="${ac.xp}"
-          onchange="updateAction(${i},'xp',+this.value)">
-        <span style="font-size:12px;color:#888"> XP</span>
-      </td>
+      <td>${ac.xp} <span style="font-size:12px;color:#888">XP</span></td>
     </tr>`).join('');
 }
 
-function updateLevel(idx, field, val) {
+function openEditLevels() {
   const cfg = loadKey(KEY.XP_CONFIG, DEFAULT_XP_CONFIG);
-  cfg.levels[idx][field] = val;
+  document.getElementById('xpLevelsEditBody').innerHTML = cfg.levels.map((lv, i) => `
+    <tr>
+      <td>${lv.level}</td>
+      <td><input class="inline-input" style="width:150px" data-f="name" data-i="${i}" value="${lv.name}"></td>
+      <td><input class="inline-input" type="number" data-f="xpFrom" data-i="${i}" value="${lv.xpFrom}"></td>
+      <td><input class="inline-input" type="number" data-f="xpTo" data-i="${i}" value="${lv.xpTo}"></td>
+      <td><input class="inline-input" type="number" data-f="unlock" data-i="${i}" value="${lv.unlock}"></td>
+    </tr>`).join('');
+  openModal('modalXpLevels');
+}
+
+function saveLevels() {
+  const cfg = loadKey(KEY.XP_CONFIG, DEFAULT_XP_CONFIG);
+  document.querySelectorAll('#xpLevelsEditBody input').forEach(inp => {
+    const lv = cfg.levels[+inp.dataset.i];
+    lv[inp.dataset.f] = inp.dataset.f === 'name' ? inp.value : +inp.value;
+  });
   saveKey(KEY.XP_CONFIG, cfg);
+  closeModal('modalXpLevels');
+  renderXPTab();
   showToast('Đã lưu!');
 }
 
-function updateAction(idx, field, val) {
+function openEditActions() {
   const cfg = loadKey(KEY.XP_CONFIG, DEFAULT_XP_CONFIG);
-  cfg.actions[idx][field] = val;
+  document.getElementById('xpActionsEditBody').innerHTML = cfg.actions.map((ac, i) => `
+    <tr>
+      <td>${ac.label}</td>
+      <td>
+        <input class="inline-input" type="number" data-i="${i}" value="${ac.xp}">
+        <span style="font-size:12px;color:#888"> XP</span>
+      </td>
+    </tr>`).join('');
+  openModal('modalXpActions');
+}
+
+function saveActions() {
+  const cfg = loadKey(KEY.XP_CONFIG, DEFAULT_XP_CONFIG);
+  document.querySelectorAll('#xpActionsEditBody input').forEach(inp => {
+    cfg.actions[+inp.dataset.i].xp = +inp.value;
+  });
   saveKey(KEY.XP_CONFIG, cfg);
+  closeModal('modalXpActions');
+  renderXPTab();
   showToast('Đã lưu!');
 }
 
