@@ -8,6 +8,7 @@
 const KEY = {
   ACCOUNTS:  'mm_accounts',
   MENU:      'mm_daily_menu',
+  INGREDIENTS: 'mm_ingredients',
   XP_CONFIG: 'mm_xp_config',
   BADGES:    'mm_badges',
   CRITERIA:  'mm_grading_criteria',
@@ -124,16 +125,30 @@ const DEFAULT_TRAY_LOG = [
   },
 ];
 
+/* ── Seed: Nguyên liệu ───────────────────────────
+   id cố định, dùng làm foodId của nhật ký FAS (nối các lần thử của cùng một nguyên liệu) */
+const DEFAULT_INGREDIENTS = [
+  { id:'com-trang',  name:'Cơm trắng',      icon:'🍚', group:'Tinh bột', planet:'Đạm',     active:true },
+  { id:'thit-heo',   name:'Thịt heo',       icon:'🥩', group:'Đạm',      planet:'Đạm',     active:true },
+  { id:'trung',      name:'Trứng',          icon:'🥚', group:'Đạm',      planet:'Đạm',     active:true },
+  { id:'ca',         name:'Cá',             icon:'🐟', group:'Đạm',      planet:'Đạm',     active:true },
+  { id:'rau-muong',  name:'Rau muống',      icon:'🥬', group:'Rau củ',   planet:'Rau củ',  active:true },
+  { id:'ca-rot',     name:'Cà rốt',         icon:'🥕', group:'Rau củ',   planet:'Rau củ',  active:true },
+  { id:'ca-chua',    name:'Cà chua',        icon:'🍅', group:'Canh',     planet:'Rau củ',  active:true },
+  { id:'bau',        name:'Bầu',            icon:'🥒', group:'Canh',     planet:'Rau củ',  active:true },
+  { id:'bong-cai',   name:'Bông cải xanh',  icon:'🥦', group:'Rau củ',   planet:'Xanh lá', active:true },
+];
+
 /* ── Seed: Daily menu ────────────────────────── */
 const DEFAULT_MENU = [
-  { id:'m01', date:'2026-10-20', name:'Cơm trắng',        group:'Tinh bột', planet:'Đạm',    isNew: false },
-  { id:'m02', date:'2026-10-20', name:'Thịt kho trứng',   group:'Đạm',      planet:'Đạm',    isNew: false },
-  { id:'m03', date:'2026-10-20', name:'Rau muống xào tỏi',group:'Rau củ',   planet:'Rau củ', isNew: false },
-  { id:'m04', date:'2026-10-20', name:'Canh chua',         group:'Canh',     planet:'Rau củ', isNew: false },
-  { id:'m05', date:'2026-10-21', name:'Cơm trắng',         group:'Tinh bột', planet:'Đạm',    isNew: false },
-  { id:'m06', date:'2026-10-21', name:'Cá kho tộ',         group:'Đạm',      planet:'Đạm',    isNew: false },
-  { id:'m07', date:'2026-10-21', name:'Bông cải xanh xào', group:'Rau củ',   planet:'Xanh lá',isNew: true  },
-  { id:'m08', date:'2026-10-21', name:'Canh bầu',          group:'Canh',     planet:'Rau củ', isNew: true  },
+  { id:'m01', date:'2026-10-20', name:'Cơm trắng',        ingredientId:'com-trang', group:'Tinh bột', planet:'Đạm',    isNew: false },
+  { id:'m02', date:'2026-10-20', name:'Thịt kho trứng',   ingredientId:'thit-heo',  group:'Đạm',      planet:'Đạm',    isNew: false },
+  { id:'m03', date:'2026-10-20', name:'Rau muống xào tỏi',ingredientId:'rau-muong', group:'Rau củ',   planet:'Rau củ', isNew: false },
+  { id:'m04', date:'2026-10-20', name:'Canh chua',         ingredientId:'ca-chua',   group:'Canh',     planet:'Rau củ', isNew: false },
+  { id:'m05', date:'2026-10-21', name:'Cơm trắng',         ingredientId:'com-trang', group:'Tinh bột', planet:'Đạm',    isNew: false },
+  { id:'m06', date:'2026-10-21', name:'Cá kho tộ',         ingredientId:'ca',        group:'Đạm',      planet:'Đạm',    isNew: false },
+  { id:'m07', date:'2026-10-21', name:'Bông cải xanh xào', ingredientId:'bong-cai',  group:'Rau củ',   planet:'Xanh lá',isNew: true  },
+  { id:'m08', date:'2026-10-21', name:'Canh bầu',          ingredientId:'bau',       group:'Canh',     planet:'Rau củ', isNew: true  },
 ];
 
 /* ── Init all seed data ──────────────────────── */
@@ -143,6 +158,7 @@ const DEFAULT_MENU = [
   if (!localStorage.getItem(KEY.CRITERIA))  saveKey(KEY.CRITERIA,  DEFAULT_CRITERIA);
   if (!localStorage.getItem(KEY.FAS_LOG))   saveKey(KEY.FAS_LOG,   DEFAULT_FAS_LOG);
   if (!localStorage.getItem(KEY.TRAY_LOG))  saveKey(KEY.TRAY_LOG,  DEFAULT_TRAY_LOG);
+  if (!localStorage.getItem(KEY.INGREDIENTS)) saveKey(KEY.INGREDIENTS, DEFAULT_INGREDIENTS);
   if (!localStorage.getItem(KEY.MENU))      saveKey(KEY.MENU,      DEFAULT_MENU);
 })();
 
@@ -179,7 +195,7 @@ function switchModule(name) {
   // Cập nhật header title
   const titles = {
     accounts:  { title: '👤 Quản lý Tài khoản', sub: 'Thêm, sửa, xóa, phân quyền tài khoản học sinh và phụ huynh' },
-    settings:  { title: '⚙️ Thiết lập',          sub: 'Thực đơn · XP & Level · Danh hiệu · Tiêu chí chấm đề xuất' },
+    settings:  { title: '⚙️ Thiết lập',          sub: 'Thực đơn · Nguyên liệu · XP & Level · Danh hiệu · Tiêu chí chấm đề xuất' },
     report:    { title: '📊 Báo cáo FAS',         sub: 'Hành trình chấp nhận thực phẩm của từng học sinh' },
     proposals: { title: '🍱 Đề xuất Thực đơn',    sub: 'Khay cơm học sinh gửi ba mẹ — chấm điểm cuối tuần' },
   };
@@ -504,6 +520,7 @@ function switchSettingsTab(tab) {
 
   const renders = {
     menu:     renderMenuTab,
+    ingredients: renderIngredientsTab,
     xp:       renderXPTab,
     badges:   renderBadgesTab,
     criteria: renderCriteriaTab,
@@ -646,10 +663,13 @@ function saveMenuItem() {
   const planet = document.getElementById('menuPlanet').value;
   const isNew  = document.getElementById('menuIsNew').checked;
 
+  const ingId = document.getElementById('menuIngredient').value;
+  const ing   = loadKey(KEY.INGREDIENTS, DEFAULT_INGREDIENTS).find(g => g.id === ingId);
+  if (!ing)  { showToast('Vui lòng chọn nguyên liệu chính!', 'error'); return; }
   if (!name) { showToast('Vui lòng nhập tên món!', 'error'); return; }
 
   const menu = loadKey(KEY.MENU, []);
-  menu.push({ id: 'm' + Date.now(), date, name, icon: icon || groupIcon(group), group, planet, isNew });
+  menu.push({ id: 'm' + Date.now(), date, name, ingredientId: ing.id, icon: icon || ing.icon || groupIcon(ing.group), group: ing.group, planet: ing.planet, isNew });
   saveKey(KEY.MENU, menu);
   closeModal('modalMenu');
   renderMenuTab();
@@ -680,15 +700,199 @@ function openAddMenu(date) {
   document.getElementById('menuDate').value = date;
   document.getElementById('menuName').value = '';
   document.getElementById('menuIcon').value = '';
+  document.getElementById('menuIngredient').value = '';
   document.getElementById('menuIconDisplay').textContent = '🍽️';
   document.getElementById('iconPickerPanel').style.display = 'none';
+  renderMenuIngredientPick();
   openModal('modalMenu');
+}
+
+/* Danh sách nguyên liệu theo Nhóm + Hành tinh đang chọn trong form thêm món */
+function renderMenuIngredientPick() {
+  const group  = document.getElementById('menuGroup').value;
+  const planet = document.getElementById('menuPlanet').value;
+  const selId  = document.getElementById('menuIngredient').value;
+  const list   = loadKey(KEY.INGREDIENTS, DEFAULT_INGREDIENTS)
+    .filter(g => g.active !== false && g.group === group && g.planet === planet);
+  if (selId && !list.some(g => g.id === selId)) document.getElementById('menuIngredient').value = '';
+  const box = document.getElementById('menuIngredientPick');
+  if (!list.length) {
+    box.innerHTML = `<span style="font-size:12px;color:var(--text-muted)">Chưa có nguyên liệu thuộc nhóm "${group}" · hành tinh "${planet}" — hãy thêm ở tab Nguyên liệu.</span>`;
+    return;
+  }
+  const cur = document.getElementById('menuIngredient').value;
+  box.innerHTML = '<div style="display:flex;flex-wrap:wrap;gap:6px">' + list.map(g => `
+    <button type="button" class="btn btn-sm ${g.id === cur ? 'btn-primary' : 'btn-secondary'}"
+      onclick="pickMenuIngredient('${g.id}')">${g.icon} ${escapeHtml(g.name)}${g.id === cur ? ' ✓' : ''}</button>`).join('') + '</div>';
+}
+
+function pickMenuIngredient(id) {
+  const g = loadKey(KEY.INGREDIENTS, DEFAULT_INGREDIENTS).find(x => x.id === id);
+  if (!g) return;
+  document.getElementById('menuIngredient').value = id;
+  document.getElementById('menuIcon').value = g.icon;
+  document.getElementById('menuIconDisplay').textContent = g.icon;
+  renderMenuIngredientPick();
 }
 
 function deleteMenuItem(id) {
   const menu = loadKey(KEY.MENU, []).filter(m => m.id !== id);
   saveKey(KEY.MENU, menu);
   renderMenuTab();
+}
+
+/* Tab — Nguyên liệu
+   Danh mục nguyên liệu do BGH quản lý (thỉnh thoảng, không hằng ngày).
+   `id` của nguyên liệu là foodId của nhật ký FAS. */
+const PLANET_ORDER = ['Rau củ', 'Đạm', 'Xanh lá', 'Trái cây'];
+const GROUP_ORDER  = ['Tinh bột', 'Đạm', 'Rau củ', 'Canh'];
+const ING_ICONS    = ['🍚','🍞','🍜','🌽','🥩','🍗','🐟','🦐','🥚','🥓','🥦','🥕','🍅','🥬','🧅','🥒','🍆','🥔','🍎','🍌','🍊','🍇','🍓','🍲','🥣','🍄','🫛','🌿'];
+
+function escapeHtml(t) {
+  return String(t).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+}
+
+function ingredientInUse(id) {
+  return loadKey(KEY.MENU, []).some(m => m.ingredientId === id)
+      || loadKey(KEY.FAS_LOG, []).some(r => r.foodId === id);
+}
+
+function renderIngredientsTab() {
+  const list = loadKey(KEY.INGREDIENTS, DEFAULT_INGREDIENTS);
+  const box  = document.getElementById('ingredientsList');
+  if (!list.length) {
+    box.innerHTML = '<div class="content-card"><div style="padding:24px;text-align:center;color:#888">Chưa có nguyên liệu. Bấm "+ Thêm nguyên liệu".</div></div>';
+    return;
+  }
+  const planets = PLANET_ORDER.concat([...new Set(list.map(g => g.planet))].filter(x => !PLANET_ORDER.includes(x)));
+  box.innerHTML = '<div class="content-card" style="overflow:hidden">' + planets.map(pl => {
+    const inPlanet = list.filter(g => g.planet === pl);
+    if (!inPlanet.length) return '';
+    const groups = GROUP_ORDER.concat([...new Set(inPlanet.map(g => g.group))].filter(x => !GROUP_ORDER.includes(x)));
+    return `<div style="padding:8px 16px;background:#F3F6F8;font-size:12px;font-weight:700;color:var(--text-muted)">🪐 Hành tinh ${escapeHtml(pl)}</div>` +
+      groups.map(gr => {
+        const items = inPlanet.filter(g => g.group === gr);
+        if (!items.length) return '';
+        return `<div style="padding:8px 16px 2px;font-size:11px;color:var(--text-muted)">Nhóm: ${escapeHtml(gr)}</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;padding:4px 16px 12px">${items.map(ingChipHtml).join('')}</div>`;
+      }).join('');
+  }).join('') + '</div>';
+}
+
+function ingChipHtml(g) {
+  const used = ingredientInUse(g.id);
+  const off  = g.active === false;
+  const del  = used
+    ? `<button class="btn btn-sm btn-ghost btn-icon" title="${off ? 'Dùng lại' : 'Ngừng dùng (đã có trong thực đơn/FAS nên không xóa được)'}" onclick="toggleIngredient('${g.id}')">${off ? '✅' : '🚫'}</button>`
+    : `<button class="btn btn-sm btn-ghost btn-icon" title="Xóa" onclick="deleteIngredient('${g.id}')">🗑</button>`;
+  return `<span style="display:inline-flex;align-items:center;gap:4px;border:1px solid var(--border);border-radius:10px;padding:2px 4px 2px 10px;font-size:12px;${off ? 'opacity:.5' : ''}">
+    ${g.icon} ${escapeHtml(g.name)}${off ? ' <em style="font-size:10px">(ngừng dùng)</em>' : ''}
+    <button class="btn btn-sm btn-ghost btn-icon" title="Sửa" onclick="openEditIngredient('${g.id}')">✏️</button>${del}</span>`;
+}
+
+function toggleIngIconPanel() {
+  const panel = document.getElementById('ingIconPanel');
+  if (!panel.innerHTML) {
+    panel.innerHTML = ING_ICONS.map(ic => `<button type="button" class="icon-opt" onclick="pickIngIcon('${ic}')">${ic}</button>`).join('');
+  }
+  panel.style.display = panel.style.display === 'none' ? 'flex' : 'none';
+}
+
+function pickIngIcon(ic) {
+  document.getElementById('ingIcon').value = ic;
+  document.getElementById('ingIconDisplay').textContent = ic;
+  document.getElementById('ingIconPanel').style.display = 'none';
+}
+
+function openAddIngredient() {
+  document.getElementById('modalIngredientTitle').textContent = '+ Thêm nguyên liệu';
+  document.getElementById('ingEditId').value = '';
+  document.getElementById('ingName').value = '';
+  document.getElementById('ingIcon').value = '';
+  document.getElementById('ingIconDisplay').textContent = '🍽️';
+  document.getElementById('ingIconPanel').style.display = 'none';
+  document.getElementById('ingEditWarn').style.display = 'none';
+  openModal('modalIngredient');
+}
+
+function openEditIngredient(id) {
+  const g = loadKey(KEY.INGREDIENTS, DEFAULT_INGREDIENTS).find(x => x.id === id);
+  if (!g) return;
+  document.getElementById('modalIngredientTitle').textContent = 'Sửa nguyên liệu';
+  document.getElementById('ingEditId').value = id;
+  document.getElementById('ingName').value = g.name;
+  document.getElementById('ingGroup').value = g.group;
+  document.getElementById('ingPlanet').value = g.planet;
+  document.getElementById('ingIcon').value = g.icon;
+  document.getElementById('ingIconDisplay').textContent = g.icon;
+  document.getElementById('ingIconPanel').style.display = 'none';
+  document.getElementById('ingEditWarn').style.display = ingredientInUse(id) ? 'block' : 'none';
+  openModal('modalIngredient');
+}
+
+function makeIngredientId(name, list) {
+  const base = String(name).normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'nl';
+  let id = base, n = 2;
+  while (list.some(g => g.id === id)) id = base + '-' + (n++);
+  return id;
+}
+
+function saveIngredient() {
+  const editId = document.getElementById('ingEditId').value;
+  const name   = document.getElementById('ingName').value.trim();
+  const group  = document.getElementById('ingGroup').value;
+  const planet = document.getElementById('ingPlanet').value;
+  const icon   = document.getElementById('ingIcon').value || groupIcon(group);
+  if (!name) { showToast('Vui lòng nhập tên nguyên liệu!', 'error'); return; }
+
+  const list = loadKey(KEY.INGREDIENTS, DEFAULT_INGREDIENTS);
+  const norm = t => t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').toLowerCase().replace(/\s+/g, ' ').trim();
+  if (list.some(g => g.id !== editId && norm(g.name) === norm(name))) {
+    showToast('Nguyên liệu này đã có!', 'error'); return;
+  }
+
+  if (editId) {
+    const g = list.find(x => x.id === editId);
+    if (!g) return;
+    const changed = g.name !== name || g.group !== group || g.planet !== planet;
+    Object.assign(g, { name, group, planet, icon });
+    saveKey(KEY.INGREDIENTS, list);
+    if (changed) {
+      // Đồng bộ nhóm/hành tinh/tên vào thực đơn và nhật ký FAS (nối theo id, không mất lịch sử)
+      const menu = loadKey(KEY.MENU, []);
+      menu.forEach(m => { if (m.ingredientId === editId) { m.group = group; m.planet = planet; } });
+      saveKey(KEY.MENU, menu);
+      const fas = loadKey(KEY.FAS_LOG, []);
+      fas.forEach(r => { if (r.foodId === editId) { r.foodName = name; r.planet = planet; } });
+      saveKey(KEY.FAS_LOG, fas);
+    }
+  } else {
+    list.push({ id: makeIngredientId(name, list), name, icon, group, planet, active: true });
+    saveKey(KEY.INGREDIENTS, list);
+  }
+  closeModal('modalIngredient');
+  renderIngredientsTab();
+  showToast('Đã lưu nguyên liệu!');
+}
+
+function toggleIngredient(id) {
+  const list = loadKey(KEY.INGREDIENTS, DEFAULT_INGREDIENTS);
+  const g = list.find(x => x.id === id);
+  if (!g) return;
+  g.active = g.active === false;
+  saveKey(KEY.INGREDIENTS, list);
+  renderIngredientsTab();
+}
+
+function deleteIngredient(id) {
+  if (ingredientInUse(id)) { showToast('Nguyên liệu đã dùng, chỉ có thể ngừng dùng.', 'error'); return; }
+  const g = loadKey(KEY.INGREDIENTS, DEFAULT_INGREDIENTS).find(x => x.id === id);
+  if (!g || !confirm(`Xóa nguyên liệu "${g.name}"?`)) return;
+  saveKey(KEY.INGREDIENTS, loadKey(KEY.INGREDIENTS, DEFAULT_INGREDIENTS).filter(x => x.id !== id));
+  renderIngredientsTab();
+  showToast('Đã xóa nguyên liệu');
 }
 
 /* Tab 2 — XP & Level */
@@ -1279,6 +1483,7 @@ function refreshTab(kind) {
   const fn = {
     accounts:  renderAccounts,
     menu:      renderMenuTab,
+    ingredients: renderIngredientsTab,
     xp:        renderXPTab,
     badges:    renderBadgesTab,
     criteria:  renderCriteriaTab,

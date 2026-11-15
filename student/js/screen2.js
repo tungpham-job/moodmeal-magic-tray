@@ -22,14 +22,14 @@ function initFoods() {
 
   FOODS = getTodayMenu()
     .filter(item => {                         // bỏ món trùng tên trong cùng một ngày
-      const n = normFood(item.name);
+      const n = foodKeyOf(item);
       if (seen[n]) return false;
       seen[n] = true;
       return true;
     })
     .map(item => {
-      const canon   = canonicalFood(item.name);
-      const history = session ? foodHistory(session.userId, canon.name) : [];
+      const canon   = canonicalFoodOf(item);
+      const history = session ? foodHistoryOf(session.userId, item) : [];
       const nextAttempt = (history.length ? Math.max(...history.map(h => h.attempt)) : 0) + 1;
       return {
         item, id: canon.id, name: canon.name, group: item.group, planet: item.planet,
@@ -136,13 +136,14 @@ function writeFasLog(f, rating, score) {
 
   const log = readJson('mm_fas_log', []);
   const attempts = log
-    .filter(r => r.studentId === session.userId && normFood(r.foodName) === normFood(f.name))
+    .filter(r => r.studentId === session.userId && (r.foodId === f.id || normFood(r.foodName) === normFood(f.name)))
     .map(r => r.attempt);
 
   const entry = {
     studentId: session.userId,
     foodId:    f.id,
     foodName:  f.name,
+    dishName:  f.item.name,
     planet:    f.planet,
     attempt:   (attempts.length ? Math.max(...attempts) : 0) + 1,
     score,

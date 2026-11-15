@@ -76,7 +76,7 @@ const FAS_TREND_MARK = { up: '▲', down: '▼', mixed: '▲▼', same: '•' };
 function buildFasDays() {
   const myLog = load('mm_fas_log', []).filter(r => r.studentId === STUDENT?.id);
   const byFood = {};
-  myLog.forEach(r => { (byFood[r.foodName] = byFood[r.foodName] || []).push(r); });
+  myLog.forEach(r => { const k = r.foodId || r.foodName; (byFood[k] = byFood[k] || []).push(r); });
 
   const days = {};
   Object.values(byFood).forEach(list => {

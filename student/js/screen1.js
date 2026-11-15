@@ -100,7 +100,7 @@ function showPopup(key) {
     title = `${p.icon} Hành tinh ${p.name} — Đã mở khóa!`;
     p.tried.forEach(f => items.push({ icon: p.icon, name: f.name, fas: `FAS: ${Number(f.latest.score).toFixed(1)} ⭐` }));
     if (target && target.planet === p.name &&
-        !p.tried.some(f => normFood(f.name) === normFood(target.name))) {
+        !p.tried.some(f => foodKeyOf(target) === (f.latest.foodId || normFood(f.name)))) {
       items.unshift({ icon: foodIcon(target), name: target.name, fas: '→ Thử hôm nay!' });
     }
     while (items.length < p.total) items.push({ icon: '❓', name: 'Món chưa khám phá', fas: 'Chưa khám phá' });

@@ -72,7 +72,7 @@ function bdFoodStats(studentId) {
   const menu = bdRead('mm_daily_menu', []);
   const byName = {};
   bdRead('mm_fas_log', []).filter(r => r.studentId === studentId).forEach(r => {
-    const n = bdNorm(r.foodName);
+    const n = r.foodId || bdNorm(r.foodName);
     const o = byName[n] || (byName[n] = { latest: r, planet: null });
     if (r.attempt >= o.latest.attempt) o.latest = r;
     if (r.planet) o.planet = r.planet;
@@ -80,8 +80,9 @@ function bdFoodStats(studentId) {
   return Object.keys(byName).map(n => {
     const o = byName[n];
     if (!o.planet) {
-      const m = menu.find(x => x.planet && bdNorm(x.name) === n);
-      o.planet = (m && m.planet) || BD_FOOD_PLANET[n] || null;
+      const nm = bdNorm(o.latest.foodName);
+      const m = menu.find(x => x.planet && (x.ingredientId === o.latest.foodId || bdNorm(x.name) === nm));
+      o.planet = (m && m.planet) || BD_FOOD_PLANET[nm] || null;
     }
     return o;
   });

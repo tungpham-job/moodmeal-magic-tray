@@ -103,6 +103,7 @@
       <div class="module-panel" id="module-settings">
         <div class="tab-bar">
           <button class="tab-btn active" data-tab="menu"     onclick="switchSettingsTab('menu')">📅 Thực đơn theo ngày</button>
+          <button class="tab-btn"        data-tab="ingredients" onclick="switchSettingsTab('ingredients')">🥕 Nguyên liệu</button>
           <button class="tab-btn"        data-tab="xp"       onclick="switchSettingsTab('xp')">⭐ XP & Level</button>
           <button class="tab-btn"        data-tab="badges"   onclick="switchSettingsTab('badges')">🏅 Danh hiệu</button>
           <button class="tab-btn"        data-tab="criteria" onclick="switchSettingsTab('criteria')">📝 Tiêu chí chấm</button>
@@ -115,6 +116,15 @@
             <button class="btn btn-secondary" style="margin-left:auto" onclick="refreshTab('menu')">↻ Làm mới</button>
           </div>
           <div id="weekGrid"></div>
+        </div>
+
+        <!-- Tab: Nguyên liệu -->
+        <div class="tab-panel" id="tab-ingredients">
+          <div style="display:flex;gap:8px;margin-bottom:16px">
+            <button class="btn btn-primary" onclick="openAddIngredient()">+ Thêm nguyên liệu</button>
+            <button class="btn btn-secondary" style="margin-left:auto" onclick="refreshTab('ingredients')">↻ Làm mới</button>
+          </div>
+          <div id="ingredientsList"></div>
         </div>
 
         <!-- Tab: XP & Level -->
@@ -411,7 +421,36 @@
         <input class="form-control" type="date" id="menuDate">
       </div>
 
-      <!-- Hàng 2: Tên món + nút chọn icon (cùng hàng) -->
+      <!-- Hàng 2: Nhóm dinh dưỡng + Hành tinh (chọn trước) -->
+      <div class="form-row">
+        <div class="form-group-s">
+          <label class="form-label-s">Nhóm dinh dưỡng</label>
+          <select class="form-control" id="menuGroup" onchange="renderMenuIngredientPick()">
+            <option>Tinh bột</option>
+            <option>Đạm</option>
+            <option>Rau củ</option>
+            <option>Canh</option>
+          </select>
+        </div>
+        <div class="form-group-s">
+          <label class="form-label-s">Hành tinh</label>
+          <select class="form-control" id="menuPlanet" onchange="renderMenuIngredientPick()">
+            <option>Rau củ</option>
+            <option>Đạm</option>
+            <option>Xanh lá</option>
+            <option>Trái cây</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Hàng 3: Nguyên liệu chính (chọn 1, theo nhóm + hành tinh đã chọn) -->
+      <div class="form-group-s">
+        <label class="form-label-s">Nguyên liệu chính * <span style="font-weight:400;color:var(--text-muted)">(chọn 1 — dùng để theo dõi FAS)</span></label>
+        <input type="hidden" id="menuIngredient">
+        <div id="menuIngredientPick" style="border:1.5px solid var(--border-light);border-radius:var(--radius-md);background:#F8FAFB;padding:8px;min-height:40px"></div>
+      </div>
+
+      <!-- Hàng 4: Tên món + nút chọn icon (cùng hàng) -->
       <div class="form-group-s">
         <label class="form-label-s">Tên món *</label>
         <div style="display:flex;gap:8px;align-items:center">
@@ -482,29 +521,7 @@
         </div>
       </div>
 
-      <!-- Hàng 3: Nhóm dinh dưỡng + Hành tinh -->
-      <div class="form-row">
-        <div class="form-group-s">
-          <label class="form-label-s">Nhóm dinh dưỡng</label>
-          <select class="form-control" id="menuGroup">
-            <option>Tinh bột</option>
-            <option>Đạm</option>
-            <option>Rau củ</option>
-            <option>Canh</option>
-          </select>
-        </div>
-        <div class="form-group-s">
-          <label class="form-label-s">Hành tinh</label>
-          <select class="form-control" id="menuPlanet">
-            <option>Rau củ</option>
-            <option>Đạm</option>
-            <option>Xanh lá</option>
-            <option>Trái cây</option>
-          </select>
-        </div>
-      </div>
-
-      <!-- Hàng 4: Checkbox MỚI -->
+      <!-- Hàng 5: Checkbox MỚI -->
       <div class="form-group-s" style="display:flex;align-items:center;gap:8px">
         <input type="checkbox" id="menuIsNew">
         <label for="menuIsNew" class="form-label-s" style="margin:0">
@@ -536,6 +553,52 @@
   transform: scale(1.15);
 }
 </style>
+
+<!-- Modal: Thêm/Sửa nguyên liệu -->
+<div class="modal-overlay" id="modalIngredient">
+  <div class="modal-box" style="max-width:460px">
+    <div class="modal-header">
+      <span class="modal-title" id="modalIngredientTitle">+ Thêm nguyên liệu</span>
+      <button class="modal-close" onclick="closeModal('modalIngredient')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="ingEditId">
+      <div class="form-row">
+        <div class="form-group-s">
+          <label class="form-label-s">Nhóm dinh dưỡng</label>
+          <select class="form-control" id="ingGroup">
+            <option>Tinh bột</option><option>Đạm</option><option>Rau củ</option><option>Canh</option>
+          </select>
+        </div>
+        <div class="form-group-s">
+          <label class="form-label-s">Hành tinh</label>
+          <select class="form-control" id="ingPlanet">
+            <option>Rau củ</option><option>Đạm</option><option>Xanh lá</option><option>Trái cây</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group-s">
+        <label class="form-label-s">Tên nguyên liệu *</label>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input class="form-control" id="ingName" placeholder="vd: Bông cải xanh" style="flex:1">
+          <button type="button" onclick="toggleIngIconPanel()" title="Chọn icon"
+            style="flex-shrink:0;width:42px;height:38px;border:1.5px solid var(--border);border-radius:var(--radius-md);background:var(--white);font-size:20px;cursor:pointer">
+            <span id="ingIconDisplay">🍽️</span>
+          </button>
+          <input type="hidden" id="ingIcon">
+        </div>
+        <div id="ingIconPanel" style="display:none;flex-wrap:wrap;gap:4px;margin-top:8px;padding:10px;background:#F8FAFB;border:1.5px solid var(--border-light);border-radius:var(--radius-md)"></div>
+      </div>
+      <div id="ingEditWarn" style="display:none;font-size:11px;color:#B7791F;background:#FFF8E6;border-radius:8px;padding:8px 10px">
+        ⚠️ Nguyên liệu này đã dùng trong thực đơn / FAS. Đổi nhóm hoặc hành tinh sẽ áp dụng cho cả dữ liệu cũ.
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modalIngredient')">Hủy</button>
+      <button class="btn btn-primary" onclick="saveIngredient()">Lưu nguyên liệu</button>
+    </div>
+  </div>
+</div>
 
 <!-- Modal: Thêm/Sửa danh hiệu -->
 <div class="modal-overlay" id="modalBadge">
@@ -716,8 +779,8 @@
 <!-- ══ SCRIPTS ══ -->
 <script src="../js/auth.js"></script>
 <script src="../js/xp.js"></script>
-<script src="../js/badges.js"></script>
-<script src="js/school.js?v=20261115b"></script>
+<script src="../js/badges.js?v=20261115c"></script>
+<script src="js/school.js?v=20261115c"></script>
 <script>
   /* Filter accounts table by search */
   function filterAccountsTable(q) {

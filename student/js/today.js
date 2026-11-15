@@ -63,6 +63,37 @@ function foodIcon(item) {
   return (item && item.icon) || GROUP_ICON[item && item.group] || '🍽️';
 }
 
+/* ── Nguyên liệu (danh mục do BGH quản lý) ─────────
+   Mỗi món trong thực đơn gắn với một nguyên liệu chính (item.ingredientId).
+   FAS được theo dõi theo nguyên liệu, nên tên món mỗi ngày có khác cũng nối đúng. */
+function getIngredient(id) {
+  return readJson('mm_ingredients', []).find(g => g.id === id) || null;
+}
+
+/* Khóa theo dõi FAS của một món trong thực đơn: id nguyên liệu; món cũ chưa có thì dùng tên */
+function foodKeyOf(item) {
+  return (item && item.ingredientId) || normFood(item && item.name);
+}
+
+/* Mã + tên chuẩn của món theo nguyên liệu; món cũ (không có nguyên liệu) dùng canonicalFood */
+function canonicalFoodOf(item) {
+  if (item && item.ingredientId) {
+    const g = getIngredient(item.ingredientId);
+    return { id: item.ingredientId, name: g ? g.name : item.name };
+  }
+  return canonicalFood(item.name);
+}
+
+/* Các lần thử của học sinh với món trong thực đơn (theo nguyên liệu) */
+function foodHistoryOf(studentId, item) {
+  if (item && item.ingredientId) {
+    return readJson('mm_fas_log', [])
+      .filter(r => r.studentId === studentId && r.foodId === item.ingredientId)
+      .sort((a, b) => a.attempt - b.attempt);
+  }
+  return foodHistory(studentId, item.name);
+}
+
 /* ── Lịch sử FAS ──────────────────────────────── */
 /* Các lần thử của một học sinh với một món (so khớp theo tên), theo thứ tự lần thử */
 function foodHistory(studentId, name) {
@@ -94,14 +125,17 @@ function planetOfName(name) {
 function studentFoods(studentId) {
   const byName = {};
   readJson('mm_fas_log', []).filter(r => r.studentId === studentId).forEach(r => {
-    const n = normFood(r.foodName);
+    const n = r.foodId || normFood(r.foodName);
     const o = byName[n] || (byName[n] = { name: r.foodName, planet: null, latest: r });
     if (r.attempt >= o.latest.attempt) o.latest = r;
     if (r.planet) o.planet = r.planet;
   });
   return Object.keys(byName).map(n => {
     const o = byName[n];
-    if (!o.planet) o.planet = planetOfName(o.name);
+    if (!o.planet) {
+      const ing = getIngredient(o.latest.foodId);
+      o.planet = (ing && ing.planet) || planetOfName(o.name);
+    }
     return o;
   });
 }
