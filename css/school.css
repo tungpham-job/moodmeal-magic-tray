@@ -82,6 +82,16 @@ body.page-school {
   padding: 10px 16px;
   font-size: 12px; color: rgba(255,255,255,0.8);
 }
+.sidebar-logout {
+  display: block; width: calc(100% - 32px); margin: 6px 16px 0;
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.25);
+  color: #fff; border-radius: 8px;
+  padding: 9px 10px; font-size: 12px; font-weight: 600;
+  text-align: center; cursor: pointer;
+  font-family: var(--font); transition: background 0.15s;
+}
+.sidebar-logout:hover { background: rgba(255,255,255,0.28); }
 .sidebar-user-avatar { font-size: 22px; }
 .sidebar-user-name   { font-weight: 600; }
 .sidebar-user-role   { font-size: 10px; opacity: 0.65; }
@@ -548,6 +558,8 @@ textarea.form-control { resize: vertical; min-height: 80px; }
   .nav-link span:not(.nav-icon),
   .sidebar-user-name,
   .sidebar-user-role { display: none; }
+  .sidebar-logout span { display: none; }
+  .sidebar-logout { width: calc(100% - 16px); margin: 6px 8px 0; padding: 9px 0; }
   .nav-link        { justify-content: center; padding: 12px; }
   .main-content    { margin-left: 60px; }
   .main-body       { padding: 16px; }
