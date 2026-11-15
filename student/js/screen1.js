@@ -103,7 +103,7 @@ function showPopup(key) {
         !p.tried.some(f => foodKeyOf(target) === (f.latest.foodId || normFood(f.name)))) {
       items.unshift({ icon: foodIcon(target), name: target.name, fas: '→ Thử hôm nay!' });
     }
-    while (items.length < p.total) items.push({ icon: '❓', name: 'Món chưa khám phá', fas: 'Chưa khám phá' });
+    while (items.length < p.total) items.push({ icon: '❓', name: 'Nguyên liệu ẩn', fas: 'Chưa khám phá' });
   } else if (p.state === 'unlocking') {
     title = `${p.icon} Hành tinh ${p.name} — Đang mở khóa!`;
     items.push({ icon: foodIcon(target), name: target.name, fas: '→ Thử hôm nay để mở khóa!' });

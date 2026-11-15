@@ -133,7 +133,7 @@ function foodBlockHtml(f, i, total) {
     <div class="toast" id="toast-${i}"></div>
 
     <div class="fas-chart" id="fasChart-${i}">
-      <div class="fas-chart-title">📈 Hành trình khám phá ${escHtml(f.item.name)}</div>
+      <div class="fas-chart-title">📈 Hành trình khám phá ${escHtml(f.name)}</div>
       <div class="fas-bars" id="fasBars-${i}" style="height:auto;min-height:56px"></div>
       <div class="fas-track-label">
         <span>FAS: 1.0 (Không thích)</span>
