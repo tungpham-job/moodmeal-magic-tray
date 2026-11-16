@@ -69,9 +69,8 @@ function restoreDone(i, entry) {
   if (sel) setEmojiSelected(i, sel);
   document.querySelectorAll(`#food-${i} .emoji-btn`).forEach(b => { b.disabled = true; });
 
-  const ta = document.getElementById(`tryAgainBtn-${i}`);
-  if (f.tryAgain) { ta.innerHTML = '<span>✅</span> Đã đặt nhắc nhở thử lại!'; ta.classList.add('done'); }
-  ta.disabled = true;
+  setTryAgainUi(i, f.tryAgain ? 1 : 0);
+  document.querySelectorAll(`#food-${i} .ta-btn`).forEach(b => { b.disabled = true; });
 
   const btn = document.getElementById(`confirmBtn-${i}`);
   btn.disabled    = true;
@@ -122,9 +121,16 @@ function foodBlockHtml(f, i, total) {
 
     <div class="gap"></div>
 
-    <button class="btn btn-secondary" id="tryAgainBtn-${i}" onclick="toggleTryAgain(${i})" style="margin-bottom:6px">
-      <span>⭐</span> Muốn thử lại lần sau (TRY AGAIN)
-    </button>
+    <div class="ta-card" id="taCard-${i}">
+      <div class="ta-head">
+        <div class="ta-q" id="taQ-${i}">Lần sau em muốn thử món này nữa không?</div>
+        <span class="ta-xp">⭐ +${xpAmount('try_again')} XP</span>
+      </div>
+      <div class="ta-row" role="radiogroup" aria-labelledby="taQ-${i}">
+        <button type="button" class="ta-btn" role="radio" aria-checked="false" aria-label="Muốn, nhận thêm ${xpAmount('try_again')} XP khi xác nhận" tabindex="0" data-val="1" onclick="pickTryAgain(${i}, this)" onkeydown="tryAgainKey(event, ${i})">Muốn</button>
+        <button type="button" class="ta-btn" role="radio" aria-checked="false" aria-label="Để sau" tabindex="-1" data-val="0" onclick="pickTryAgain(${i}, this)" onkeydown="tryAgainKey(event, ${i})">Để sau</button>
+      </div>
+    </div>
 
     <button class="confirm-btn" id="confirmBtn-${i}" onclick="confirmEval(${i})" disabled>
       ✓ Xác nhận đánh giá
@@ -241,18 +247,40 @@ function emojiKey(ev, i) {
   pickEmoji(i, next);
 }
 
-function toggleTryAgain(i) {
+/* Chọn "Muốn" (1) / "Để sau" (0); bấm lại nút đang chọn thì bỏ chọn (về chưa chọn) */
+function pickTryAgain(i, btn) {
   const f = FOODS[i];
   if (!f || f.done) return;
-  f.tryAgain = !f.tryAgain;
-  const btn = document.getElementById(`tryAgainBtn-${i}`);
-  if (f.tryAgain) {
-    btn.innerHTML = '<span>✅</span> Đã đặt nhắc nhở thử lại!';
-    btn.classList.add('done');
-  } else {
-    btn.innerHTML = '<span>⭐</span> Muốn thử lại lần sau (TRY AGAIN)';
-    btn.classList.remove('done');
-  }
+  const already = btn.getAttribute('aria-checked') === 'true';
+  const val = already ? null : parseInt(btn.dataset.val);
+  setTryAgainUi(i, val);
+  f.tryAgain = val === 1;
+}
+
+/* val: 1 = Muốn, 0 = Để sau, null = chưa chọn (giao diện + aria-checked + tab dừng đúng nút) */
+function setTryAgainUi(i, val) {
+  const btns = [...document.querySelectorAll(`#food-${i} .ta-btn`)];
+  btns.forEach((b, k) => {
+    const on = val !== null && parseInt(b.dataset.val) === val;
+    b.classList.toggle('selected', on);
+    b.setAttribute('aria-checked', on ? 'true' : 'false');
+    b.tabIndex = val === null ? (k === 0 ? 0 : -1) : (on ? 0 : -1);
+  });
+}
+
+/* Bàn phím cho nhóm radio "Muốn / Để sau": phím mũi tên đổi lựa chọn */
+function tryAgainKey(ev, i) {
+  const keys = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 };
+  if (!(ev.key in keys)) return;
+  ev.preventDefault();
+  const f = FOODS[i];
+  if (!f || f.done) return;
+  const btns = [...document.querySelectorAll(`#food-${i} .ta-btn:not(:disabled)`)];
+  const next = btns[(btns.indexOf(ev.currentTarget) + keys[ev.key] + btns.length) % btns.length];
+  if (!next) return;
+  next.focus();
+  setTryAgainUi(i, parseInt(next.dataset.val));
+  f.tryAgain = parseInt(next.dataset.val) === 1;
 }
 
 /* Biểu đồ hành trình: tối đa 3 lần thử gần nhất của món này + lần hôm nay */
@@ -316,7 +344,7 @@ function confirmEval(i) {
   btn.disabled    = true;
   btn.textContent = '✅ Đã ghi nhận!';
   document.querySelectorAll(`#food-${i} .emoji-btn`).forEach(b => { b.disabled = true; });
-  document.getElementById(`tryAgainBtn-${i}`).disabled = true;
+  document.querySelectorAll(`#food-${i} .ta-btn`).forEach(b => { b.disabled = true; });
 
   renderFasBars(i, prev, data.val);
 
