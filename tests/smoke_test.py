@@ -123,10 +123,14 @@ def run(browser, base):
       const c = document.querySelector('#confirmBtn-0'); const cr = c.getBoundingClientRect();
       return {w: Math.round(b.width), h: Math.round(b.height), ch: Math.round(cr.height), cf: getComputedStyle(c).fontSize,
               q: document.getElementById('taQ-0').innerText}; }""")
-    check('khối "thử lại": một hàng, nút 74×40px, câu hỏi "Thử lại lần sau?"', dim['w'] == 74 and dim['h'] == 40 and dim['q'] == 'Thử lại lần sau?', dim)
+    check('khối "thử lại": một hàng, nút 70×36px, câu hỏi "Thử lại lần sau?"', dim['w'] == 70 and dim['h'] == 36 and dim['q'] == 'Thử lại lần sau?', dim)
+    nb = page.evaluate("getComputedStyle(document.getElementById('taCard-0')).borderTopWidth")
+    check('khối "thử lại": không còn khung viền xám', nb == '0px', nb)
     check('nút "Xác nhận đánh giá": cao 45px, chữ 15px', dim['ch'] == 45 and dim['cf'] == '15px', dim)
-    one_row = page.evaluate("(() => { const q = document.getElementById('taQ-0').getBoundingClientRect(), b = document.querySelector('#taCard-0 .ta-btn').getBoundingClientRect(); return q.top < b.bottom && q.bottom > b.top && document.getElementById('taCard-0').getBoundingClientRect().height < 60; })()")
-    check('khối "thử lại" gọn (cao dưới 60px, câu hỏi và nút cùng hàng)', one_row)
+    one_row = page.evaluate("(() => { const q = document.getElementById('taQ-0').getBoundingClientRect(), b = document.querySelector('#taCard-0 .ta-btn').getBoundingClientRect(); return q.top < b.bottom && q.bottom > b.top && document.getElementById('taCard-0').getBoundingClientRect().height < 50; })()")
+    centered = page.evaluate("(() => { const c = document.getElementById('taCard-0').getBoundingClientRect(), q = document.getElementById('taQ-0').getBoundingClientRect(), bs = document.querySelectorAll('#taCard-0 .ta-btn'), r = bs[bs.length - 1].getBoundingClientRect(); return {left: Math.round(q.left - c.left), right: Math.round(c.right - r.right), gap: Math.round(bs[0].getBoundingClientRect().left - document.querySelector('#taCard-0 .ta-xp').getBoundingClientRect().right)}; })()")
+    check('khối "thử lại": nội dung và 2 nút canh giữa, nằm gần nhau', abs(centered['left'] - centered['right']) <= 2 and centered['gap'] <= 16, centered)
+    check('khối "thử lại" gọn (cao dưới 50px, câu hỏi và nút cùng hàng)', one_row)
     check('hỏi "thử lại": ban đầu chưa chọn gì', page.locator('#taCard-0 [aria-checked=true]').count() == 0)
     ta.nth(0).click(); page.wait_for_timeout(350)
     tas = page.evaluate("""() => { const b = document.querySelector('#taCard-0 .ta-btn.selected'); const c = getComputedStyle(b);
