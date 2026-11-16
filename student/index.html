@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍱</text></svg>">
   <title>MoodMeal Magic Tray</title>
-  <link rel="stylesheet" href="../css/base.css">
-  <link rel="stylesheet" href="../css/student.css">
+  <link rel="stylesheet" href="../css/base.css?v=20261116d">
+  <link rel="stylesheet" href="../css/student.css?v=20261116d">
 </head>
 <body class="page-student">
 <div class="phone-frame">
@@ -89,10 +89,10 @@
   </nav>
 </div>
 
-<script src="../js/seed.js?v=20261116c"></script>
-<script src="../js/auth.js?v=20261116c"></script>
-<script src="../js/xp.js?v=20261116c"></script>
-<script src="js/nav.js"></script>
+<script src="../js/seed.js?v=20261116d"></script>
+<script src="../js/auth.js?v=20261116d"></script>
+<script src="../js/xp.js?v=20261116d"></script>
+<script src="js/nav.js?v=20261116d"></script>
 <script>
   /* Auth guard */
   const SESSION = auth.check('student');
@@ -122,10 +122,10 @@
 
     grid.innerHTML = todayItems.map(m => `
       <div class="menu-item">
-        <span class="m-icon">${m.icon || groupIcons[m.group] || '🍽️'}</span>
+        <span class="m-icon">${escHtml(m.icon || groupIcons[m.group] || '🍽️')}</span>
         <div>
-          <div class="m-name">${m.name}</div>
-          <div class="m-group">${m.group}</div>
+          <div class="m-name">${escHtml(m.name)}</div>
+          <div class="m-group">${escHtml(m.group)}</div>
         </div>
         ${m.isNew ? '<span class="m-new">MỚI!</span>' : ''}
       </div>`).join('');

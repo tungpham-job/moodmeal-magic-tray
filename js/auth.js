@@ -48,6 +48,14 @@ const STORAGE_KEY_FLASH    = 'mm_flash';   // thông báo hiện ở trang đăn
 if (typeof mmSeedAll === 'function') mmSeedAll();
 else console.error('Thiếu js/seed.js: hãy nạp seed.js TRƯỚC auth.js trên trang này.');
 
+/* ── Tiện ích: thoát ký tự HTML ─────────────────────
+   BẮT BUỘC dùng khi chèn chuỗi do người dùng nhập (tên khay, tên món, tên học sinh,
+   ghi chú…) vào innerHTML / template string. Dùng chung cho mọi trang. */
+function escHtml(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g,
+    c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
 /* ── Tiện ích: ngày dạng YYYY-MM-DD theo giờ LOCAL ───
    Dùng thay cho toISOString().split('T')[0] (trả về ngày UTC,
    bị lệch 1 ngày ở UTC+7 khi giờ local < 07:00). */

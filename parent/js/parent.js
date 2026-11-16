@@ -193,7 +193,7 @@ function renderFasDay() {
     <div class="fas-day-chips">
       ${items.map((e, i) => `
         <button class="fas-food-chip ${e.trend} ${e.foodName === FAS_SEL_FOOD ? 'active' : ''}" onclick="selectFasFood(${i})">
-          <span class="fas-food-mark">${FAS_TREND_MARK[e.trend]}</span>${e.foodName}
+          <span class="fas-food-mark">${FAS_TREND_MARK[e.trend]}</span>${escHtml(e.foodName)}
         </button>`).join('')}
     </div>`;
   const sel = items.find(e => e.foodName === FAS_SEL_FOOD) || items[0];
@@ -245,9 +245,9 @@ function renderBadges() {
     const dateStr = e ? formatYmd(e.awardedDate) : '';
     return `
       <div class="badge-chip ${e ? 'earned' : 'locked'}"
-           title="${b.name}: ${b.desc}${dateStr ? ' · ' + dateStr : ''}">
-        <span class="b-icon">${b.icon}</span>
-        <span class="b-name">${b.name}</span>
+           title="${escHtml(b.name)}: ${escHtml(b.desc)}${dateStr ? ' · ' + dateStr : ''}">
+        <span class="b-icon">${escHtml(b.icon)}</span>
+        <span class="b-name">${escHtml(b.name)}</span>
         ${dateStr ? `<span class="b-date">${dateStr}</span>` : ''}
       </div>`;
   }).join('');
@@ -346,13 +346,13 @@ function renderSection2() {
       wrap.innerHTML = `
         <div class="no-tray-placeholder">
           ✅ Ba mẹ đã xác nhận khay cơm hôm nay!<br>
-          <span style="font-size:12px;color:#aaa">"${confirmed.trayName}"</span>
+          <span style="font-size:12px;color:#aaa">"${escHtml(confirmed.trayName)}"</span>
         </div>`;
     } else if (declined) {
       wrap.innerHTML = `
         <div class="no-tray-placeholder">
           🌱 Ba mẹ đã báo tối nay chưa nấu được khay cơm.<br>
-          <span style="font-size:12px;color:#aaa">"${declined.trayName}" · Mỗi khay chỉ phản hồi một lần</span>
+          <span style="font-size:12px;color:#aaa">"${escHtml(declined.trayName)}" · Mỗi khay chỉ phản hồi một lần</span>
         </div>`;
     } else {
       wrap.innerHTML = `
@@ -370,15 +370,15 @@ function renderSection2() {
   const icons = TRAY_ITEM.tray.map(x => x.icon).join('');
   const itemsHTML = TRAY_ITEM.tray.map(x => `
     <div class="tray-item-chip">
-      <span class="tray-item-icon">${x.icon}</span>
+      <span class="tray-item-icon">${escHtml(x.icon)}</span>
       <div>
-        <div class="tray-item-name">${x.name}</div>
+        <div class="tray-item-name">${escHtml(x.name)}</div>
         <div class="tray-item-group">${groupLabel(x.group)}</div>
       </div>
     </div>`).join('');
 
   wrap.innerHTML = `
-    <div class="tray-name-display">${TRAY_ITEM.trayName} ${icons}</div>
+    <div class="tray-name-display">${escHtml(TRAY_ITEM.trayName)} ${icons}</div>
     <div class="tray-items-row">${itemsHTML}</div>
     <div class="tray-meta">
       <span class="tray-score">⭐ ${TRAY_ITEM.nutritionScore}/100 điểm dinh dưỡng</span>
@@ -497,7 +497,7 @@ function renderSection3() {
         <div class="timeline-dot ${dotClass}"></div>
         <div class="timeline-content">
           <div class="timeline-date">${formatDateFull(t.sentAt)}</div>
-          <div class="timeline-tray-name">"${t.trayName}"</div>
+          <div class="timeline-tray-name">"${escHtml(t.trayName)}"</div>
           <div class="timeline-icons">${icons}</div>
           <div class="timeline-status ${statusClass}">${statusText}</div>
         </div>

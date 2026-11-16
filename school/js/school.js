@@ -116,11 +116,11 @@ function renderAccounts() {
     }
 
     return `
-      <tr data-id="${acc.id}">
-        <td><code style="font-size:12px">${acc.id}</code></td>
-        <td><strong>${acc.name}</strong></td>
+      <tr data-id="${escHtml(acc.id)}">
+        <td><code style="font-size:12px">${escHtml(acc.id)}</code></td>
+        <td><strong>${escHtml(acc.name)}</strong></td>
         <td><span class="badge ${roleBadge}">${roleLabel(acc.role)}</span></td>
-        <td>${linked ? linked.name : '<span style="color:#aaa">—</span>'}</td>
+        <td>${linked ? escHtml(linked.name) : '<span style="color:#aaa">—</span>'}</td>
         ${statCells}
         <td><span class="badge ${statusBadge}" style="font-size:10px">${statusText}</span></td>
         <td>
@@ -168,7 +168,7 @@ function renderBadgeChecks(studentId) {
   const have = studentId ? getEarnedBadges(studentId).map(e => e.def.id) : [];
   document.getElementById('accFormBadges').innerHTML = getBadgeDefs().filter(d => d.active).map(d => `
     <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
-      <input type="checkbox" class="accBadgeChk" value="${d.id}" ${have.indexOf(d.id) !== -1 ? 'checked' : ''}>
+      <input type="checkbox" class="accBadgeChk" value="${escHtml(d.id)}" ${have.indexOf(d.id) !== -1 ? 'checked' : ''}>
       <span>${d.icon} ${escAttr(d.name)}</span>
       <span style="font-size:11px;color:#888">· ${d.auto ? 'tự động' : 'duyệt tay'}</span>
     </label>`).join('');
@@ -234,7 +234,7 @@ function renderLinkedSelect(role, selectedId = '') {
 
   const options = accounts.filter(a => a.role === targetRole);
   sel.innerHTML = `<option value="">— Chưa liên kết —</option>` +
-    options.map(a => `<option value="${a.id}" ${a.id === selectedId ? 'selected' : ''}>${a.name} (${a.id})</option>`).join('');
+    options.map(a => `<option value="${a.id}" ${a.id === selectedId ? 'selected' : ''}>${escHtml(a.name)} (${escHtml(a.id)})</option>`).join('');
 }
 
 document.addEventListener('change', e => {
@@ -243,6 +243,9 @@ document.addEventListener('change', e => {
     toggleStudentStats(e.target.value, document.getElementById('accEditId').value || null);
   }
 });
+
+/* ID đăng nhập: chữ không dấu, số, . _ - (được dùng trong thuộc tính HTML nên không cho ký tự đặc biệt) */
+const ID_PATTERN = /^[A-Za-z0-9._-]{1,30}$/;
 
 function saveAccount() {
   const editId = document.getElementById('accEditId').value;
@@ -253,6 +256,7 @@ function saveAccount() {
   const linked = document.getElementById('accFormLinked')?.value || null;
 
   if (!id || !name || !pass) { showToast('Vui lòng điền đầy đủ thông tin!', 'error'); return; }
+  if (!editId && !ID_PATTERN.test(id)) { showToast('ID chỉ gồm chữ không dấu, số, dấu . _ - (tối đa 30 ký tự)!', 'error'); return; }
 
   const isStudent = role === 'student';
   let xpVal = null;
@@ -356,6 +360,7 @@ function importCSV() {
     if (parts.length < 3) return;
     const [id, name, pass] = parts;
     if (!id || !name || !pass) return;
+    if (!ID_PATTERN.test(id)) return;            // bỏ qua ID có ký tự không hợp lệ
     if (accounts.find(a => a.id === id)) return; // bỏ qua trùng
     accounts.push({ id, name, pass, role: 'student', linkedId: null, avatar: '🧒', locked: false, xp: 0 });
     added++;
@@ -409,9 +414,9 @@ function renderMenuTab() {
 
   function chipsOf(date) {
     return menu.filter(m => m.date === date).map(m => `
-        <div class="menu-chip" title="Nhóm: ${m.group} · Hành tinh: ${m.planet}">
-          <span class="menu-chip-icon">${m.icon || groupIcon(m.group)}</span>
-          <span class="menu-chip-name">${m.name}</span>
+        <div class="menu-chip" title="Nhóm: ${escHtml(m.group)} · Hành tinh: ${escHtml(m.planet)}">
+          <span class="menu-chip-icon">${escHtml(m.icon || groupIcon(m.group))}</span>
+          <span class="menu-chip-name">${escHtml(m.name)}</span>
           ${m.isNew ? '<span class="menu-chip-new">MỚI</span>' : ''}
           <button class="btn btn-ghost btn-icon" style="padding:0;font-size:11px" onclick="deleteMenuItem('${m.id}')">✕</button>
         </div>`).join('');
@@ -586,7 +591,7 @@ function renderMenuIngredientPick() {
   const cur = document.getElementById('menuIngredient').value;
   box.innerHTML = '<div style="display:flex;flex-wrap:wrap;gap:6px">' + list.map(g => `
     <button type="button" class="btn btn-sm ${g.id === cur ? 'btn-primary' : 'btn-secondary'}"
-      title="Hành tinh ${escapeHtml(g.planet)}" onclick="pickMenuIngredient('${g.id}')">${g.icon} ${escapeHtml(g.name)}${g.id === cur ? ' ✓' : ''}</button>`).join('') + '</div>';
+      title="Hành tinh ${escHtml(g.planet)}" onclick="pickMenuIngredient('${g.id}')">${g.icon} ${escHtml(g.name)}${g.id === cur ? ' ✓' : ''}</button>`).join('') + '</div>';
 }
 
 function pickMenuIngredient(id) {
@@ -611,10 +616,6 @@ const PLANET_ORDER = ['Rau củ', 'Đạm', 'Xanh lá', 'Trái cây'];
 const GROUP_ORDER  = ['Tinh bột', 'Đạm', 'Rau củ', 'Canh'];
 const ING_ICONS    = ['🍚','🍞','🍜','🌽','🥩','🍗','🐟','🦐','🥚','🥓','🥦','🥕','🍅','🥬','🧅','🥒','🍆','🥔','🍎','🍌','🍊','🍇','🍓','🍲','🥣','🍄','🫛','🌿'];
 
-function escapeHtml(t) {
-  return String(t).replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
-}
-
 function ingredientInUse(id) {
   return loadKey(KEY.MENU, []).some(m => m.ingredientId === id)
       || loadKey(KEY.FAS_LOG, []).some(r => r.foodId === id);
@@ -632,11 +633,11 @@ function renderIngredientsTab() {
     const inPlanet = list.filter(g => g.planet === pl);
     if (!inPlanet.length) return '';
     const groups = GROUP_ORDER.concat([...new Set(inPlanet.map(g => g.group))].filter(x => !GROUP_ORDER.includes(x)));
-    return `<div style="padding:8px 16px;background:#F3F6F8;font-size:12px;font-weight:700;color:var(--text-muted)">🪐 Hành tinh ${escapeHtml(pl)}</div>` +
+    return `<div style="padding:8px 16px;background:#F3F6F8;font-size:12px;font-weight:700;color:var(--text-muted)">🪐 Hành tinh ${escHtml(pl)}</div>` +
       groups.map(gr => {
         const items = inPlanet.filter(g => g.group === gr);
         if (!items.length) return '';
-        return `<div style="padding:8px 16px 2px;font-size:11px;color:var(--text-muted)">Nhóm: ${escapeHtml(gr)}</div>
+        return `<div style="padding:8px 16px 2px;font-size:11px;color:var(--text-muted)">Nhóm: ${escHtml(gr)}</div>
           <div style="display:flex;flex-wrap:wrap;gap:8px;padding:4px 16px 12px">${items.map(ingChipHtml).join('')}</div>`;
       }).join('');
   }).join('') + '</div>';
@@ -649,7 +650,7 @@ function ingChipHtml(g) {
     ? `<button class="btn btn-sm btn-ghost btn-icon" title="${off ? 'Dùng lại' : 'Ngừng dùng (đã có trong thực đơn/FAS nên không xóa được)'}" onclick="toggleIngredient('${g.id}')">${off ? '✅' : '🚫'}</button>`
     : `<button class="btn btn-sm btn-ghost btn-icon" title="Xóa" onclick="deleteIngredient('${g.id}')">🗑</button>`;
   return `<span style="display:inline-flex;align-items:center;gap:4px;border:1px solid var(--border);border-radius:10px;padding:2px 4px 2px 10px;font-size:12px;${off ? 'opacity:.5' : ''}">
-    ${g.icon} ${escapeHtml(g.name)}${off ? ' <em style="font-size:10px">(ngừng dùng)</em>' : ''}
+    ${g.icon} ${escHtml(g.name)}${off ? ' <em style="font-size:10px">(ngừng dùng)</em>' : ''}
     <button class="btn btn-sm btn-ghost btn-icon" title="Sửa" onclick="openEditIngredient('${g.id}')">✏️</button>${del}</span>`;
 }
 
@@ -766,7 +767,7 @@ function renderXPTab() {
   document.getElementById('xpLevelsBody').innerHTML = cfg.levels.map(lv => `
     <tr>
       <td>${lv.level}</td>
-      <td>${lv.name}</td>
+      <td>${escHtml(lv.name)}</td>
       <td>${lv.xpFrom}</td>
       <td>${lv.xpTo}</td>
       <td>${lv.unlock}</td>
@@ -775,7 +776,7 @@ function renderXPTab() {
   // Bảng actions (chỉ xem)
   document.getElementById('xpActionsBody').innerHTML = cfg.actions.map(ac => `
     <tr>
-      <td>${ac.label}</td>
+      <td>${escHtml(ac.label)}</td>
       <td>${ac.xp} <span style="font-size:12px;color:#888">XP</span></td>
     </tr>`).join('');
 }
@@ -785,7 +786,7 @@ function openEditLevels() {
   document.getElementById('xpLevelsEditBody').innerHTML = cfg.levels.map((lv, i) => `
     <tr>
       <td>${lv.level}</td>
-      <td><input class="inline-input" style="width:150px" data-f="name" data-i="${i}" value="${lv.name}"></td>
+      <td><input class="inline-input" style="width:150px" data-f="name" data-i="${i}" value="${escHtml(lv.name)}"></td>
       <td><input class="inline-input" type="number" data-f="xpFrom" data-i="${i}" value="${lv.xpFrom}"></td>
       <td><input class="inline-input" type="number" data-f="xpTo" data-i="${i}" value="${lv.xpTo}"></td>
       <td><input class="inline-input" type="number" data-f="unlock" data-i="${i}" value="${lv.unlock}"></td>
@@ -809,7 +810,7 @@ function openEditActions() {
   const cfg = loadKey(KEY.XP_CONFIG, DEFAULT_XP_CONFIG);
   document.getElementById('xpActionsEditBody').innerHTML = cfg.actions.map((ac, i) => `
     <tr>
-      <td>${ac.label}</td>
+      <td>${escHtml(ac.label)}</td>
       <td>
         <input class="inline-input" type="number" data-i="${i}" value="${ac.xp}">
         <span style="font-size:12px;color:#888"> XP</span>
@@ -835,8 +836,8 @@ function renderBadgesTab() {
 
   document.getElementById('badgesList').innerHTML = badges.map((b, i) => `
     <tr>
-      <td style="font-size:20px">${b.icon}</td>
-      <td><strong>${b.name}</strong><div style="font-size:11px;color:#888">${b.desc}</div></td>
+      <td style="font-size:20px">${escHtml(b.icon)}</td>
+      <td><strong>${escHtml(b.name)}</strong><div style="font-size:11px;color:#888">${escHtml(b.desc)}</div></td>
       <td>${b.auto
         ? '<span class="badge badge-green">✓ Tự động</span>'
         : '<span class="badge badge-orange">✗ Duyệt tay</span>'}</td>
@@ -936,7 +937,7 @@ function renderCriteriaTab() {
     const total = c.items.reduce((s, it) => s + it.max, 0);
     const rows = c.items.map(it => `
       <tr>
-        <td>${it.label}</td>
+        <td>${escHtml(it.label)}</td>
         <td style="text-align:center">${it.max}</td>
       </tr>`).join('');
 
@@ -944,7 +945,7 @@ function renderCriteriaTab() {
       <div class="content-card" style="margin-bottom:12px">
         <div class="content-card-header">
           <div>
-            <div class="content-card-title">${c.name}</div>
+            <div class="content-card-title">${escHtml(c.name)}</div>
             <div style="font-size:11px;color:#888;margin-top:2px">${c.weekStart} → ${c.weekEnd} · Tổng: ${total} điểm</div>
           </div>
           <div style="display:flex;gap:6px">
@@ -1050,7 +1051,7 @@ function renderReport() {
   // Populate filters
   const studentSel = document.getElementById('filterStudent');
   studentSel.innerHTML = '<option value="">— Tất cả học sinh —</option>' +
-    accounts.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
+    accounts.map(a => `<option value="${escHtml(a.id)}">${escHtml(a.name)}</option>`).join('');
 
   const foods = [...new Set(fasLog.map(f => f.foodName))];
   const foodSel = document.getElementById('filterFood');
@@ -1088,9 +1089,9 @@ function renderFasStats(fasLog, accounts) {
   document.getElementById('statAvgFas').textContent = avgFas;
   document.getElementById('statTryRate').textContent = tryRate + '%';
   document.getElementById('statTop3').innerHTML = fagByStudent.slice(0, 3)
-    .map(s => `<div style="font-size:12px">🏆 ${s.name} <strong>+${s.fag}</strong></div>`).join('') || '—';
+    .map(s => `<div style="font-size:12px">🏆 ${escHtml(s.name)} <strong>+${s.fag}</strong></div>`).join('') || '—';
   document.getElementById('statBottom3').innerHTML = fagByStudent.slice(-3).reverse()
-    .map(s => `<div style="font-size:12px">📌 ${s.name} <strong>${s.fag >= 0 ? '+' : ''}${s.fag}</strong></div>`).join('') || '—';
+    .map(s => `<div style="font-size:12px">📌 ${escHtml(s.name)} <strong>${s.fag >= 0 ? '+' : ''}${s.fag}</strong></div>`).join('') || '—';
 }
 
 function applyReportFilter() {
@@ -1124,8 +1125,8 @@ function renderFasTable(fasLog, accounts, stuFilter, foodFilter) {
 
     return `
       <tr>
-        <td><strong>${acc?.name || g.studentId}</strong></td>
-        <td>${g.foodName}</td>
+        <td><strong>${escHtml(acc?.name || g.studentId)}</strong></td>
+        <td>${escHtml(g.foodName)}</td>
         ${scores.map(s => `<td style="text-align:center">${s !== '—' ? `<strong>${s}</strong>` : '<span style="color:#ccc">—</span>'}</td>`).join('')}
         <td style="text-align:center;font-weight:700;${fagColor}">${fag !== '—' ? (fag > 0 ? '+' : '') + fag : '—'}</td>
         <td style="text-align:center">${tryCount}/${g.attempts.length}</td>
@@ -1163,7 +1164,7 @@ function renderProposals() {
   // Criteria selector
   const sel = document.getElementById('criteriaSelector');
   sel.innerHTML = '<option value="">— Chọn bộ tiêu chí —</option>' +
-    criteria.map((c, i) => `<option value="${i}">${c.name}</option>`).join('');
+    criteria.map((c, i) => `<option value="${i}">${escHtml(c.name)}</option>`).join('');
 
   renderProposalTable(trays);
 }
@@ -1186,9 +1187,9 @@ function renderProposalTable(trays) {
     return `
       <tr>
         <td><input type="checkbox" class="tray-check" data-idx="${i}"></td>
-        <td><strong>${t.studentName}</strong></td>
-        <td style="font-size:13px">${t.trayName}</td>
-        <td style="font-size:18px;letter-spacing:2px" title="${t.tray.map(x=>x.name).join(' · ')}">${icons}</td>
+        <td><strong>${escHtml(t.studentName)}</strong></td>
+        <td style="font-size:13px">${escHtml(t.trayName)}</td>
+        <td style="font-size:18px;letter-spacing:2px" title="${escHtml(t.tray.map(x=>x.name).join(' · '))}">${icons}</td>
         <td style="font-size:11px;color:#888">${formatTime(t.sentAt)}</td>
         <td>${confirmCell}</td>
         <td>
@@ -1196,7 +1197,7 @@ function renderProposalTable(trays) {
             ? `<span class="badge badge-blue">${t.schoolScore} điểm</span>`
             : '<span style="color:#aaa;font-size:12px">Chưa chấm</span>'}
         </td>
-        <td style="font-size:12px;color:#888">${t.schoolNote || '—'}</td>
+        <td style="font-size:12px;color:#888">${escHtml(t.schoolNote || '—')}</td>
         <td>
           <button class="btn btn-sm btn-primary" onclick="openGradePanel(${i})">
             ${t.schoolScore !== null ? '✏️ Sửa' : '📝 Chấm'}
@@ -1241,7 +1242,7 @@ function openGradePanel(idx) {
           onclick="setScore(this,${i},${v})" data-crit="${i}" data-val="${v}">${v}</button>`).join('');
       return `
         <div class="criteria-row">
-          <span class="criteria-name">${item.label}</span>
+          <span class="criteria-name">${escHtml(item.label)}</span>
           <div class="score-btn-group">${btns}</div>
           <span class="criteria-max">/ ${item.max}</span>
         </div>`;

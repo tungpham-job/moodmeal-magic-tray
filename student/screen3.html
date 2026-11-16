@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎨</text></svg>">
   <title>Thiết kế Khay – MoodMeal</title>
-  <link rel="stylesheet" href="../css/base.css">
-  <link rel="stylesheet" href="../css/student.css">
+  <link rel="stylesheet" href="../css/base.css?v=20261116d">
+  <link rel="stylesheet" href="../css/student.css?v=20261116d">
 </head>
 <body class="page-student">
 <div class="phone-frame">
@@ -80,7 +80,7 @@
     </div>
 
     <!-- Tên khay -->
-    <input type="text" class="name-input" id="trayName"
+    <input type="text" class="name-input" id="trayName" maxlength="40"
       placeholder="Đặt tên sáng tạo cho khay cơm... 🌈">
 
     <!-- Chỉ giữ nút gửi cho ba mẹ (bỏ gửi bếp trưởng) -->
@@ -106,11 +106,11 @@
   </nav>
 </div>
 
-<script src="../js/seed.js?v=20261116c"></script>
-<script src="../js/auth.js?v=20261116c"></script>
-<script src="../js/xp.js?v=20261116c"></script>
-<script src="js/nav.js"></script>
-<script src="js/screen3.js?v=20261115g"></script>
+<script src="../js/seed.js?v=20261116d"></script>
+<script src="../js/auth.js?v=20261116d"></script>
+<script src="../js/xp.js?v=20261116d"></script>
+<script src="js/nav.js?v=20261116d"></script>
+<script src="js/screen3.js?v=20261116d"></script>
 <script>
   const SESSION = auth.check('student');
   if (SESSION) {

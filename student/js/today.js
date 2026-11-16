@@ -30,10 +30,6 @@ function readJson(key, fallback) {
   catch (e) { return fallback; }
 }
 
-function escHtml(s) {
-  return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-}
-
 /* Chuẩn hóa tên món để so khớp: bỏ dấu, viết thường, gọn khoảng trắng */
 function normFood(s) {
   return String(s || '')
