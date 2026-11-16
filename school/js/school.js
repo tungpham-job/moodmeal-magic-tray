@@ -125,31 +125,7 @@ const DEFAULT_TRAY_LOG = [
   },
 ];
 
-/* ── Seed: Nguyên liệu ───────────────────────────
-   id cố định, dùng làm foodId của nhật ký FAS (nối các lần thử của cùng một nguyên liệu) */
-const DEFAULT_INGREDIENTS = [
-  { id:'com-trang',  name:'Cơm trắng',      icon:'🍚', group:'Tinh bột', planet:'Đạm',     active:true },
-  { id:'thit-heo',   name:'Thịt heo',       icon:'🥩', group:'Đạm',      planet:'Đạm',     active:true },
-  { id:'trung',      name:'Trứng',          icon:'🥚', group:'Đạm',      planet:'Đạm',     active:true },
-  { id:'ca',         name:'Cá',             icon:'🐟', group:'Đạm',      planet:'Đạm',     active:true },
-  { id:'rau-muong',  name:'Rau muống',      icon:'🥬', group:'Rau củ',   planet:'Rau củ',  active:true },
-  { id:'ca-rot',     name:'Cà rốt',         icon:'🥕', group:'Rau củ',   planet:'Rau củ',  active:true },
-  { id:'ca-chua',    name:'Cà chua',        icon:'🍅', group:'Canh',     planet:'Rau củ',  active:true },
-  { id:'bau',        name:'Bầu',            icon:'🥒', group:'Canh',     planet:'Rau củ',  active:true },
-  { id:'bong-cai',   name:'Bông cải xanh',  icon:'🥦', group:'Rau củ',   planet:'Xanh lá', active:true },
-];
-
-/* ── Seed: Daily menu ────────────────────────── */
-const DEFAULT_MENU = [
-  { id:'m01', date:'2026-10-20', name:'Cơm trắng',        ingredientId:'com-trang', group:'Tinh bột', planet:'Đạm',    isNew: false },
-  { id:'m02', date:'2026-10-20', name:'Thịt kho trứng',   ingredientId:'thit-heo',  group:'Đạm',      planet:'Đạm',    isNew: false },
-  { id:'m03', date:'2026-10-20', name:'Rau muống xào tỏi',ingredientId:'rau-muong', group:'Rau củ',   planet:'Rau củ', isNew: false },
-  { id:'m04', date:'2026-10-20', name:'Canh chua',         ingredientId:'ca-chua',   group:'Canh',     planet:'Rau củ', isNew: false },
-  { id:'m05', date:'2026-10-21', name:'Cơm trắng',         ingredientId:'com-trang', group:'Tinh bột', planet:'Đạm',    isNew: false },
-  { id:'m06', date:'2026-10-21', name:'Cá kho tộ',         ingredientId:'ca',        group:'Đạm',      planet:'Đạm',    isNew: false },
-  { id:'m07', date:'2026-10-21', name:'Bông cải xanh xào', ingredientId:'bong-cai',  group:'Rau củ',   planet:'Xanh lá',isNew: true  },
-  { id:'m08', date:'2026-10-21', name:'Canh bầu',          ingredientId:'bau',       group:'Canh',     planet:'Rau củ', isNew: true  },
-];
+/* DEFAULT_INGREDIENTS, DEFAULT_MENU: xem js/seed.js (dùng chung với trang đăng nhập) */
 
 /* ── Init all seed data ──────────────────────── */
 (function initAllSeed() {

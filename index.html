@@ -99,6 +99,7 @@
 
   <!-- auth.js phải load TRƯỚC script bên dưới -->
   <script src="js/auth.js?v=20261115h"></script>
+  <script src="js/seed.js?v=20261116a"></script>
   <script>
 
     /* Hiện lý do nếu vừa bị đăng xuất (tài khoản bị khóa, bị xóa, đổi vai trò) */
@@ -175,6 +176,9 @@
       [localStorage, sessionStorage].forEach(store => {
         Object.keys(store).filter(k => k.indexOf('mm_') === 0).forEach(k => store.removeItem(k));
       });
+      /* Ghi sẵn nguyên liệu + thực đơn mẫu, kèm món "Trứng chiên" hôm nay */
+      localStorage.setItem('mm_ingredients', JSON.stringify(DEFAULT_INGREDIENTS));
+      localStorage.setItem('mm_daily_menu', JSON.stringify(mmDemoMenuWithToday()));
       const btn = document.getElementById('btnReset');
       btn.disabled = true;
       btn.textContent = '✅ Đã đặt lại';
