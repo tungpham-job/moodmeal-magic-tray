@@ -99,7 +99,7 @@
 
   <!-- auth.js phải load TRƯỚC script bên dưới -->
   <script src="js/auth.js?v=20261115h"></script>
-  <script src="js/seed.js?v=20261116a"></script>
+  <script src="js/seed.js?v=20261116b"></script>
   <script>
 
     /* Hiện lý do nếu vừa bị đăng xuất (tài khoản bị khóa, bị xóa, đổi vai trò) */
@@ -171,14 +171,14 @@
     /* Đặt lại dữ liệu demo: chỉ xóa các khóa mm_* của MoodMeal (không đụng dữ liệu trang khác
        cùng tên miền), rồi tải lại. Tài khoản mẫu tự tạo lại ở auth.js; thực đơn, FAS, khay mẫu
        tự tạo khi mở trang BGH → mở tab BGH trước khi demo. */
+    mmSetupDemoDataIfMissing();   /* lần đầu mở web: tự có dữ liệu mẫu */
+
     function resetDemoData() {
       if (!confirm('Xóa toàn bộ dữ liệu demo trên trình duyệt này và tạo lại dữ liệu mẫu?')) return;
       [localStorage, sessionStorage].forEach(store => {
         Object.keys(store).filter(k => k.indexOf('mm_') === 0).forEach(k => store.removeItem(k));
       });
-      /* Ghi sẵn nguyên liệu + thực đơn mẫu, kèm món "Trứng chiên" hôm nay */
-      localStorage.setItem('mm_ingredients', JSON.stringify(DEFAULT_INGREDIENTS));
-      localStorage.setItem('mm_daily_menu', JSON.stringify(mmDemoMenuWithToday()));
+      mmSetupDemoData();   /* dùng chung với lần mở đầu tiên (js/seed.js) */
       const btn = document.getElementById('btnReset');
       btn.disabled = true;
       btn.textContent = '✅ Đã đặt lại';

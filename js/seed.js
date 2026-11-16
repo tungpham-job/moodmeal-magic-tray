@@ -41,3 +41,15 @@ function mmDemoMenuWithToday() {
       icon: '🥚', group: 'Đạm', planet: 'Đạm', isNew: true },
   ]);
 }
+
+/* Hàm DUY NHẤT thiết lập dữ liệu mẫu (nguyên liệu + thực đơn kèm Trứng chiên hôm nay).
+   Được gọi bởi: nút "Đặt lại dữ liệu demo" và lần mở trang Đăng nhập đầu tiên (chưa có dữ liệu). */
+function mmSetupDemoData() {
+  localStorage.setItem('mm_ingredients', JSON.stringify(DEFAULT_INGREDIENTS));
+  localStorage.setItem('mm_daily_menu', JSON.stringify(mmDemoMenuWithToday()));
+}
+
+/* Lần đầu mở web: thiếu nguyên liệu hoặc thực đơn → thiết lập như khi đặt lại */
+function mmSetupDemoDataIfMissing() {
+  if (!localStorage.getItem('mm_ingredients') || !localStorage.getItem('mm_daily_menu')) mmSetupDemoData();
+}
