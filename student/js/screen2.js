@@ -123,12 +123,12 @@ function foodBlockHtml(f, i, total) {
 
     <div class="ta-card" id="taCard-${i}">
       <div class="ta-head">
-        <div class="ta-q" id="taQ-${i}">Lần sau em muốn thử món này nữa không?</div>
-        <span class="ta-xp">⭐ +${xpAmount('try_again')} XP</span>
+        <div class="ta-q" id="taQ-${i}">Thử lại lần sau?</div>
+        <span class="ta-xp">+${xpAmount('try_again')} XP</span>
       </div>
       <div class="ta-row" role="radiogroup" aria-labelledby="taQ-${i}">
-        <button type="button" class="ta-btn" role="radio" aria-checked="false" aria-label="Muốn, nhận thêm ${xpAmount('try_again')} XP khi xác nhận" tabindex="0" data-val="1" onclick="pickTryAgain(${i}, this)" onkeydown="tryAgainKey(event, ${i})">Muốn</button>
-        <button type="button" class="ta-btn" role="radio" aria-checked="false" aria-label="Để sau" tabindex="-1" data-val="0" onclick="pickTryAgain(${i}, this)" onkeydown="tryAgainKey(event, ${i})">Để sau</button>
+        <button type="button" class="ta-btn" role="radio" aria-checked="false" aria-label="Muốn thử lại lần sau, nhận thêm ${xpAmount('try_again')} XP khi xác nhận" tabindex="0" data-val="1" onclick="pickTryAgain(${i}, this)" onkeydown="tryAgainKey(event, ${i})">Muốn</button>
+        <button type="button" class="ta-btn" role="radio" aria-checked="false" aria-label="Để sau, chưa thử lại" tabindex="-1" data-val="0" onclick="pickTryAgain(${i}, this)" onkeydown="tryAgainKey(event, ${i})">Để sau</button>
       </div>
     </div>
 

@@ -119,6 +119,14 @@ def run(browser, base):
     ta = page.locator('#food-0 [role=radiogroup][aria-labelledby=taQ-0] [role=radio]')
     check('hỏi "thử lại": nhóm radiogroup có nhãn + 2 nút Muốn / Để sau', ta.count() == 2 and (ta.nth(0).inner_text(), ta.nth(1).inner_text()) == ('Muốn', 'Để sau'))
     check('hỏi "thử lại": có nhãn +3 XP (đọc từ bảng BGH)', '+3 XP' in page.inner_text('#taCard-0'), page.inner_text('#taCard-0'))
+    dim = page.evaluate("""() => { const b = document.querySelector('#taCard-0 .ta-btn').getBoundingClientRect();
+      const c = document.querySelector('#confirmBtn-0'); const cr = c.getBoundingClientRect();
+      return {w: Math.round(b.width), h: Math.round(b.height), ch: Math.round(cr.height), cf: getComputedStyle(c).fontSize,
+              q: document.getElementById('taQ-0').innerText}; }""")
+    check('khối "thử lại": một hàng, nút 74×40px, câu hỏi "Thử lại lần sau?"', dim['w'] == 74 and dim['h'] == 40 and dim['q'] == 'Thử lại lần sau?', dim)
+    check('nút "Xác nhận đánh giá": cao 45px, chữ 15px', dim['ch'] == 45 and dim['cf'] == '15px', dim)
+    one_row = page.evaluate("(() => { const q = document.getElementById('taQ-0').getBoundingClientRect(), b = document.querySelector('#taCard-0 .ta-btn').getBoundingClientRect(); return q.top < b.bottom && q.bottom > b.top && document.getElementById('taCard-0').getBoundingClientRect().height < 60; })()")
+    check('khối "thử lại" gọn (cao dưới 60px, câu hỏi và nút cùng hàng)', one_row)
     check('hỏi "thử lại": ban đầu chưa chọn gì', page.locator('#taCard-0 [aria-checked=true]').count() == 0)
     ta.nth(0).click(); page.wait_for_timeout(350)
     tas = page.evaluate("""() => { const b = document.querySelector('#taCard-0 .ta-btn.selected'); const c = getComputedStyle(b);
