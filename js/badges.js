@@ -7,19 +7,12 @@
    - Danh hiệu "Tự động" có điều kiện kiểm tra được thì hệ thống tự cấp
      (b01, b02, b03). Danh hiệu khác do BGH cấp tay.
    - BGH có thể cấp thêm hoặc thu hồi; danh hiệu đã bị thu hồi sẽ không tự cấp lại.
-   Load SAU js/auth.js (dùng toLocalDateStr).
+   Load SAU js/seed.js và js/auth.js (dùng toLocalDateStr).
 ═══════════════════════════════════════════════ */
 
 const BADGE_LOG_KEY = 'mm_badges_log';
 
-/* Dùng khi BGH chưa mở trang Thiết lập; trùng mặc định bên BGH */
-const BADGE_DEFAULTS = [
-  { id: 'b01', icon: '🌱', name: 'Người mới',      desc: 'Đăng nhập lần đầu',                  auto: true,  active: true },
-  { id: 'b02', icon: '🥕', name: 'Bạn Rau củ',     desc: 'FAS rau củ ≥ 3.0',                   auto: true,  active: true },
-  { id: 'b03', icon: '🥦', name: 'Người xanh',     desc: 'Thử ≥ 3 loại rau xanh',              auto: true,  active: true },
-  { id: 'b04', icon: '👨‍🍳', name: 'Đại bếp nhí',   desc: 'Khay cơm được PH xác nhận ≥ 5 lần', auto: false, active: true },
-  { id: 'b05', icon: '⭐', name: 'Sao dinh dưỡng', desc: 'FAG tổng ≥ 5.0',                     auto: false, active: true },
-];
+/* Danh hiệu mặc định (DEFAULT_BADGES): xem js/seed.js */
 
 /* Điều kiện tự động theo mã danh hiệu */
 const BADGE_RULES = { b01: 'first_login', b02: 'rau_cu_fas', b03: 'xanh_la_foods' };
@@ -45,7 +38,7 @@ function bdNorm(s) {
 
 function getBadgeDefs() {
   const d = bdRead('mm_badges', null);
-  return Array.isArray(d) && d.length ? d : BADGE_DEFAULTS;
+  return Array.isArray(d) && d.length ? d : DEFAULT_BADGES;
 }
 
 function getBadgeLog() { return bdRead(BADGE_LOG_KEY, []); }

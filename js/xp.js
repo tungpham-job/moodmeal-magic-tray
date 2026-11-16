@@ -6,28 +6,11 @@
    - Mỗi lần cộng XP được ghi vào sổ mm_xp_log (kèm refId để không cộng trùng).
    - XP của học sinh = XP hiện có (account.xp, mặc định 185 như dữ liệu mẫu)
                        + tổng XP trong sổ.
-   Load SAU js/auth.js.
+   Load SAU js/seed.js và js/auth.js.
 ═══════════════════════════════════════════════ */
 
 const XP_LOG_KEY      = 'mm_xp_log';
-const XP_BASE_DEFAULT = 185;   // XP hiện có của học sinh mẫu, các lần cộng sẽ cộng dồn lên số này
-
-/* Dùng khi BGH chưa mở trang Thiết lập (chưa có mm_xp_config); trùng mặc định bên BGH */
-const XP_CONFIG_DEFAULT = {
-  levels: [
-    { level: 1, name: 'Người mới',        xpFrom: 0,   xpTo: 99,   unlock: 5  },
-    { level: 2, name: 'Người khám phá',   xpFrom: 100, xpTo: 299,  unlock: 15 },
-    { level: 3, name: 'Nhà thám hiểm',    xpFrom: 300, xpTo: 599,  unlock: 30 },
-    { level: 4, name: 'Đại sứ dinh dưỡng', xpFrom: 600, xpTo: 9999, unlock: 99 },
-  ],
-  actions: [
-    { id: 'first_try',      label: 'Thử món lần đầu',        xp: 15 },
-    { id: 'emoji_rate',     label: 'Đánh giá emoji',         xp: 5  },
-    { id: 'try_again',      label: 'Bấm TRY AGAIN',          xp: 3  },
-    { id: 'send_tray',      label: 'Gửi khay cơm cho ba mẹ', xp: 10 },
-    { id: 'parent_confirm', label: 'Ba mẹ xác nhận đã nấu',  xp: 20 },
-  ],
-};
+/* XP nền của học sinh mẫu (DEFAULT_XP_BASE) và cấu hình mặc định (DEFAULT_XP_CONFIG): xem js/seed.js */
 
 function xpRead(key, fallback) {
   try {
@@ -40,8 +23,8 @@ function xpRead(key, fallback) {
 function getXpConfig() {
   const c = xpRead('mm_xp_config', null);
   return {
-    levels:  c && Array.isArray(c.levels)  && c.levels.length  ? c.levels  : XP_CONFIG_DEFAULT.levels,
-    actions: c && Array.isArray(c.actions) && c.actions.length ? c.actions : XP_CONFIG_DEFAULT.actions,
+    levels:  c && Array.isArray(c.levels)  && c.levels.length  ? c.levels  : DEFAULT_XP_CONFIG.levels,
+    actions: c && Array.isArray(c.actions) && c.actions.length ? c.actions : DEFAULT_XP_CONFIG.actions,
   };
 }
 
@@ -55,7 +38,7 @@ function xpAmount(actionId) {
 /* ── XP của học sinh ──────────────────────────── */
 function getXpBase(studentId) {
   const acc = xpRead('mm_accounts', []).find(a => a.id === studentId);
-  return acc && typeof acc.xp === 'number' ? acc.xp : XP_BASE_DEFAULT;
+  return acc && typeof acc.xp === 'number' ? acc.xp : DEFAULT_XP_BASE;
 }
 
 /* Tổng XP đã cộng trong sổ cho học sinh */

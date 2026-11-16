@@ -1,7 +1,7 @@
 /* ═══════════════════════════════════════════════
    auth.js — MOODMEAL MAGIC TRAY v3
    Session management · Route protection · Seed data
-   Load trên MỌI trang (trừ login.html).
+   Load trên MỌI trang (trừ login.html), SAU js/seed.js.
    Cách dùng:
      const session = auth.check('student'); // redirect nếu sai role
      auth.logout();                         // xóa session → login
@@ -37,89 +37,16 @@
   window.Date = DemoDate;
 })();
 
-/* ── 1. Seed accounts (Demo) ─────────────────── */
-/*
-   Production: thay bằng API call đến api.gs
-   Demo: dữ liệu lưu localStorage key "mm_accounts"
-   Schema mỗi account:
-   {
-     id:       string   — mã đăng nhập
-     pass:     string   — mật khẩu (plain text cho demo)
-     role:     'admin' | 'student' | 'parent'
-     name:     string   — tên hiển thị
-     linkedId: string | null — student↔parent link
-     avatar:   string   — emoji đại diện
-   }
-*/
-const SEED_ACCOUNTS = [
-  {
-    id: 'admin',
-    pass: 'admin2026',
-    role: 'admin',
-    name: 'Ban Giám Hiệu',
-    linkedId: null,
-    avatar: '🏫'
-  },
-  {
-    id: 'phambaotruc',
-    pass: 'hs001',
-    role: 'student',
-    name: 'Phạm Bảo Trúc',
-    linkedId: 'phbaotruc',
-    avatar: '🧒'
-  },
-  {
-    id: 'nguyenminhan',
-    pass: 'hs002',
-    role: 'student',
-    name: 'Nguyễn Minh An',
-    linkedId: 'phminhan',
-    avatar: '🧒'
-  },
-  {
-    id: 'tranthanhkhoa',
-    pass: 'hs003',
-    role: 'student',
-    name: 'Trần Thanh Khoa',
-    linkedId: 'phthanhkhoa',
-    avatar: '🧒'
-  },
-  {
-    id: 'phbaotruc',
-    pass: 'ph001',
-    role: 'parent',
-    name: 'Phụ huynh Bảo Trúc',
-    linkedId: 'phambaotruc',
-    avatar: '👩'
-  },
-  {
-    id: 'phminhan',
-    pass: 'ph002',
-    role: 'parent',
-    name: 'Phụ huynh Minh An',
-    linkedId: 'nguyenminhan',
-    avatar: '👨'
-  },
-  {
-    id: 'phthanhkhoa',
-    pass: 'ph003',
-    role: 'parent',
-    name: 'Phụ huynh Thanh Khoa',
-    linkedId: 'tranthanhkhoa',
-    avatar: '👩'
-  }
-];
-
+/* ── 1. Tài khoản mẫu: xem SEED_ACCOUNTS trong js/seed.js (nạp TRƯỚC file này) ── */
 const STORAGE_KEY_ACCOUNTS = 'mm_accounts';
 const STORAGE_KEY_SESSION  = 'mm_session';
 const STORAGE_KEY_FLASH    = 'mm_flash';   // thông báo hiện ở trang đăng nhập sau khi bị đăng xuất
 
-/* ── 2. Khởi tạo seed vào localStorage ───────── */
-(function initSeed() {
-  if (!localStorage.getItem(STORAGE_KEY_ACCOUNTS)) {
-    localStorage.setItem(STORAGE_KEY_ACCOUNTS, JSON.stringify(SEED_ACCOUNTS));
-  }
-})();
+/* ── 2. Khởi tạo dữ liệu mặc định/mẫu vào localStorage (chỉ khóa còn thiếu) ─────
+   Hàm mmSeedAll() nằm trong js/seed.js; auth.js có mặt trên mọi trang nên đây là
+   điểm khởi tạo DUY NHẤT. */
+if (typeof mmSeedAll === 'function') mmSeedAll();
+else console.error('Thiếu js/seed.js: hãy nạp seed.js TRƯỚC auth.js trên trang này.');
 
 /* ── Tiện ích: ngày dạng YYYY-MM-DD theo giờ LOCAL ───
    Dùng thay cho toISOString().split('T')[0] (trả về ngày UTC,
