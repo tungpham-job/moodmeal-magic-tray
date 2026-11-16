@@ -1,7 +1,7 @@
 /* ═══════════════════════════════════════════════
    auth.js — MOODMEAL MAGIC TRAY v3
    Session management · Route protection · Seed data
-   Load trên MỌI trang (trừ login.html), SAU js/seed.js.
+   Load trên MỌI trang (trừ login.html), SAU config.js, seed.js, utils.js, store.js.
    Cách dùng:
      const session = auth.check('student'); // redirect nếu sai role
      auth.logout();                         // xóa session → login
@@ -17,7 +17,8 @@
   const RealDate = window.Date;
   window.MM_RealDate = RealDate;
   let ds = null;
-  try { ds = localStorage.getItem('mm_demo_date'); } catch (e) { return; }
+  if (typeof MM_CONFIG !== 'undefined' && MM_CONFIG.DEMO_MODE === false) return;   // bản chạy thật: không giả lập ngày
+  try { ds = store.getRaw(MM_KEYS.DEMO_DATE); } catch (e) { return; }
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ds || '');
   if (!m) return;
   const y = +m[1], mo = +m[2] - 1, d = +m[3];
@@ -38,9 +39,9 @@
 })();
 
 /* ── 1. Tài khoản mẫu: xem SEED_ACCOUNTS trong js/seed.js (nạp TRƯỚC file này) ── */
-const STORAGE_KEY_ACCOUNTS = 'mm_accounts';
-const STORAGE_KEY_SESSION  = 'mm_session';
-const STORAGE_KEY_FLASH    = 'mm_flash';   // thông báo hiện ở trang đăng nhập sau khi bị đăng xuất
+const STORAGE_KEY_ACCOUNTS = MM_KEYS.ACCOUNTS;
+const STORAGE_KEY_SESSION  = MM_KEYS.SESSION;
+const STORAGE_KEY_FLASH    = MM_KEYS.FLASH;   // thông báo hiện ở trang đăng nhập sau khi bị đăng xuất
 
 /* ── 2. Khởi tạo dữ liệu mặc định/mẫu vào localStorage (chỉ khóa còn thiếu) ─────
    Hàm mmSeedAll() nằm trong js/seed.js; auth.js có mặt trên mọi trang nên đây là
@@ -48,48 +49,24 @@ const STORAGE_KEY_FLASH    = 'mm_flash';   // thông báo hiện ở trang đăn
 if (typeof mmSeedAll === 'function') mmSeedAll();
 else console.error('Thiếu js/seed.js: hãy nạp seed.js TRƯỚC auth.js trên trang này.');
 
-/* ── Tiện ích: thoát ký tự HTML ─────────────────────
-   BẮT BUỘC dùng khi chèn chuỗi do người dùng nhập (tên khay, tên món, tên học sinh,
-   ghi chú…) vào innerHTML / template string. Dùng chung cho mọi trang. */
-function escHtml(s) {
-  return String(s == null ? '' : s).replace(/[&<>"']/g,
-    c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-}
-
-/* ── Tiện ích: ngày dạng YYYY-MM-DD theo giờ LOCAL ───
-   Dùng thay cho toISOString().split('T')[0] (trả về ngày UTC,
-   bị lệch 1 ngày ở UTC+7 khi giờ local < 07:00). */
-function toLocalDateStr(d) {
-  const yyyy = d.getFullYear();
-  const mm   = String(d.getMonth() + 1).padStart(2, '0');
-  const dd   = String(d.getDate()).padStart(2, '0');
-  return `${yyyy}-${mm}-${dd}`;
-}
+/* escHtml(), toLocalDateStr(): xem js/utils.js (nạp TRƯỚC file này) */
 
 /* ── 3. Đối tượng auth (public API) ─────────── */
 const auth = {
 
   /* Lấy session hiện tại (hoặc null) */
   getSession() {
-    try {
-      return JSON.parse(sessionStorage.getItem(STORAGE_KEY_SESSION));
-    } catch {
-      return null;
-    }
+    return sessionStore.get(STORAGE_KEY_SESSION, null);
   },
 
   /* Lấy danh sách accounts từ localStorage */
   getAccounts() {
-    try {
-      return JSON.parse(localStorage.getItem(STORAGE_KEY_ACCOUNTS)) || SEED_ACCOUNTS;
-    } catch {
-      return SEED_ACCOUNTS;
-    }
+    return store.get(STORAGE_KEY_ACCOUNTS, SEED_ACCOUNTS);
   },
 
   /* Lưu danh sách accounts (dùng cho School khi CRUD) */
   saveAccounts(accounts) {
-    localStorage.setItem(STORAGE_KEY_ACCOUNTS, JSON.stringify(accounts));
+    store.set(STORAGE_KEY_ACCOUNTS, accounts);
   },
 
   /*
@@ -158,7 +135,7 @@ const auth = {
       linkedId: user.linkedId
     };
 
-    sessionStorage.setItem(STORAGE_KEY_SESSION, JSON.stringify(session));
+    sessionStore.set(STORAGE_KEY_SESSION, session);
 
     const redirectMap = {
       admin:   'school/index.html',
@@ -171,7 +148,7 @@ const auth = {
 
   /* logout — xóa session → về trang đăng nhập */
   logout() {
-    sessionStorage.removeItem(STORAGE_KEY_SESSION);
+    sessionStore.remove(STORAGE_KEY_SESSION);
     this._redirectToLogin();
   },
 
@@ -189,15 +166,15 @@ const auth = {
     }
     const fresh = { role: acc.role, userId: acc.id, name: acc.name, avatar: acc.avatar, linkedId: acc.linkedId };
     if (JSON.stringify(fresh) !== JSON.stringify(session)) {
-      sessionStorage.setItem(STORAGE_KEY_SESSION, JSON.stringify(fresh));
+      sessionStore.set(STORAGE_KEY_SESSION, fresh);
     }
     return { ok: true, session: fresh, sig: JSON.stringify([acc.name, acc.avatar, acc.linkedId, acc.xp]) };
   },
 
   /* Kết thúc phiên (kèm lý do hiện ở trang đăng nhập) */
   _endSession(reason) {
-    sessionStorage.removeItem(STORAGE_KEY_SESSION);
-    if (reason) sessionStorage.setItem(STORAGE_KEY_FLASH, reason);
+    sessionStore.remove(STORAGE_KEY_SESSION);
+    if (reason) sessionStore.setRaw(STORAGE_KEY_FLASH, reason);
     if (document.body && document.body.classList.contains('page-login')) return;
     this._redirectToLogin();
   },

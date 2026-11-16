@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍱</text></svg>">
   <title>MOODMEAL MAGIC TRAY — Đăng nhập</title>
-  <link rel="stylesheet" href="css/base.css?v=20261116d">
+  <link rel="stylesheet" href="css/base.css?v=20261116e">
 </head>
 <body class="page-login">
 
@@ -97,16 +97,19 @@
 
   </div>
 
-  <!-- auth.js phải load TRƯỚC script bên dưới -->
-  <script src="js/seed.js?v=20261116d"></script>
-  <script src="js/auth.js?v=20261116d"></script>
+  <!-- Thứ tự bắt buộc: config → seed → utils → store → auth (auth.js phải load TRƯỚC script bên dưới) -->
+  <script src="js/config.js?v=20261116e"></script>
+  <script src="js/seed.js?v=20261116e"></script>
+  <script src="js/utils.js?v=20261116e"></script>
+  <script src="js/store.js?v=20261116e"></script>
+  <script src="js/auth.js?v=20261116e"></script>
   <script>
 
     /* Hiện lý do nếu vừa bị đăng xuất (tài khoản bị khóa, bị xóa, đổi vai trò) */
     (function showFlash() {
-      const msg = sessionStorage.getItem('mm_flash');
+      const msg = sessionStore.getRaw(MM_KEYS.FLASH);
       if (!msg) return;
-      sessionStorage.removeItem('mm_flash');
+      sessionStore.remove(MM_KEYS.FLASH);
       const err = document.getElementById('errorMsg');
       err.textContent = msg;
       err.classList.add('show');
@@ -139,7 +142,7 @@
     function realTodayStr() { return toLocalDateStr(new (window.MM_RealDate || Date)()); }
 
     function renderDemoDate() {
-      const sim  = localStorage.getItem('mm_demo_date');
+      const sim  = store.getRaw(MM_KEYS.DEMO_DATE);
       const inp  = document.getElementById('demoDate');
       const note = document.getElementById('demoDateNote');
       inp.value = sim || realTodayStr();
@@ -157,24 +160,30 @@
     }
 
     function setDemoDate(v) {
-      if (!v || v === realTodayStr()) localStorage.removeItem('mm_demo_date');
-      else localStorage.setItem('mm_demo_date', v);
+      if (!v || v === realTodayStr()) store.remove(MM_KEYS.DEMO_DATE);
+      else store.setRaw(MM_KEYS.DEMO_DATE, v);
       renderDemoDate();
     }
 
     function clearDemoDate() {
-      localStorage.removeItem('mm_demo_date');
+      store.remove(MM_KEYS.DEMO_DATE);
       renderDemoDate();
     }
-    renderDemoDate();
+    /* DEMO_MODE = false (js/config.js): bản chạy thật → bỏ khối tài khoản thử nghiệm / ngày demo / Đặt lại */
+    if (MM_CONFIG.DEMO_MODE === false) {
+      const demoBox = document.querySelector('.demo-info');
+      if (demoBox) demoBox.remove();
+    } else {
+      renderDemoDate();
+    }
 
     /* Đặt lại dữ liệu demo: chỉ xóa các khóa mm_* của MoodMeal (không đụng dữ liệu trang khác
        cùng tên miền), rồi tải lại. Tài khoản mẫu tự tạo lại ở auth.js; thực đơn, FAS, khay mẫu
        tự tạo khi mở trang BGH → mở tab BGH trước khi demo. */
     function resetDemoData() {
       if (!confirm('Xóa toàn bộ dữ liệu demo trên trình duyệt này và tạo lại dữ liệu mẫu?')) return;
-      [localStorage, sessionStorage].forEach(store => {
-        Object.keys(store).filter(k => k.indexOf('mm_') === 0).forEach(k => store.removeItem(k));
+      [localStorage, sessionStorage].forEach(area => {
+        Object.keys(area).filter(k => k.indexOf('mm_') === 0).forEach(k => area.removeItem(k));
       });
       mmSeedAll({ force: true });   /* hàm duy nhất ghi dữ liệu mẫu (js/seed.js) */
       const btn = document.getElementById('btnReset');

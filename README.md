@@ -29,7 +29,8 @@ rồi vào <http://localhost:8000/>. Bản chạy thật: GitHub Pages (chỉ ch
 ## Dữ liệu mẫu và đặt lại
 
 - Mọi dữ liệu mặc định/mẫu nằm trong **`js/seed.js`** (tài khoản, XP, danh hiệu, tiêu chí, nguyên liệu, thực đơn, nhật ký mẫu). Muốn thêm dữ liệu mẫu: sửa file này.
-- **Thứ tự nạp script bắt buộc trên mọi trang: `seed.js` trước `auth.js`** (thiếu `seed.js` trình duyệt sẽ báo lỗi trong Console).
+- **Thứ tự nạp script bắt buộc trên mọi trang: `config.js` → `seed.js` → `utils.js` → `store.js` → `auth.js`** (thiếu một file, trình duyệt báo lỗi trong Console).
+- Đổi **cấu trúc** dữ liệu: tăng `MM_SCHEMA_VERSION` trong `seed.js` và thêm hàm nâng cấp vào `MM_MIGRATIONS`; dữ liệu cũ trong trình duyệt tự được nâng cấp khi mở trang.
 - Lần đầu mở web trên một trình duyệt, dữ liệu mẫu tự được tạo (thực đơn có thêm món "Trứng chiên" cho ngày hôm nay).
 - Trang đăng nhập có nút **"↻ Đặt lại dữ liệu demo"** (xóa dữ liệu thử nghiệm, đưa "Ngày hôm nay" về ngày thật, tạo lại dữ liệu mẫu) và ô **"Ngày hôm nay"** để giả lập ngày khi demo.
 
@@ -39,8 +40,11 @@ rồi vào <http://localhost:8000/>. Bản chạy thật: GitHub Pages (chỉ ch
 index.html            trang đăng nhập (điểm vào)
 css/                  base.css (dùng chung) · student.css · school.css · parent.css
 js/
-  seed.js             dữ liệu mặc định + mẫu, hàm mmSeedAll()
-  auth.js             đăng nhập, session, bảo vệ trang, escHtml(), toLocalDateStr()
+  config.js           cờ MM_CONFIG.DEMO_MODE (true = bản demo; false = bản chạy thật)
+  seed.js             dữ liệu mặc định + mẫu, phiên bản dữ liệu, hàm mmSeedAll()
+  utils.js            escHtml(), toLocalDateStr(), normFood()
+  store.js            MM_KEYS (tên khóa) + store / sessionStore (đọc ghi localStorage / sessionStorage)
+  auth.js             đăng nhập, session, bảo vệ trang
   xp.js               sổ XP và Level (Học sinh + Phụ huynh)
   badges.js           danh hiệu (BGH + Phụ huynh)
 student/              giao diện Học sinh (index + screen1–3, js/)
@@ -53,9 +57,14 @@ MoodMeal_v3_Spec.md   đặc tả chi tiết (nằm trong Project STEMPETITION 2
 
 ## Quy tắc khi sửa code
 
+- Đọc/ghi dữ liệu chỉ qua `store` / `sessionStore` và tên khóa `MM_KEYS.*` (`js/store.js`); không gọi `localStorage` hay viết thẳng chuỗi `'mm_...'`.
 - Chuỗi người dùng nhập (tên khay, tên món, tên học sinh, ghi chú…) khi đưa vào `innerHTML` hoặc template string **phải bọc `escHtml()`**.
 - Ngày dùng `toLocalDateStr()`, không dùng `toISOString()` để lấy ngày.
 - Sau khi sửa file `.css`/`.js`, chạy `python tools/bump_version.py` để trình duyệt (GitHub Pages) tải bản mới, rồi bấm Ctrl+F5 khi kiểm tra.
+
+## Bản chạy thật (chưa có backend)
+
+Đổi `DEMO_MODE` thành `false` trong `js/config.js`: tắt đồng hồ demo, ẩn khối tài khoản thử nghiệm ở trang đăng nhập, và dữ liệu khởi tạo chỉ gồm mặc định hệ thống + tài khoản `admin` (BGH tự tạo tài khoản học sinh, phụ huynh).
 
 ## Kiểm thử
 

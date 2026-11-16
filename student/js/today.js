@@ -18,26 +18,10 @@ const GROUP_ICON = { 'Tinh bột': '🍚', 'Đạm': '🥩', 'Rau củ': '🥦',
 
 /* Hành tinh của một số món trong dữ liệu mẫu (dùng khi dòng FAS cũ chưa ghi
    hành tinh và tên món không có trong thực đơn). Khóa đã bỏ dấu, viết thường. */
-const FOOD_PLANET_SAMPLE = {
-  'ca rot': 'Rau củ', 'rau muong': 'Rau củ', 'ca chua': 'Rau củ',
-  'bong cai xanh': 'Xanh lá', 'bong cai': 'Xanh lá',
-  'thit ga': 'Đạm', 'trung kho': 'Đạm', 'ca kho': 'Đạm', 'thit heo': 'Đạm',
-};
-
 /* ── Tiện ích ─────────────────────────────────── */
-function readJson(key, fallback) {
-  try { return JSON.parse(localStorage.getItem(key)) || fallback; }
-  catch (e) { return fallback; }
-}
+function readJson(key, fallback) { return store.get(key, fallback); }
 
 /* Chuẩn hóa tên món để so khớp: bỏ dấu, viết thường, gọn khoảng trắng */
-function normFood(s) {
-  return String(s || '')
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    .replace(/đ/g, 'd').replace(/Đ/g, 'D')
-    .toLowerCase().replace(/\s+/g, ' ').trim();
-}
-
 function slugFood(s) {
   return normFood(s).replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 }
@@ -45,7 +29,7 @@ function slugFood(s) {
 /* ── Thực đơn hôm nay ─────────────────────────── */
 function getTodayMenu() {
   const today = toLocalDateStr(new Date());
-  return readJson('mm_daily_menu', []).filter(m => m.date === today);
+  return readJson(MM_KEYS.MENU, []).filter(m => m.date === today);
 }
 
 /* Món mục tiêu: món MỚI đầu tiên của hôm nay; không có thì món đầu tiên */
@@ -63,7 +47,7 @@ function foodIcon(item) {
    Mỗi món trong thực đơn gắn với một nguyên liệu chính (item.ingredientId).
    FAS được theo dõi theo nguyên liệu, nên tên món mỗi ngày có khác cũng nối đúng. */
 function getIngredient(id) {
-  return readJson('mm_ingredients', []).find(g => g.id === id) || null;
+  return readJson(MM_KEYS.INGREDIENTS, []).find(g => g.id === id) || null;
 }
 
 /* Khóa theo dõi FAS của một món trong thực đơn: id nguyên liệu; món cũ chưa có thì dùng tên */
@@ -83,7 +67,7 @@ function canonicalFoodOf(item) {
 /* Các lần thử của học sinh với món trong thực đơn (theo nguyên liệu) */
 function foodHistoryOf(studentId, item) {
   if (item && item.ingredientId) {
-    return readJson('mm_fas_log', [])
+    return readJson(MM_KEYS.FAS_LOG, [])
       .filter(r => r.studentId === studentId && r.foodId === item.ingredientId)
       .sort((a, b) => a.attempt - b.attempt);
   }
@@ -94,7 +78,7 @@ function foodHistoryOf(studentId, item) {
 /* Các lần thử của một học sinh với một món (so khớp theo tên), theo thứ tự lần thử */
 function foodHistory(studentId, name) {
   const n = normFood(name);
-  return readJson('mm_fas_log', [])
+  return readJson(MM_KEYS.FAS_LOG, [])
     .filter(r => r.studentId === studentId && normFood(r.foodName) === n)
     .sort((a, b) => a.attempt - b.attempt);
 }
@@ -103,7 +87,7 @@ function foodHistory(studentId, name) {
    (Phụ huynh, Báo cáo BGH) gom đúng một món; chưa có thì tạo mới từ tên. */
 function canonicalFood(name) {
   const n = normFood(name);
-  const hit = readJson('mm_fas_log', []).find(r => normFood(r.foodName) === n);
+  const hit = readJson(MM_KEYS.FAS_LOG, []).find(r => normFood(r.foodName) === n);
   return hit ? { id: hit.foodId, name: hit.foodName }
              : { id: slugFood(name), name: String(name).trim() };
 }
@@ -111,16 +95,16 @@ function canonicalFood(name) {
 /* Hành tinh của một món (theo tên): thực đơn BGH trước, rồi bảng dữ liệu mẫu */
 function planetOfName(name) {
   const n = normFood(name);
-  const fromMenu = readJson('mm_daily_menu', [])
+  const fromMenu = readJson(MM_KEYS.MENU, [])
     .filter(m => m.planet && normFood(m.name) === n)
     .sort((a, b) => String(b.date).localeCompare(String(a.date)))[0];
-  return (fromMenu && fromMenu.planet) || FOOD_PLANET_SAMPLE[n] || null;
+  return (fromMenu && fromMenu.planet) || LEGACY_FOOD_PLANET[n] || null;
 }
 
 /* Các món bé đã thử (mỗi món một dòng), kèm hành tinh và lần thử gần nhất */
 function studentFoods(studentId) {
   const byName = {};
-  readJson('mm_fas_log', []).filter(r => r.studentId === studentId).forEach(r => {
+  readJson(MM_KEYS.FAS_LOG, []).filter(r => r.studentId === studentId).forEach(r => {
     const n = r.foodId || normFood(r.foodName);
     const o = byName[n] || (byName[n] = { name: r.foodName, planet: null, latest: r });
     if (r.attempt >= o.latest.attempt) o.latest = r;

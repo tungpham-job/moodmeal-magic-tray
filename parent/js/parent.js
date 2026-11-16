@@ -5,13 +5,8 @@
 ═══════════════════════════════════════════════ */
 
 /* ── Storage helpers ─────────────────────────── */
-function load(key, fallback) {
-  try { return JSON.parse(localStorage.getItem(key)) ?? fallback; }
-  catch { return fallback; }
-}
-function save(key, data) {
-  localStorage.setItem(key, JSON.stringify(data));
-}
+function load(key, fallback) { return store.get(key, fallback); }
+function save(key, data)     { store.set(key, data); }
 
 /* ── Session & linked student ────────────────── */
 let SESSION   = null;
@@ -74,7 +69,7 @@ let FAS_SEL_FOOD = null;
 const FAS_TREND_MARK = { up: '▲', down: '▼', mixed: '▲▼', same: '•' };
 
 function buildFasDays() {
-  const myLog = load('mm_fas_log', []).filter(r => r.studentId === STUDENT?.id);
+  const myLog = load(MM_KEYS.FAS_LOG, []).filter(r => r.studentId === STUDENT?.id);
   const byFood = {};
   myLog.forEach(r => { const k = r.foodId || r.foodName; (byFood[k] = byFood[k] || []).push(r); });
 
@@ -266,16 +261,16 @@ function refreshStudentInfo() {
 
 /* XP, danh hiệu hoặc thông tin của con đổi ở tab khác (học sinh, BGH) → cập nhật ngay */
 window.addEventListener('storage', e => {
-  const keys = ['mm_xp_log', 'mm_xp_config', 'mm_badges_log', 'mm_badges', 'mm_fas_log', 'mm_accounts'];
+  const keys = [MM_KEYS.XP_LOG, MM_KEYS.XP_CONFIG, MM_KEYS.BADGES_LOG, MM_KEYS.BADGES, MM_KEYS.FAS_LOG, MM_KEYS.ACCOUNTS];
   if (e.key !== null && keys.indexOf(e.key) === -1) return;
   if (!STUDENT) return;
-  if (e.key === null || e.key === 'mm_accounts') refreshStudentInfo();
+  if (e.key === null || e.key === MM_KEYS.ACCOUNTS) refreshStudentInfo();
   renderChildCard();
 });
 
 /* uptoAttempt: chỉ tính các lần thử đến lần này (lần của ngày được chọn) */
 function renderFasChart(foodName, uptoAttempt) {
-  const fasLog = load('mm_fas_log', []);
+  const fasLog = load(MM_KEYS.FAS_LOG, []);
   const entries = fasLog
     .filter(r => r.studentId === STUDENT?.id && r.foodName === foodName)
     .filter(r => uptoAttempt == null || r.attempt <= uptoAttempt)
@@ -317,7 +312,7 @@ function renderFasChart(foodName, uptoAttempt) {
    SECTION ② — Gợi ý nấu ăn hôm nay
 ══════════════════════════════════════════════ */
 function renderSection2() {
-  const trayLog = load('mm_tray_log', []);
+  const trayLog = load(MM_KEYS.TRAY_LOG, []);
 
   // Lấy khay mới nhất của con, chưa xác nhận (parentConfirmed === null)
   const myTrays = trayLog
@@ -394,7 +389,7 @@ function groupLabel(g) {
 
 /* Mỗi khay chỉ được phản hồi một lần: đọc lại từ nhật ký (phòng bấm hai lần hoặc đã trả lời ở tab khác) */
 function trayAlreadyAnswered() {
-  const cur = load('mm_tray_log', []).find(t => t.id === TRAY_ITEM.id);
+  const cur = load(MM_KEYS.TRAY_LOG, []).find(t => t.id === TRAY_ITEM.id);
   if (cur && cur.parentConfirmed !== null && cur.parentConfirmed !== undefined) {
     showToast('Khay này ba mẹ đã phản hồi rồi');
     renderSection2();
@@ -450,18 +445,18 @@ function notCooked() {
 
 /* Cập nhật tray_log theo id */
 function updateTrayLog(id, patch) {
-  const log = load('mm_tray_log', []);
+  const log = load(MM_KEYS.TRAY_LOG, []);
   const idx = log.findIndex(t => t.id === id);
   if (idx === -1) return;
   log[idx] = { ...log[idx], ...patch };
-  save('mm_tray_log', log);
+  save(MM_KEYS.TRAY_LOG, log);
 }
 
 /* ══════════════════════════════════════════════
    SECTION ③ — Lịch sử xác nhận
 ══════════════════════════════════════════════ */
 function renderSection3() {
-  const trayLog = load('mm_tray_log', []);
+  const trayLog = load(MM_KEYS.TRAY_LOG, []);
   const myTrays = trayLog
     .filter(t => t.studentId === STUDENT?.id && t.sentAt)
     .sort((a, b) => new Date(b.sentAt) - new Date(a.sentAt))

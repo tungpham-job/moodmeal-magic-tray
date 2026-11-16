@@ -84,6 +84,7 @@ def run(browser, base):
     menu = ls('mm_daily_menu') or []
     check('có đúng 1 món "Trứng chiên" (hôm nay)', sum(m['name'] == 'Trứng chiên' for m in menu) == 1)
     check('chưa đăng nhập thì về trang đăng nhập', page.url.endswith('/index.html'), page.url)
+    check('ghi số phiên bản dữ liệu mm_schema_version = 1', ls('mm_schema_version') == 1, ls('mm_schema_version'))
 
     print('2. Đăng nhập 3 vai trò')
     check('học sinh → student/index.html', login('phambaotruc', 'hs001') == '/student/index.html')
@@ -159,7 +160,53 @@ def run(browser, base):
     check('có đúng 1 "Trứng chiên" và đủ 7 tài khoản',
           sum(m['name'] == 'Trứng chiên' for m in menu) == 1 and len(ls('mm_accounts')) == 7)
 
-    print('8. Lỗi trình duyệt trong cả phiên')
+    print('8. Lớp dữ liệu và phiên bản dữ liệu')
+    login('phambaotruc', 'hs001')
+    before = len(problems)
+    page.evaluate("localStorage.setItem('mm_fas_log', '{{khong-phai-json')")
+    page.evaluate("localStorage.setItem('mm_tray_log', 'null')")
+    for s_ in ('index', 'screen1', 'screen2', 'screen3'):
+        page.goto(f'{base}/student/{s_}.html'); page.wait_for_timeout(400)
+    check('khóa hỏng JSON không làm sập trang Học sinh', len(problems) == before, problems[before:][:3])
+    page.goto(base + '/index.html'); page.evaluate('sessionStorage.clear()'); page.reload()
+    page.click('#btnReset'); page.wait_for_timeout(1200)
+    cfg = ls('mm_xp_config'); cfg['actions'][0]['xp'] = 88
+    page.evaluate("c => localStorage.setItem('mm_xp_config', JSON.stringify(c))", cfg)
+    page.evaluate("localStorage.removeItem('mm_schema_version')")           # dữ liệu cũ chưa có số phiên bản
+    page.reload(); page.wait_for_timeout(400)
+    check('dữ liệu cũ không có phiên bản: ghi v1, không đổi dữ liệu',
+          ls('mm_schema_version') == 1 and ls('mm_xp_config')['actions'][0]['xp'] == 88)
+    page.evaluate("localStorage.setItem('mm_schema_version', '99')")
+    page.evaluate("localStorage.removeItem('mm_badges')")
+    page.reload(); page.wait_for_timeout(400)
+    check('dữ liệu mới hơn code (v99): không bị ghi đè hay seed lại',
+          ls('mm_schema_version') == 99 and ls('mm_badges') is None)
+    page.click('#btnReset'); page.wait_for_timeout(1200)
+    check('Đặt lại đưa phiên bản về v1', ls('mm_schema_version') == 1)
+
+    print('9. DEMO_MODE = false (bản chạy thật)')
+    ctx2 = browser.new_context()
+    p2 = ctx2.new_page()
+    p2.on('pageerror', lambda e: problems.append(f'[demo off] {e}'))
+    p2.route('**/js/config.js*', lambda r: r.fulfill(content_type='application/javascript',
+                                                      body='const MM_CONFIG = { DEMO_MODE: false };'))
+    p2.goto(base + '/index.html'); p2.wait_for_timeout(500)
+    ls2 = lambda k: json.loads(p2.evaluate(f"localStorage.getItem('{k}')") or 'null')
+    check('ẩn khối tài khoản thử nghiệm / ngày hôm nay / Đặt lại', p2.locator('.demo-info').count() == 0)
+    accs = ls2('mm_accounts') or []
+    check('chỉ có tài khoản admin', [a['role'] for a in accs] == ['admin'], [a['role'] for a in accs])
+    check('không có nhật ký, khay, tiêu chí, thực đơn mẫu',
+          all(ls2(k) == [] for k in ('mm_fas_log', 'mm_tray_log', 'mm_grading_criteria', 'mm_daily_menu')))
+    check('vẫn có mặc định hệ thống (XP, danh hiệu, nguyên liệu)',
+          bool(ls2('mm_xp_config')) and bool(ls2('mm_badges')) and bool(ls2('mm_ingredients')))
+    p2.evaluate("localStorage.setItem('mm_demo_date', '2026-12-25')"); p2.reload(); p2.wait_for_timeout(300)
+    same = p2.evaluate("toLocalDateStr(new Date()) === toLocalDateStr(new MM_RealDate())")
+    check('bỏ qua ngày giả lập (đồng hồ demo tắt)', same)
+    p2.fill('#username', 'admin'); p2.fill('#password', 'admin2026'); p2.click('#btnSubmit'); p2.wait_for_timeout(1000)
+    check('admin vẫn đăng nhập được', p2.url.endswith('/school/index.html'), p2.url)
+    ctx2.close()
+
+    print('10. Lỗi trình duyệt trong cả phiên')
     check('không có lỗi JS / 404 / console error', not problems, problems[:5])
 
 

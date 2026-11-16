@@ -1,27 +1,22 @@
 /* ═══════════════════════════════════════════════
    xp.js — Sổ XP và Level (dùng chung Học sinh + Phụ huynh)
 
-   - Số XP và Level lấy theo cấu hình của BGH (localStorage mm_xp_config):
+   - Số XP và Level lấy theo cấu hình của BGH (localStorage, khóa MM_KEYS.XP_CONFIG):
      bảng "XP theo hành động" và bảng "Cấu hình Level".
    - Mỗi lần cộng XP được ghi vào sổ mm_xp_log (kèm refId để không cộng trùng).
    - XP của học sinh = XP hiện có (account.xp, mặc định 185 như dữ liệu mẫu)
                        + tổng XP trong sổ.
-   Load SAU js/seed.js và js/auth.js.
+   Load SAU js/seed.js, js/utils.js, js/store.js và js/auth.js.
 ═══════════════════════════════════════════════ */
 
-const XP_LOG_KEY      = 'mm_xp_log';
+const XP_LOG_KEY      = MM_KEYS.XP_LOG;
 /* XP nền của học sinh mẫu (DEFAULT_XP_BASE) và cấu hình mặc định (DEFAULT_XP_CONFIG): xem js/seed.js */
 
-function xpRead(key, fallback) {
-  try {
-    const v = JSON.parse(localStorage.getItem(key));
-    return v === null || v === undefined ? fallback : v;
-  } catch (e) { return fallback; }
-}
+function xpRead(key, fallback) { return store.get(key, fallback); }
 
 /* ── Cấu hình của BGH ─────────────────────────── */
 function getXpConfig() {
-  const c = xpRead('mm_xp_config', null);
+  const c = xpRead(MM_KEYS.XP_CONFIG, null);
   return {
     levels:  c && Array.isArray(c.levels)  && c.levels.length  ? c.levels  : DEFAULT_XP_CONFIG.levels,
     actions: c && Array.isArray(c.actions) && c.actions.length ? c.actions : DEFAULT_XP_CONFIG.actions,
@@ -37,7 +32,7 @@ function xpAmount(actionId) {
 
 /* ── XP của học sinh ──────────────────────────── */
 function getXpBase(studentId) {
-  const acc = xpRead('mm_accounts', []).find(a => a.id === studentId);
+  const acc = xpRead(MM_KEYS.ACCOUNTS, []).find(a => a.id === studentId);
   return acc && typeof acc.xp === 'number' ? acc.xp : DEFAULT_XP_BASE;
 }
 
@@ -93,8 +88,7 @@ function awardXpBatch(studentId, list) {
   });
 
   if (awarded) {
-    try { localStorage.setItem(XP_LOG_KEY, JSON.stringify(log)); }
-    catch (e) { console.warn('Could not write mm_xp_log', e); awarded = 0; }
+    if (!store.set(XP_LOG_KEY, log)) awarded = 0;
   }
 
   const after = getLevelInfo(getStudentXp(studentId));
@@ -124,14 +118,13 @@ function refreshXpDisplay(studentId, name) {
 
 /* Đọc lại XP mới nhất cho học sinh đang đăng nhập (an toàn với trang không có thanh XP) */
 function refreshXpFromSession() {
-  let session = null;
-  try { session = JSON.parse(sessionStorage.getItem('mm_session')); } catch (err) {}
+  const session = sessionStore.get(MM_KEYS.SESSION, null);
   if (session && session.role === 'student') refreshXpDisplay(session.userId, session.name);
 }
 
 /* Tab khác (phụ huynh, BGH) đổi XP hoặc bảng cấu hình → cập nhật ngay trên màn Học sinh */
 window.addEventListener('storage', e => {
-  if (['mm_xp_log', 'mm_xp_config', 'mm_accounts'].indexOf(e.key) === -1) return;
+  if ([MM_KEYS.XP_LOG, MM_KEYS.XP_CONFIG, MM_KEYS.ACCOUNTS].indexOf(e.key) === -1) return;
   refreshXpFromSession();
 });
 

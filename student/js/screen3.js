@@ -142,7 +142,7 @@ function buildTrayData() {
 
 /* ── Write to tray_log ───────────────────────── */
 function writeTrayLog(trayName) {
-  const KEY = 'mm_tray_log';
+  const KEY = MM_KEYS.TRAY_LOG;
   const session = auth.getSession();
   const accounts = auth.getAccounts();
   const acc = accounts.find(a => a.id === session?.userId);
@@ -161,13 +161,9 @@ function writeTrayLog(trayName) {
     schoolNote:      '',
   };
 
-  try {
-    const log = JSON.parse(localStorage.getItem(KEY)) || [];
-    log.push(entry);
-    localStorage.setItem(KEY, JSON.stringify(log));
-  } catch (e) {
-    console.warn('Could not write tray_log', e);
-  }
+  const log = store.get(KEY, []);
+  log.push(entry);
+  store.set(KEY, log);
 
   return entry;
 }
@@ -177,10 +173,8 @@ function trayToday() {
   const session = auth.getSession();
   if (!session) return null;
   const today = toLocalDateStr(new Date());
-  try {
-    return (JSON.parse(localStorage.getItem('mm_tray_log')) || []).find(t =>
-      t.studentId === session.userId && t.sentAt && toLocalDateStr(new Date(t.sentAt)) === today) || null;
-  } catch (e) { return null; }
+  return store.get(MM_KEYS.TRAY_LOG, []).find(t =>
+    t.studentId === session.userId && t.sentAt && toLocalDateStr(new Date(t.sentAt)) === today) || null;
 }
 
 function lockTrayIfSentToday() {

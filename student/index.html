@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍱</text></svg>">
   <title>MoodMeal Magic Tray</title>
-  <link rel="stylesheet" href="../css/base.css?v=20261116d">
-  <link rel="stylesheet" href="../css/student.css?v=20261116d">
+  <link rel="stylesheet" href="../css/base.css?v=20261116e">
+  <link rel="stylesheet" href="../css/student.css?v=20261116e">
 </head>
 <body class="page-student">
 <div class="phone-frame">
@@ -89,10 +89,13 @@
   </nav>
 </div>
 
-<script src="../js/seed.js?v=20261116d"></script>
-<script src="../js/auth.js?v=20261116d"></script>
-<script src="../js/xp.js?v=20261116d"></script>
-<script src="js/nav.js?v=20261116d"></script>
+<script src="../js/config.js?v=20261116e"></script>
+<script src="../js/seed.js?v=20261116e"></script>
+<script src="../js/utils.js?v=20261116e"></script>
+<script src="../js/store.js?v=20261116e"></script>
+<script src="../js/auth.js?v=20261116e"></script>
+<script src="../js/xp.js?v=20261116e"></script>
+<script src="js/nav.js?v=20261116e"></script>
 <script>
   /* Auth guard */
   const SESSION = auth.check('student');
@@ -108,8 +111,7 @@
     const today = toLocalDateStr(new Date());
     const groupIcons = { 'Tinh bột':'🍚', 'Đạm':'🥩', 'Rau củ':'🥦', 'Canh':'🍲' };
 
-    let menu = [];
-    try { menu = JSON.parse(localStorage.getItem('mm_daily_menu')) || []; } catch {}
+    const menu = store.get(MM_KEYS.MENU, []);
 
     const todayItems = menu.filter(m => m.date === today);
     const grid = document.getElementById('menuGrid');

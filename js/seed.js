@@ -1,9 +1,9 @@
 /* ═══════════════════════════════════════════════════════════════
    seed.js — NGUỒN DUY NHẤT của dữ liệu mặc định và dữ liệu mẫu (demo)
 
-   Nạp ĐẦU TIÊN trên mọi trang, TRƯỚC js/auth.js:
-     <script src="…/js/seed.js"></script>
-     <script src="…/js/auth.js"></script>
+   Thứ tự nạp script trên MỌI trang (bắt buộc):
+     config.js → seed.js → utils.js → store.js → auth.js
+   (seed.js chỉ khai báo dữ liệu và hàm; mmSeedAll() được auth.js gọi sau khi store.js sẵn sàng.)
 
    Quy ước:
    • File này chỉ CHỨA dữ liệu và hàm ghi dữ liệu. Các file khác không tự định nghĩa lại
@@ -11,7 +11,9 @@
      làm giá trị dự phòng.
    • Khi chạy thật, BGH sửa cấu hình thì giá trị mới nằm trong localStorage; seed chỉ được
      ghi khi khóa chưa tồn tại (lần mở đầu) hoặc khi bấm "Đặt lại dữ liệu demo".
-   • Muốn thêm dữ liệu mẫu mới: thêm hằng số ở đây + một dòng trong MM_SEEDS bên dưới.
+   • Muốn thêm dữ liệu mẫu mới: thêm hằng số ở đây + một dòng trong mmSeedPlan() bên dưới.
+   • Đổi CẤU TRÚC dữ liệu: tăng MM_SCHEMA_VERSION và thêm hàm nâng cấp vào MM_MIGRATIONS.
+   • Cờ MM_CONFIG.DEMO_MODE (js/config.js): false → chỉ tạo mặc định hệ thống + tài khoản admin.
 
    PHẦN A — Mặc định hệ thống (cấu hình ban đầu)
    PHẦN B — Dữ liệu mẫu cho demo
@@ -234,34 +236,73 @@ const DEFAULT_TRAY_LOG = [
   },
 ];
 
+/* Hành tinh của các món mẫu cũ (khóa đã bỏ dấu), dùng khi dòng FAS/thực đơn chưa ghi hành tinh.
+   Dự phòng cho dữ liệu cũ; dùng chung cho student/js/today.js và js/badges.js. */
+const LEGACY_FOOD_PLANET = {
+  'ca rot': 'Rau củ', 'rau muong': 'Rau củ', 'ca chua': 'Rau củ',
+  'bong cai xanh': 'Xanh lá', 'bong cai': 'Xanh lá',
+  'thit ga': 'Đạm', 'trung kho': 'Đạm', 'ca kho': 'Đạm', 'thit heo': 'Đạm',
+};
+
 /* ═════════════ PHẦN C — KHỞI TẠO ═════════════ */
 
-/* Khóa localStorage → hàm trả về giá trị mẫu (hàm, để lấy "hôm nay" tại thời điểm ghi) */
-const MM_SEEDS = [
-  ['mm_accounts',         () => SEED_ACCOUNTS],
-  ['mm_xp_config',        () => DEFAULT_XP_CONFIG],
-  ['mm_badges',           () => DEFAULT_BADGES],
-  ['mm_grading_criteria', () => DEFAULT_CRITERIA],
-  ['mm_fas_log',          () => DEFAULT_FAS_LOG],
-  ['mm_tray_log',         () => DEFAULT_TRAY_LOG],
-];
+/* Phiên bản cấu trúc dữ liệu trong localStorage (khóa mm_schema_version).
+   v1 = cấu trúc hiện tại (thực đơn có ingredientId, FAS có foodId + thang 4/3/2/1).
+   Dữ liệu cũ chưa có số phiên bản được coi là v0 và nâng lên v1 mà không đổi dữ liệu
+   (các file đọc dữ liệu vẫn xử lý được dòng cũ). Muốn đổi cấu trúc: tăng số này và thêm
+   MM_MIGRATIONS[n] = function () {…}  — hàm nâng dữ liệu từ bản n-1 lên bản n. */
+const MM_SCHEMA_VERSION = 1;
+const MM_MIGRATIONS = {
+  // 2: function () { /* ví dụ: thêm trường mới vào mm_daily_menu */ },
+};
 
-/* HÀM DUY NHẤT thiết lập dữ liệu mặc định/mẫu.
-   • mmSeedAll()              — chỉ ghi khóa còn THIẾU (gọi từ js/auth.js trên mọi trang).
+/* Kế hoạch dữ liệu khởi tạo: [khóa, hàm trả về giá trị].
+   DEMO_MODE = false → chỉ phần mặc định hệ thống + tài khoản admin, danh sách còn lại để trống. */
+function mmSeedPlan() {
+  const K = MM_KEYS;
+  const demo = !(typeof MM_CONFIG !== 'undefined' && MM_CONFIG.DEMO_MODE === false);
+  return [
+    [K.XP_CONFIG,   () => DEFAULT_XP_CONFIG],
+    [K.BADGES,      () => DEFAULT_BADGES],
+    [K.ACCOUNTS,    () => (demo ? SEED_ACCOUNTS : SEED_ACCOUNTS.filter(a => a.role === 'admin'))],
+    [K.CRITERIA,    () => (demo ? DEFAULT_CRITERIA : [])],
+    [K.FAS_LOG,     () => (demo ? DEFAULT_FAS_LOG : [])],
+    [K.TRAY_LOG,    () => (demo ? DEFAULT_TRAY_LOG : [])],
+  ];
+}
+
+/* HÀM DUY NHẤT thiết lập dữ liệu mặc định/mẫu (gọi từ js/auth.js trên mọi trang).
+   • mmSeedAll()              — ghi các khóa còn THIẾU, rồi nâng cấp cấu trúc nếu cần.
    • mmSeedAll({force:true})  — ghi lại TẤT CẢ (nút "Đặt lại dữ liệu demo").
-   Nguyên liệu và thực đơn đi cặp: thiếu một trong hai thì ghi lại cả hai,
-   kèm món "Trứng chiên" cho hôm nay. */
+   Nguyên liệu và thực đơn đi cặp: thiếu một trong hai thì ghi lại cả hai
+   (demo: kèm món "Trứng chiên" cho hôm nay). */
 function mmSeedAll(opts) {
   const force = !!(opts && opts.force);
-  const missing = key => !localStorage.getItem(key);
-  const put = (key, value) => localStorage.setItem(key, JSON.stringify(value));
+  const K = MM_KEYS;
+  const demo = !(typeof MM_CONFIG !== 'undefined' && MM_CONFIG.DEMO_MODE === false);
   try {
-    MM_SEEDS.forEach(([key, make]) => { if (force || missing(key)) put(key, make()); });
-    if (force || missing('mm_ingredients') || missing('mm_daily_menu')) {
-      put('mm_ingredients', DEFAULT_INGREDIENTS);
-      put('mm_daily_menu', mmDemoMenuWithToday());
+    const stored = store.get(K.SCHEMA, null);
+    if (!force && typeof stored === 'number' && stored > MM_SCHEMA_VERSION) {
+      console.warn('Dữ liệu trong trình duyệt mới hơn code (v' + stored + ' > v' + MM_SCHEMA_VERSION +
+                   '): không thay đổi. Hãy tải lại trang bằng Ctrl+F5.');
+      return;
     }
+    const plan = mmSeedPlan();
+    const hadData = plan.some(([key]) => store.has(key)) || store.has(K.MENU) || store.has(K.INGREDIENTS);
+
+    plan.forEach(([key, make]) => { if (force || !store.has(key)) store.set(key, make()); });
+    if (force || !store.has(K.INGREDIENTS) || !store.has(K.MENU)) {
+      store.set(K.INGREDIENTS, DEFAULT_INGREDIENTS);
+      store.set(K.MENU, demo ? mmDemoMenuWithToday() : []);
+    }
+
+    // Nâng cấp cấu trúc: máy mới/đặt lại đã ở bản hiện tại; dữ liệu cũ chưa có số phiên bản = v0
+    let ver = (typeof stored === 'number' && !force) ? stored : (hadData && !force ? 0 : MM_SCHEMA_VERSION);
+    for (let v = ver + 1; v <= MM_SCHEMA_VERSION; v++) {
+      if (typeof MM_MIGRATIONS[v] === 'function') MM_MIGRATIONS[v]();
+    }
+    store.set(K.SCHEMA, MM_SCHEMA_VERSION);
   } catch (e) {
-    console.warn('Không ghi được dữ liệu mẫu vào localStorage', e);
+    console.warn('Không khởi tạo được dữ liệu mẫu', e);
   }
 }

@@ -52,7 +52,7 @@ function isToday(ts) {
 function findTodayEntry(f) {
   const session = auth.getSession();
   if (!session) return null;
-  return readJson('mm_fas_log', []).find(r =>
+  return readJson(MM_KEYS.FAS_LOG, []).find(r =>
     r.studentId === session.userId && isToday(r.timestamp) &&
     (r.foodId === f.id || normFood(r.foodName) === normFood(f.name))) || null;
 }
@@ -186,7 +186,7 @@ function writeFasLog(f, rating, score) {
   const session = auth.getSession();
   if (!session || !f) return null;
 
-  const log = readJson('mm_fas_log', []);
+  const log = readJson(MM_KEYS.FAS_LOG, []);
   const attempts = log
     .filter(r => r.studentId === session.userId && (r.foodId === f.id || normFood(r.foodName) === normFood(f.name)))
     .map(r => r.attempt);
@@ -204,13 +204,8 @@ function writeFasLog(f, rating, score) {
     timestamp: new Date().toISOString(),
   };
 
-  try {
-    log.push(entry);
-    localStorage.setItem('mm_fas_log', JSON.stringify(log));
-  } catch (e) {
-    console.warn('Could not write mm_fas_log', e);
-    return null;
-  }
+  log.push(entry);
+  if (!store.set(MM_KEYS.FAS_LOG, log)) return null;
   return entry;
 }
 

@@ -6,24 +6,19 @@
 
 /* ── Storage keys ───────────────────────────── */
 const KEY = {
-  ACCOUNTS:  'mm_accounts',
-  MENU:      'mm_daily_menu',
-  INGREDIENTS: 'mm_ingredients',
-  XP_CONFIG: 'mm_xp_config',
-  BADGES:    'mm_badges',
-  CRITERIA:  'mm_grading_criteria',
-  FAS_LOG:   'mm_fas_log',
-  TRAY_LOG:  'mm_tray_log',
+  ACCOUNTS:  MM_KEYS.ACCOUNTS,
+  MENU:      MM_KEYS.MENU,
+  INGREDIENTS: MM_KEYS.INGREDIENTS,
+  XP_CONFIG: MM_KEYS.XP_CONFIG,
+  BADGES:    MM_KEYS.BADGES,
+  CRITERIA:  MM_KEYS.CRITERIA,
+  FAS_LOG:   MM_KEYS.FAS_LOG,
+  TRAY_LOG:  MM_KEYS.TRAY_LOG,
 };
 
 /* ── Seed data helpers ───────────────────────── */
-function loadKey(key, fallback) {
-  try { return JSON.parse(localStorage.getItem(key)) || fallback; }
-  catch { return fallback; }
-}
-function saveKey(key, data) {
-  localStorage.setItem(key, JSON.stringify(data));
-}
+function loadKey(key, fallback) { return store.get(key, fallback); }
+function saveKey(key, data)     { store.set(key, data); }
 
 /* Dữ liệu mặc định / mẫu (DEFAULT_*) nằm ở js/seed.js; hàm mmSeedAll() ghi vào localStorage khi chưa có. */
 
@@ -84,10 +79,6 @@ function switchModule(name) {
 /* ══════════════════════════════════════════════
    MODULE ① — TÀI KHOẢN
 ══════════════════════════════════════════════ */
-function escAttr(t) {
-  return String(t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-}
-
 function renderAccounts() {
   const accounts = auth.getAccounts();
   const tbody = document.getElementById('accountsTbody');
@@ -107,11 +98,11 @@ function renderAccounts() {
       const info   = getLevelInfo(getStudentXp(acc.id));
       const earned = getEarnedBadges(acc.id);
       const icons  = earned.length
-        ? earned.map(b => `<span title="${escAttr(b.def.name)}${b.awardedDate ? ' · ' + b.awardedDate : ''}" style="font-size:18px;margin-right:2px">${b.def.icon}</span>`).join('')
+        ? earned.map(b => `<span title="${escHtml(b.def.name)}${b.awardedDate ? ' · ' + b.awardedDate : ''}" style="font-size:18px;margin-right:2px">${b.def.icon}</span>`).join('')
         : '<span style="color:#aaa">—</span>';
       statCells = `
         <td><strong>${info.xp}</strong> <span style="color:#888;font-size:11px">XP</span></td>
-        <td><span class="badge badge-blue">Level ${info.level} · ${escAttr(info.name)}</span></td>
+        <td><span class="badge badge-blue">Level ${info.level} · ${escHtml(info.name)}</span></td>
         <td>${icons}</td>`;
     }
 
@@ -145,7 +136,7 @@ function sortedLevels() {
 
 function fillLevelSelect() {
   document.getElementById('accFormLevel').innerHTML = sortedLevels().map((l, i) =>
-    `<option value="${i}" data-from="${l.xpFrom}">Level ${l.level} · ${escAttr(l.name)} (từ ${l.xpFrom} XP)</option>`).join('');
+    `<option value="${i}" data-from="${l.xpFrom}">Level ${l.level} · ${escHtml(l.name)} (từ ${l.xpFrom} XP)</option>`).join('');
 }
 
 /* Đổi XP → Level tự khớp bảng "Cấu hình Level" */
@@ -169,7 +160,7 @@ function renderBadgeChecks(studentId) {
   document.getElementById('accFormBadges').innerHTML = getBadgeDefs().filter(d => d.active).map(d => `
     <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
       <input type="checkbox" class="accBadgeChk" value="${escHtml(d.id)}" ${have.indexOf(d.id) !== -1 ? 'checked' : ''}>
-      <span>${d.icon} ${escAttr(d.name)}</span>
+      <span>${d.icon} ${escHtml(d.name)}</span>
       <span style="font-size:11px;color:#888">· ${d.auto ? 'tự động' : 'duyệt tay'}</span>
     </label>`).join('');
 }
@@ -491,13 +482,6 @@ function groupIcon(group) {
 }
 
 /* Tạo date string dạng YYYY-MM-DD theo LOCAL time (tránh lệch UTC+7) */
-function toLocalDateStr(d) {
-  const yyyy = d.getFullYear();
-  const mm   = String(d.getMonth() + 1).padStart(2, '0');
-  const dd   = String(d.getDate()).padStart(2, '0');
-  return `${yyyy}-${mm}-${dd}`;
-}
-
 /* Danh sách ngày cần hiển thị (tuần bắt đầu Thứ Hai, gồm cả T7 và CN)
    - week : 7 ngày T2–CN của tuần chứa `anchor`
    - month: các tuần trọn vẹn phủ tháng chứa `anchor` (ngày ngoài tháng có inMonth = false) */
@@ -1380,7 +1364,7 @@ function formatTime(iso) {
 
 /* XP, danh hiệu hoặc tài khoản đổi ở tab khác (học sinh, phụ huynh) → bảng tài khoản tự cập nhật */
 window.addEventListener('storage', e => {
-  const keys = ['mm_xp_log', 'mm_xp_config', 'mm_badges_log', 'mm_badges', 'mm_fas_log', 'mm_accounts', 'mm_tray_log'];
+  const keys = [MM_KEYS.XP_LOG, MM_KEYS.XP_CONFIG, MM_KEYS.BADGES_LOG, MM_KEYS.BADGES, MM_KEYS.FAS_LOG, MM_KEYS.ACCOUNTS, MM_KEYS.TRAY_LOG];
   if (e.key !== null && keys.indexOf(e.key) === -1) return;
   const panel = document.getElementById('module-accounts');
   if (panel && panel.classList.contains('active')) renderAccounts();

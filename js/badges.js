@@ -7,45 +7,27 @@
    - Danh hiệu "Tự động" có điều kiện kiểm tra được thì hệ thống tự cấp
      (b01, b02, b03). Danh hiệu khác do BGH cấp tay.
    - BGH có thể cấp thêm hoặc thu hồi; danh hiệu đã bị thu hồi sẽ không tự cấp lại.
-   Load SAU js/seed.js và js/auth.js (dùng toLocalDateStr).
+   Load SAU js/seed.js, js/utils.js, js/store.js và js/auth.js.
 ═══════════════════════════════════════════════ */
 
-const BADGE_LOG_KEY = 'mm_badges_log';
+const BADGE_LOG_KEY = MM_KEYS.BADGES_LOG;
 
 /* Danh hiệu mặc định (DEFAULT_BADGES): xem js/seed.js */
 
 /* Điều kiện tự động theo mã danh hiệu */
 const BADGE_RULES = { b01: 'first_login', b02: 'rau_cu_fas', b03: 'xanh_la_foods' };
 
-/* Hành tinh của món mẫu (khóa đã bỏ dấu), dùng khi dòng FAS chưa ghi hành tinh */
-const BD_FOOD_PLANET = {
-  'ca rot': 'Rau củ', 'rau muong': 'Rau củ', 'ca chua': 'Rau củ',
-  'bong cai xanh': 'Xanh lá', 'bong cai': 'Xanh lá',
-  'thit ga': 'Đạm', 'trung kho': 'Đạm', 'ca kho': 'Đạm', 'thit heo': 'Đạm',
-};
-
-function bdRead(key, fallback) {
-  try {
-    const v = JSON.parse(localStorage.getItem(key));
-    return v === null || v === undefined ? fallback : v;
-  } catch (e) { return fallback; }
-}
-
-function bdNorm(s) {
-  return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    .replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase().replace(/\s+/g, ' ').trim();
-}
+function bdRead(key, fallback) { return store.get(key, fallback); }
 
 function getBadgeDefs() {
-  const d = bdRead('mm_badges', null);
+  const d = bdRead(MM_KEYS.BADGES, null);
   return Array.isArray(d) && d.length ? d : DEFAULT_BADGES;
 }
 
 function getBadgeLog() { return bdRead(BADGE_LOG_KEY, []); }
 
 function saveBadgeLog(log) {
-  try { localStorage.setItem(BADGE_LOG_KEY, JSON.stringify(log)); }
-  catch (e) { console.warn('Could not write mm_badges_log', e); }
+  store.set(BADGE_LOG_KEY, log);
 }
 
 /* Danh hiệu đang có của học sinh (chỉ danh hiệu còn hoạt động), theo thứ tự danh sách */
@@ -62,10 +44,10 @@ function getEarnedBadges(studentId) {
 
 /* Món bé đã thử: mỗi món một dòng, kèm hành tinh và điểm FAS gần nhất */
 function bdFoodStats(studentId) {
-  const menu = bdRead('mm_daily_menu', []);
+  const menu = bdRead(MM_KEYS.MENU, []);
   const byName = {};
-  bdRead('mm_fas_log', []).filter(r => r.studentId === studentId).forEach(r => {
-    const n = r.foodId || bdNorm(r.foodName);
+  bdRead(MM_KEYS.FAS_LOG, []).filter(r => r.studentId === studentId).forEach(r => {
+    const n = r.foodId || normFood(r.foodName);
     const o = byName[n] || (byName[n] = { latest: r, planet: null });
     if (r.attempt >= o.latest.attempt) o.latest = r;
     if (r.planet) o.planet = r.planet;
@@ -73,9 +55,9 @@ function bdFoodStats(studentId) {
   return Object.keys(byName).map(n => {
     const o = byName[n];
     if (!o.planet) {
-      const nm = bdNorm(o.latest.foodName);
-      const m = menu.find(x => x.planet && (x.ingredientId === o.latest.foodId || bdNorm(x.name) === nm));
-      o.planet = (m && m.planet) || BD_FOOD_PLANET[nm] || null;
+      const nm = normFood(o.latest.foodName);
+      const m = menu.find(x => x.planet && (x.ingredientId === o.latest.foodId || normFood(x.name) === nm));
+      o.planet = (m && m.planet) || LEGACY_FOOD_PLANET[nm] || null;
     }
     return o;
   });
@@ -83,10 +65,10 @@ function bdFoodStats(studentId) {
 
 function badgeRuleMet(rule, studentId) {
   if (rule === 'first_login') {
-    const acc = bdRead('mm_accounts', []).find(a => a.id === studentId);
+    const acc = bdRead(MM_KEYS.ACCOUNTS, []).find(a => a.id === studentId);
     return !!(acc && acc.firstLoginAt)
-      || bdRead('mm_fas_log', []).some(r => r.studentId === studentId)
-      || bdRead('mm_xp_log', []).some(r => r.studentId === studentId);
+      || bdRead(MM_KEYS.FAS_LOG, []).some(r => r.studentId === studentId)
+      || bdRead(MM_KEYS.XP_LOG, []).some(r => r.studentId === studentId);
   }
   const foods = bdFoodStats(studentId);
   if (rule === 'rau_cu_fas') {
