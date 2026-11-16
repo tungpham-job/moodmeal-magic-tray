@@ -235,20 +235,40 @@ body.page-student {
 }
 
 /* ── Emoji row ───────────────────────────────── */
-.emoji-label { padding: 4px 14px 6px; font-size: 11px; color: var(--text-muted); }
+.emoji-label { padding: 4px 14px 6px; font-size: 11px; color: #455A64; }
 .emoji-row   { display: flex; gap: 6px; padding: 0 12px; }
 .emoji-btn   {
   flex: 1; display: flex; flex-direction: column;
-  align-items: center; gap: 3px; padding: 8px 4px;
+  align-items: center; justify-content: center; gap: 3px;
+  min-height: 64px; padding: 8px 4px; position: relative;
   border-radius: 12px; border: 2px solid #E8ECF0;
   background: var(--white); cursor: pointer;
   transition: all 0.15s; font-family: inherit;
 }
-.emoji-btn .e-icon  { font-size: 22px; line-height: 1; }
-.emoji-btn .e-label { font-size: 8px; color: var(--text-muted); font-weight: 500; }
-.emoji-btn.selected { border-color: var(--green-mid); background: var(--green-pale); }
-.emoji-btn.selected .e-label { color: var(--green-dark); }
+.emoji-btn .e-icon  { font-size: 28px; line-height: 1; }
+.emoji-btn .e-label { font-size: 11px; color: #37474F; font-weight: 500; line-height: 1.15; text-align: center; }
+.emoji-btn .e-tick  {
+  display: none; position: absolute; top: -7px; right: -5px;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--green-dark); color: #fff;
+  font-size: 11px; line-height: 18px; text-align: center; font-weight: 600;
+}
+/* Đã chọn: viền dày 3px, nền xanh đậm hơn và dấu ✓ (không chỉ dựa vào màu) */
+.emoji-btn.selected { border: 3px solid var(--green-dark); padding: 7px 3px; background: var(--green-light); }
+.emoji-btn.selected .e-label { color: #0B4F42; }
+.emoji-btn.selected .e-tick  { display: block; }
 .emoji-btn:hover:not(.selected) { border-color: #BDC3C7; }
+
+/* Viền focus rõ khi dùng bàn phím */
+.emoji-btn:focus-visible, .confirm-btn:focus-visible, .btn:focus-visible {
+  outline: 3px solid var(--blue-mid); outline-offset: 2px;
+}
+
+/* Chỉ dành cho trình đọc màn hình */
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}
 
 /* ── FAS chart ───────────────────────────────── */
 .fas-chart {
@@ -292,7 +312,7 @@ body.page-student {
   display: flex; align-items: center; justify-content: center; gap: 6px;
   transition: all 0.15s;
 }
-.confirm-btn:disabled           { background: #BDC3C7; cursor: not-allowed; }
+.confirm-btn:disabled           { background: #CFD8DC; color: #455A64; cursor: not-allowed; }
 .confirm-btn:not(:disabled):active { transform: scale(0.97); }
 
 /* ── Toast ───────────────────────────────────── */

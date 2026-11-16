@@ -66,7 +66,7 @@ function restoreDone(i, entry) {
   f.tryAgain  = !!entry.tryAgain;
 
   const sel = document.querySelector(`#food-${i} .emoji-btn[data-val="${f.selected}"]`);
-  if (sel) sel.classList.add('selected');
+  if (sel) setEmojiSelected(i, sel);
   document.querySelectorAll(`#food-${i} .emoji-btn`).forEach(b => { b.disabled = true; });
 
   const ta = document.getElementById(`tryAgainBtn-${i}`);
@@ -96,7 +96,7 @@ function foodBlockHtml(f, i, total) {
   const badge = f.history.length ? `Lần thử thứ ${f.nextAttempt}` : 'Lần thử đầu tiên!';
   const tag   = f.item.isNew ? 'Món mới hôm nay' : 'Hôm nay có trong thực đơn';
   const faces = [[4, '❤️', 'Rất thích'], [3, '🙂', 'Có thể ăn'], [2, '😐', 'Chưa quen'], [1, '🙁', 'Không thích']]
-    .map(([v, e, l]) => `<button class="emoji-btn" data-val="${v}" onclick="pickEmoji(${i}, this)"><span class="e-icon">${e}</span><span class="e-label">${l}</span></button>`)
+    .map(([v, e, l], k) => `<button type="button" class="emoji-btn" role="radio" aria-checked="false" aria-label="${l}, ${v} điểm" tabindex="${k === 0 ? 0 : -1}" data-val="${v}" onclick="pickEmoji(${i}, this)" onkeydown="emojiKey(event, ${i})"><span class="e-tick" aria-hidden="true">✓</span><span class="e-icon" aria-hidden="true">${e}</span><span class="e-label">${l}</span></button>`)
     .join('');
   const divider = i > 0 ? 'border-top:6px solid #F0F2F5;margin-top:10px;padding-top:2px;' : '';
 
@@ -117,8 +117,8 @@ function foodBlockHtml(f, i, total) {
       </div>
     </div>
 
-    <div class="emoji-label">Sau khi thử, em cảm thấy thế nào?</div>
-    <div class="emoji-row">${faces}</div>
+    <div class="emoji-label" id="emojiQ-${i}">Sau khi thử, em cảm thấy thế nào?</div>
+    <div class="emoji-row" role="radiogroup" aria-labelledby="emojiQ-${i}">${faces}</div>
 
     <div class="gap"></div>
 
@@ -131,6 +131,7 @@ function foodBlockHtml(f, i, total) {
     </button>
 
     <div class="toast" id="toast-${i}"></div>
+    <div class="sr-only" id="live-${i}" role="status" aria-live="polite"></div>
 
     <div class="fas-chart" id="fasChart-${i}">
       <div class="fas-chart-title">📈 Hành trình khám phá ${escHtml(f.name)}</div>
@@ -213,10 +214,31 @@ function writeFasLog(f, rating, score) {
 function pickEmoji(i, btn) {
   const f = FOODS[i];
   if (!f || f.done) return;
-  document.querySelectorAll(`#food-${i} .emoji-btn`).forEach(b => b.classList.remove('selected'));
-  btn.classList.add('selected');
+  setEmojiSelected(i, btn);
   f.selected = parseInt(btn.dataset.val);
   document.getElementById(`confirmBtn-${i}`).disabled = false;
+}
+
+/* Đánh dấu một nút emoji là đã chọn (giao diện + trợ năng: aria-checked, tab dừng đúng nút) */
+function setEmojiSelected(i, btn) {
+  document.querySelectorAll(`#food-${i} .emoji-btn`).forEach(b => {
+    const on = b === btn;
+    b.classList.toggle('selected', on);
+    b.setAttribute('aria-checked', on ? 'true' : 'false');
+    b.tabIndex = on ? 0 : -1;
+  });
+}
+
+/* Bàn phím cho nhóm radio: phím mũi tên đổi lựa chọn, Space/Enter chọn nút đang focus */
+function emojiKey(ev, i) {
+  const keys = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 };
+  if (!(ev.key in keys)) return;
+  ev.preventDefault();
+  const btns = [...document.querySelectorAll(`#food-${i} .emoji-btn:not(:disabled)`)];
+  const next = btns[(btns.indexOf(ev.currentTarget) + keys[ev.key] + btns.length) % btns.length];
+  if (!next) return;
+  next.focus();
+  pickEmoji(i, next);
 }
 
 function toggleTryAgain(i) {
@@ -303,6 +325,8 @@ function confirmEval(i) {
   if (f.tryAgain) toast.textContent += ' · TRY AGAIN đã đặt!';
   if (xpRes && xpRes.leveledUp) toast.textContent += ' ' + levelUpText(xpRes);
   toast.classList.add('show');
+  const live = document.getElementById(`live-${i}`);
+  if (live) live.textContent = toast.textContent;
 
   document.getElementById(`fasChart-${i}`).classList.add('show');
   document.getElementById(`fasNote-${i}`).textContent   = fasNote(prev, data.val);

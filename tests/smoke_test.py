@@ -99,12 +99,30 @@ def run(browser, base):
     for s in ('screen1', 'screen2', 'screen3'):
         page.goto(f'{base}/student/{s}.html'); page.wait_for_timeout(400)
     page.goto(base + '/student/screen2.html'); page.wait_for_timeout(600)
+    radios = page.locator('#food-0 [role=radiogroup] [role=radio]')
+    check('nút emoji: nhóm radiogroup có nhãn + 4 nút radio', page.locator('#food-0 [role=radiogroup][aria-labelledby]').count() == 1 and radios.count() == 4)
+    labels = [radios.nth(k).get_attribute('aria-label') or '' for k in range(4)]
+    check('mỗi nút có aria-label "tên, n điểm"', all(l.endswith(' điểm') for l in labels) and labels[0].startswith('Rất thích'), labels)
+    check('ban đầu không nút nào được chọn (aria-checked)', page.locator('#food-0 [aria-checked=true]').count() == 0)
+    style = page.evaluate("""() => { const b = document.querySelectorAll('#food-0 .emoji-btn');
+      const c = getComputedStyle(b[0]), l = getComputedStyle(b[0].querySelector('.e-label'));
+      return {w: c.borderTopWidth, col: c.borderTopColor, lab: l.fontSize, min: parseFloat(c.minHeight)}; }""")
+    check('nút chưa chọn: viền 2px #E8ECF0, nhãn 11px, cao ≥ 64px',
+          style['w'] == '2px' and style['col'] == 'rgb(232, 236, 240)' and style['lab'] == '11px' and style['min'] >= 64, style)
+    radios.nth(1).focus(); page.keyboard.press('ArrowRight')
+    check('phím mũi tên đổi lựa chọn (radio)', radios.nth(2).get_attribute('aria-checked') == 'true' and radios.nth(1).get_attribute('aria-checked') == 'false')
+    page.wait_for_timeout(350)                       # chờ hiệu ứng chuyển màu 0,15s kết thúc
+    sel = page.evaluate("""() => { const b = document.querySelector('#food-0 .emoji-btn.selected');
+      const c = getComputedStyle(b); return {w: c.borderTopWidth, bg: c.backgroundColor, tick: getComputedStyle(b.querySelector('.e-tick')).display}; }""")
+    check('nút đã chọn: viền 3px, nền xanh #D5F5E3, hiện dấu ✓',
+          sel['w'] == '3px' and sel['bg'] == 'rgb(213, 245, 227)' and sel['tick'] == 'block', sel)
     page.locator('#food-0 .emoji-btn').nth(3).click()
     page.click('#confirmBtn-0'); page.wait_for_timeout(700)
     fas = [r for r in ls('mm_fas_log') if r['studentId'] == 'phambaotruc' and r['foodId'] == 'trung']
     check('ghi 1 dòng FAS cho Trứng', len(fas) == 1, len(fas))
     acts = sorted(r['actionId'] for r in (ls('mm_xp_log') or []))
     check('cộng XP first_try + emoji_rate', acts == ['emoji_rate', 'first_try'], acts)
+    check('thông báo kết quả được đọc qua vùng aria-live', len(page.inner_text('#live-0') if page.locator('#live-0').count() else '') > 0)
     page.reload(); page.wait_for_timeout(600)
     locked = page.evaluate("[...document.querySelectorAll('#food-0 .emoji-btn')].every(b => b.disabled)")
     check('tải lại: món đã đánh giá hôm nay bị khóa (1 lần/ngày)', locked)
