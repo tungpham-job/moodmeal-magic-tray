@@ -10,6 +10,7 @@ const KEY = {
   MENU:      MM_KEYS.MENU,
   INGREDIENTS: MM_KEYS.INGREDIENTS,
   NUTRITION: MM_KEYS.NUTRITION,
+  SCORE_FORMULA: MM_KEYS.SCORE_FORMULA,
   XP_CONFIG: MM_KEYS.XP_CONFIG,
   BADGES:    MM_KEYS.BADGES,
   CRITERIA:  MM_KEYS.CRITERIA,
@@ -825,6 +826,75 @@ function deleteIngredient(id) {
 }
 
 /* ── Bảng dinh dưỡng chuẩn (danh sách để chọn khi thêm nguyên liệu) ── */
+/* ── Công thức tính điểm Cân bằng năng lượng (khay cơm) ── */
+const SF_MACROS = [['carbs', 'Tinh bột (Carbs)'], ['protein', 'Đạm (Protein)'], ['fat', 'Béo (Fat)']];
+function scoreFormulaHtml() {
+  const F = mmScoreFormula();
+  const inp = (id, v, w) => `<input type="number" class="form-control" id="${id}" value="${v}" step="any" min="0" style="width:${w || 70}px;padding:4px 6px">`;
+  return `<div style="margin:0 16px 14px;padding:12px 14px;background:#F8FAFB;border:1.5px solid var(--border-light);border-radius:var(--radius-md)">
+    <div style="font-weight:600;font-size:13px;margin-bottom:4px">⚖️ Công thức tính điểm Cân bằng năng lượng</div>
+    <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">Áp dụng cho điểm khay cơm của học sinh (thang 100) và cột Thành phần dinh dưỡng ở Đề xuất Thực đơn. Năng lượng: 4 kcal/g Carbs, 4 kcal/g Đạm, 9 kcal/g Béo. Khoảng chuẩn mặc định chưa đối chiếu nguồn chính thức.</div>
+    <div style="display:grid;grid-template-columns:auto auto auto;gap:6px 14px;align-items:center;justify-content:start;font-size:13px">
+      <b>Chất</b><b>Khoảng chuẩn (% năng lượng)</b><span></span>
+      ${SF_MACROS.map(([k, lb]) => `<span>${lb}</span><span>${inp('sf_' + k + '_lo', F.targets[k][0])} – ${inp('sf_' + k + '_hi', F.targets[k][1])} %</span><span></span>`).join('')}
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:14px 24px;margin-top:12px;font-size:13px;align-items:center">
+      <label>Mức trừ: lệch ngoài khoảng ${inp('sf_tol', F.tolerance)} điểm % thì chất đó về 0 điểm</label>
+      <label>Điểm mỗi nhóm có mặt (tối đa 4 nhóm) ${inp('sf_group', F.groupPts)}</label>
+      <label>Điểm tối đa mỗi chất ${inp('sf_macro', F.macroPts)}</label>
+    </div>
+    <div id="sfSummary" style="font-size:11px;color:var(--text-muted);margin-top:8px"></div>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button class="btn btn-primary btn-sm" onclick="saveScoreFormula()">💾 Lưu công thức</button>
+      <button class="btn btn-secondary btn-sm" onclick="resetScoreFormula()">Khôi phục mặc định</button>
+    </div>
+  </div>`;
+}
+function readScoreFormulaForm() {
+  const v = id => parseFloat(document.getElementById(id).value);
+  const f = { targets: {}, tolerance: v('sf_tol'), groupPts: v('sf_group'), macroPts: v('sf_macro') };
+  SF_MACROS.forEach(([k]) => { f.targets[k] = [v('sf_' + k + '_lo'), v('sf_' + k + '_hi')]; });
+  return f;
+}
+function scoreFormulaError(f) {
+  const bad = x => typeof x !== 'number' || !isFinite(x);
+  for (const [k, lb] of SF_MACROS) {
+    const [lo, hi] = f.targets[k];
+    if (bad(lo) || bad(hi)) return `Khoảng chuẩn của ${lb} chưa nhập đủ.`;
+    if (lo < 0 || hi > 100) return `Khoảng chuẩn của ${lb} phải nằm trong 0–100 %.`;
+    if (lo > hi) return `Khoảng chuẩn của ${lb}: số thấp phải nhỏ hơn hoặc bằng số cao.`;
+  }
+  if (bad(f.tolerance) || f.tolerance <= 0) return 'Mức trừ (độ lệch tối đa) phải lớn hơn 0.';
+  if (bad(f.groupPts) || f.groupPts < 0) return 'Điểm mỗi nhóm không được âm.';
+  if (bad(f.macroPts) || f.macroPts < 0) return 'Điểm tối đa mỗi chất không được âm.';
+  if (4 * f.groupPts + 3 * f.macroPts <= 0) return 'Tổng điểm tối đa phải lớn hơn 0.';
+  return '';
+}
+function updateScoreFormulaSummary() {
+  const el = document.getElementById('sfSummary'); if (!el) return;
+  const f = readScoreFormulaForm();
+  const g = 4 * f.groupPts, m = 3 * f.macroPts, t = g + m;
+  el.textContent = (isFinite(t) && t > 0)
+    ? `Tổng điểm gốc: ${+g.toFixed(2)} (đủ nhóm) + ${+m.toFixed(2)} (cân bằng) = ${+t.toFixed(2)}, quy về thang 100 → đủ nhóm ${Math.round(100 * g / t)} điểm, cân bằng ${100 - Math.round(100 * g / t)} điểm.`
+    : '';
+}
+function saveScoreFormula() {
+  const f = readScoreFormulaForm(), err = scoreFormulaError(f);
+  if (err) { showToast(err, 'error'); return; }
+  saveKey(KEY.SCORE_FORMULA, f);
+  showToast('✅ Đã lưu công thức tính điểm');
+  renderNutritionTable(); renderProposalsIfOpen();
+}
+function resetScoreFormula() {
+  if (!confirm('Khôi phục công thức tính điểm về mặc định?')) return;
+  saveKey(KEY.SCORE_FORMULA, DEFAULT_SCORE_FORMULA);
+  showToast('Đã khôi phục công thức mặc định');
+  renderNutritionTable(); renderProposalsIfOpen();
+}
+function renderProposalsIfOpen() {
+  if (document.getElementById('proposalsTbody')) renderProposals();
+}
+
 function renderNutritionTable() {
   const box = document.getElementById('nutritionTable');
   if (!box) return;
@@ -840,6 +910,7 @@ function renderNutritionTable() {
         <button class="btn btn-secondary btn-sm" onclick="resetNutritionTable()">Khôi phục mặc định</button>
       </div>
     </div>
+    ${scoreFormulaHtml()}
     <div style="padding:0 16px 8px;font-size:11px;color:var(--text-muted)">Số liệu trên 100 g; khẩu phần là phần của một ô khay. Điểm (0–10) tự tính từ Carbs, Protein, Fat. Dấu * = số liệu tham khảo, cần đối chiếu Bảng thành phần thực phẩm Việt Nam.</div>
     <div style="overflow-x:auto"><table class="data-table">
       <thead><tr><th>Nhóm</th><th>Nguyên liệu</th><th>Khẩu phần</th><th>Carbs</th><th>Protein</th><th>Fat</th><th>Điểm</th><th></th></tr></thead>
@@ -857,6 +928,8 @@ function renderNutritionTable() {
           </td></tr>`;
       }).join('')}</tbody>
     </table></div></div>`;
+  box.querySelectorAll('[id^="sf_"]').forEach(e => e.addEventListener('input', updateScoreFormulaSummary));
+  updateScoreFormulaSummary();
 }
 
 function setNutriFields(t) {
@@ -1343,6 +1416,25 @@ function renderProposals() {
   renderProposalTable(trays);
 }
 
+/* Thành phần dinh dưỡng của khay: % năng lượng Tinh bột / Đạm / Béo, tính từ bảng dinh dưỡng chuẩn.
+   Ô khay tìm theo ingredientId, khay cũ không có thì tìm theo tên; không tìm thấy thì bỏ qua (thêm dấu *). */
+function trayMacroCell(t) {
+  const table = loadKey(KEY.NUTRITION, DEFAULT_NUTRITION_TABLE);
+  const ings  = loadKey(KEY.INGREDIENTS, DEFAULT_INGREDIENTS);
+  const norm = x => String(x || '').trim().toLowerCase();
+  const found = [], missing = [];
+  (t.tray || []).forEach(it => {
+    const src = (it.ingredientId && (table.find(r => r.id === it.ingredientId) || ings.find(r => r.id === it.ingredientId)))
+      || table.find(r => norm(r.name) === norm(it.name)) || ings.find(r => norm(r.name) === norm(it.name));
+    if (src && [src.portion, src.carbs, src.protein, src.fat].every(v => typeof v === 'number')) found.push({ group: it.group, portion: src.portion, carbs: src.carbs, protein: src.protein, fat: src.fat });
+    else missing.push(it.name);
+  });
+  const r = mmTrayPct(found);
+  if (!r.pct) return '<span style="color:#aaa">—</span>';
+  const star = missing.length ? `<span title="Chưa có số liệu: ${escHtml(missing.join(', '))}" style="color:#E67E22;cursor:help">*</span>` : '';
+  return `<span title="Tinh bột / Đạm / Béo (% năng lượng)">🍚 ${Math.round(r.pct.carbs)}% · 🥩 ${Math.round(r.pct.protein)}% · 🧈 ${Math.round(r.pct.fat)}%</span>${star}`;
+}
+
 function renderProposalTable(trays) {
   const tbody = document.getElementById('proposalsTbody');
 
@@ -1364,6 +1456,7 @@ function renderProposalTable(trays) {
         <td><strong>${escHtml(t.studentName)}</strong></td>
         <td style="font-size:13px">${escHtml(t.trayName)}</td>
         <td style="font-size:18px;letter-spacing:2px" title="${escHtml(t.tray.map(x=>x.name).join(' · '))}">${icons}</td>
+        <td style="font-size:12px;white-space:nowrap">${trayMacroCell(t)}</td>
         <td style="font-size:11px;color:#888">${formatTime(t.sentAt)}</td>
         <td>${confirmCell}</td>
         <td>

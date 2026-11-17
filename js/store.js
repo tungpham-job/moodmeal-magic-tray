@@ -17,6 +17,7 @@ const MM_KEYS = {
   MENU:        'mm_daily_menu',
   INGREDIENTS: 'mm_ingredients',
   NUTRITION:   'mm_nutrition_table',  // bảng dinh dưỡng chuẩn để BGH chọn nguyên liệu
+  SCORE_FORMULA: 'mm_score_formula',  // công thức tính điểm cân bằng năng lượng của khay
   XP_CONFIG:   'mm_xp_config',
   BADGES:      'mm_badges',
   CRITERIA:    'mm_grading_criteria',

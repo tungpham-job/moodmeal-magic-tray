@@ -80,6 +80,18 @@ function mmIngredientFromTable(t, unlocked) {
            portion:t.portion, carbs:t.carbs, protein:t.protein, fat:t.fat,
            alwaysUnlocked: !!unlocked, active:true };
 }
+/* Công thức tính điểm khay cơm (cân bằng năng lượng) — BGH sửa ở Thiết lập → Nguyên liệu → Công thức tính điểm.
+   targets: khoảng khuyến nghị % năng lượng [thấp, cao] cho Carbs / Đạm / Béo.
+   tolerance: lệch ra ngoài khoảng bao nhiêu điểm phần trăm thì điểm chất đó về 0.
+   groupPts: điểm cho mỗi nhóm có mặt (4 nhóm). macroPts: điểm tối đa của mỗi chất.
+   Tổng điểm luôn quy về thang 100. Khoảng mặc định chưa đối chiếu nguồn chính thức. */
+const DEFAULT_SCORE_FORMULA = {
+  targets: { carbs: [55, 65], protein: [13, 20], fat: [20, 30] },
+  tolerance: 15,
+  groupPts: 6.25,
+  macroPts: 25,
+};
+
 const DEFAULT_INGREDIENTS = DEFAULT_NUTRITION_TABLE
   .filter(t => MM_DEFAULT_INGREDIENT_IDS.indexOf(t.id) >= 0)
   .map(t => mmIngredientFromTable(t, MM_DEFAULT_UNLOCKED.indexOf(t.id) >= 0));
@@ -331,6 +343,7 @@ function mmSeedPlan() {
   return [
     [K.XP_CONFIG,   () => DEFAULT_XP_CONFIG],
     [K.NUTRITION,   () => DEFAULT_NUTRITION_TABLE],
+    [K.SCORE_FORMULA, () => DEFAULT_SCORE_FORMULA],
     [K.BADGES,      () => DEFAULT_BADGES],
     [K.ACCOUNTS,    () => (demo ? SEED_ACCOUNTS : SEED_ACCOUNTS.filter(a => a.role === 'admin'))],
     [K.CRITERIA,    () => (demo ? DEFAULT_CRITERIA : [])],

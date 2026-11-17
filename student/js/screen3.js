@@ -113,9 +113,10 @@ function updateScore() {
     bar.innerHTML = ''; leg.innerHTML = '<span>Chưa có nguyên liệu</span>';
   }
 
-  const why = [`Đủ 4 nhóm: +${r.groupsPts} / 25`, `Cân bằng năng lượng: +${r.balancePts} / 75`];
+  const F = mmScoreFormula();
+  const why = [`Đủ 4 nhóm: +${r.groupsPts} / ${r.groupsMax}`, `Cân bằng năng lượng: +${r.balancePts} / ${r.balanceMax}`];
   if (r.pct) Object.keys(MACRO_LABEL).forEach(k =>
-    why.push(`${MACRO_LABEL[k]} ${Math.round(r.pct[k])}% · nên ${MM_TRAY_TARGETS[k][0]}–${MM_TRAY_TARGETS[k][1]}% · +${Math.round(r.parts[k])} / 25`));
+    why.push(`${MACRO_LABEL[k]} ${Math.round(r.pct[k])}% · nên ${F.targets[k][0]}–${F.targets[k][1]}% · +${Math.round(r.parts[k])} / ${Math.round(r.macroMax)}`));
   document.getElementById('whyBox').innerHTML = why.map(escHtml).join('<br>');
 }
 

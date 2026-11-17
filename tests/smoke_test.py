@@ -280,6 +280,26 @@ def run(browser, base):
     check('xóa dòng bảng chuẩn', all(t['id'] != 'com-trang' for t in ls('mm_nutrition_table')))
     page.evaluate('resetNutritionTable()'); page.wait_for_timeout(150)
     check('Khôi phục mặc định: bảng chuẩn đủ lại', any(t['id'] == 'com-trang' for t in ls('mm_nutrition_table')))
+    # Công thức tính điểm Cân bằng năng lượng
+    check('Bảng dinh dưỡng: có khung Công thức tính điểm trước các dòng nguyên liệu',
+          page.locator('#nutritionTable #sf_carbs_lo').count() == 1 and page.input_value('#sf_carbs_lo') == '55' and page.input_value('#sf_tol') == '15'
+          and page.evaluate("document.getElementById('sf_carbs_lo').compareDocumentPosition(document.querySelector('#nutritionTable table')) & 4") > 0)
+    dflt = lambda: page.evaluate("mmTrayScore([{group:'tinBot',portion:150,carbs:28,protein:2.7,fat:0.3},{group:'dam',portion:60,carbs:0,protein:20,fat:21},{group:'rauCu',portion:80,carbs:3,protein:2,fat:0.2},{group:'traiCay',portion:100,carbs:22,protein:1.1,fat:0.3}]).total")
+    t0 = dflt()
+    page.fill('#sf_carbs_lo', '70'); page.fill('#sf_carbs_hi', '60'); page.click('button[onclick="saveScoreFormula()"]'); page.wait_for_timeout(150)
+    check('công thức sai (thấp > cao) bị từ chối, không ghi đè', ls('mm_score_formula')['targets']['carbs'] == [55, 65] and dflt() == t0)
+    page.fill('#sf_carbs_lo', '20'); page.fill('#sf_carbs_hi', '30'); page.click('button[onclick="saveScoreFormula()"]'); page.wait_for_timeout(150)
+    check('lưu công thức: ghi vào mm_score_formula và đổi điểm khay', ls('mm_score_formula')['targets']['carbs'] == [20, 30] and dflt() != t0, (t0, dflt()))
+    page.fill('#sf_group', '10'); page.fill('#sf_macro', '20'); page.wait_for_timeout(50)
+    check('tổng điểm gốc quy về thang 100 (40 + 60 = 100)', '100' in page.inner_text('#sfSummary'), page.inner_text('#sfSummary'))
+    page.click('button[onclick="resetScoreFormula()"]'); page.wait_for_timeout(150)
+    check('Khôi phục công thức mặc định', ls('mm_score_formula')['targets']['carbs'] == [55, 65] and dflt() == t0)
+    page.evaluate("switchModule('proposals')"); page.wait_for_timeout(200)
+    check('Đề xuất Thực đơn: cột Thành phần dinh dưỡng, không có cột Đạt/Chưa đạt',
+          page.locator('#module-proposals th:has-text("Thành phần dinh dưỡng")').count() == 1 and page.locator('#module-proposals :text("Chưa đạt")').count() == 0)
+    cells = page.eval_on_selector_all('#proposalsTbody tr', 'r => r.map(x => x.children[4].textContent)')
+    check('mỗi khay hiện % Tinh bột · Đạm · Béo (hoặc —)', len(cells) >= 3 and all(('%' in c) or c.strip() == '—' for c in cells) and any('%' in c for c in cells), cells)
+    page.evaluate("switchModule('settings')"); page.wait_for_timeout(150); page.click('button[data-tab=ingredients]')
     page.click('button[data-tab=xp]'); page.wait_for_timeout(150)
     check('bảng Level không còn cột "NL mở khóa"', page.locator('#tab-xp th:has-text("NL mở khóa")').count() == 0)
     page.click('button[data-tab=menu]')

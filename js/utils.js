@@ -43,16 +43,26 @@ function mmIngredientScore(g) {
   return Math.round(10 * main / total);
 }
 
+/* Công thức tính điểm khay: đọc từ BGH (mm_score_formula), thiếu hoặc sai → mặc định DEFAULT_SCORE_FORMULA. */
+function mmScoreFormula() {
+  const d = DEFAULT_SCORE_FORMULA;
+  let f = null;
+  try { f = (typeof store !== 'undefined' && typeof MM_KEYS !== 'undefined') ? store.get(MM_KEYS.SCORE_FORMULA, null) : null; } catch (e) { f = null; }
+  const num = v => typeof v === 'number' && isFinite(v);
+  const range = r => Array.isArray(r) && num(r[0]) && num(r[1]) && r[0] >= 0 && r[1] <= 100 && r[0] <= r[1];
+  if (!f || !f.targets || !['carbs', 'protein', 'fat'].every(k => range(f.targets[k])) ||
+      !num(f.tolerance) || f.tolerance <= 0 || !num(f.groupPts) || f.groupPts < 0 || !num(f.macroPts) || f.macroPts < 0 ||
+      4 * f.groupPts + 3 * f.macroPts <= 0) return d;
+  return f;
+}
+
 /* Điểm khay cơm 0–100 theo cân bằng năng lượng.
    items: [{group, portion, carbs, protein, fat}] (carbs/protein/fat: g trên 100 g, portion: g).
-   25 điểm = đủ 4 nhóm (6,25 mỗi nhóm); 75 điểm = cân bằng năng lượng, mỗi chất (Carbs, Đạm, Béo) tối đa 25,
-   đạt đủ khi nằm trong khoảng khuyến nghị, lệch ra ngoài thì trừ dần, về 0 khi lệch MM_TRAY_TOLERANCE điểm phần trăm.
-   Khoảng khuyến nghị là giá trị mặc định, chưa đối chiếu nguồn chính thức. */
-const MM_TRAY_TARGETS = { carbs: [55, 65], protein: [13, 20], fat: [20, 30] };
-const MM_TRAY_TOLERANCE = 15;
-function mmTrayScore(items) {
-  const groups = new Set(items.map(i => i.group)).size;
-  const groupsRaw = Math.min(groups, 4) * 6.25;
+   Theo công thức của BGH (mmScoreFormula): mỗi nhóm có mặt được groupPts (tối đa 4 nhóm); mỗi chất (Carbs, Đạm, Béo)
+   tối đa macroPts, đạt đủ khi % năng lượng nằm trong khoảng khuyến nghị, lệch ra ngoài thì trừ dần, về 0 khi lệch tolerance điểm phần trăm.
+   Tổng quy về thang 100 (mặc định: 25 điểm đủ nhóm + 75 điểm cân bằng, mỗi chất 25).
+   Kết quả kèm groupsMax, balanceMax, macroMax (điểm tối đa của từng phần trên thang 100). */
+function mmTrayPct(items) {
   const g = { carbs: 0, protein: 0, fat: 0 };
   items.forEach(i => {
     const k = (Number(i.portion) || 0) / 100;
@@ -60,20 +70,29 @@ function mmTrayScore(items) {
   });
   const en = { carbs: 4 * g.carbs, protein: 4 * g.protein, fat: 9 * g.fat };
   const kcal = en.carbs + en.protein + en.fat;
-  const res = { groups, groupsPts: Math.round(groupsRaw), pct: null, parts: null, worst: null, kcal };
+  return { kcal, en, pct: kcal > 0 ? { carbs: 100 * en.carbs / kcal, protein: 100 * en.protein / kcal, fat: 100 * en.fat / kcal } : null };
+}
+function mmTrayScore(items) {
+  const F = mmScoreFormula();
+  const max = 4 * F.groupPts + 3 * F.macroPts, sc = 100 / max;
+  const groups = new Set(items.map(i => i.group)).size;
+  const groupsRaw = Math.min(groups, 4) * F.groupPts;
+  const base = mmTrayPct(items);
+  const res = { groups, groupsPts: Math.round(groupsRaw * sc), pct: null, parts: null, worst: null, kcal: base.kcal,
+                groupsMax: Math.round(4 * F.groupPts * sc), macroMax: F.macroPts * sc };
+  res.balanceMax = 100 - res.groupsMax;
   let bal = 0;
-  if (kcal > 0) {
-    res.pct = {}; res.parts = {}; let worstDev = 0;
-    Object.keys(MM_TRAY_TARGETS).forEach(k => {
-      const p = 100 * en[k] / kcal, lo = MM_TRAY_TARGETS[k][0], hi = MM_TRAY_TARGETS[k][1];
+  if (base.pct) {
+    res.pct = base.pct; res.parts = {}; let worstDev = 0;
+    ['carbs', 'protein', 'fat'].forEach(k => {
+      const p = base.pct[k], lo = F.targets[k][0], hi = F.targets[k][1];
       const dev = p < lo ? lo - p : (p > hi ? p - hi : 0);
-      res.pct[k] = p;
-      res.parts[k] = 25 * Math.max(0, 1 - dev / MM_TRAY_TOLERANCE);
+      res.parts[k] = F.macroPts * Math.max(0, 1 - dev / F.tolerance) * sc;
       bal += res.parts[k];
       if (dev > worstDev) { worstDev = dev; res.worst = { key: k, dir: p < lo ? 'low' : 'high' }; }
     });
   }
-  res.total = Math.max(0, Math.min(100, Math.round(groupsRaw + bal)));
+  res.total = Math.max(0, Math.min(100, Math.round(groupsRaw * sc + bal)));
   res.balancePts = res.total - res.groupsPts;
   return res;
 }
