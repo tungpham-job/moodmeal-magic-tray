@@ -539,7 +539,7 @@ const FOOD_ICONS = [
 ];
 
 function openIconPicker() {
-  const picker = document.getElementById('iconPickerPanel');
+  const picker = renderIconPanel('iconPickerPanel', 'pickIcon');
   const isOpen = picker.style.display !== 'none';
   picker.style.display = isOpen ? 'none' : 'grid';
 }
@@ -599,22 +599,27 @@ function deleteMenuItem(id) {
    `id` của nguyên liệu là foodId của nhật ký FAS. */
 const PLANET_ORDER = ['Rau củ', 'Đạm', 'Xanh lá', 'Trái cây'];
 const GROUP_ORDER  = ['Tinh bột', 'Đạm', 'Rau củ', 'Trái cây'];
-// Icon mẫu cho form "bảng dinh dưỡng chuẩn" (nhiều hơn ING_ICONS; ô nhập vẫn cho dán icon bất kỳ)
-const NUTRI_ICONS = [...new Set([
-  '🍚','🍙','🍘','🍞','🥖','🥐','🥯','🥨','🍜','🍝','🌽','🥔','🍠','🫓','🥞','🧇','🌾','🥧','🍪','🍰',
-  '🥩','🍗','🍖','🥓','🦐','🦑','🦞','🦀','🐟','🍣','🍤','🍢','🥚','🍳','🧆','🫘','🥜','🌰','🧀','🥛','🍖',
-  '🥦','🥕','🍅','🥬','🥒','🌶️','🫑','🧅','🧄','🍆','🥑','🍄','🌿','🫛','🥗','🫒','🎃','🌱',
-  '🍎','🍏','🍐','🍊','🍋','🍌','🍉','🍇','🍓','🫐','🍈','🍒','🍑','🥭','🍍','🥥','🥝',
-  '🍲','🥘','🍛','🍱','🥣','🥟','🥠','🍡','🌮','🌯','🥪','🍔','🍕','🌭','🍧','🍨','🍽️'
-])];
-
-// Icon mẫu của form Thêm/Sửa nguyên liệu, chia theo nhóm dinh dưỡng như bảng icon của form thêm món
-const ING_ICON_GROUPS = [
-  { name: 'Tinh bột', icon: '🍚', list: ['🍚','🍙','🍘','🍞','🥖','🥐','🥯','🥨','🍜','🍝','🌽','🥔','🍠','🫓','🥞','🧇','🌾','🥣'] },
-  { name: 'Đạm',      icon: '🥩', list: ['🥩','🍗','🍖','🥓','🦐','🦑','🦞','🦀','🐟','🍣','🍤','🥚','🍳','🧆','🫘','🥜','🌰','🧀','🥛'] },
-  { name: 'Rau củ',   icon: '🥦', list: ['🥦','🥕','🍅','🥬','🥒','🌶️','🫑','🧅','🧄','🍆','🥑','🍄','🌿','🫛','🥗','🎃','🌱'] },
+// DANH SÁCH ICON CHUNG cho 3 form: Thêm món thực đơn, Thêm/Sửa nguyên liệu, Thêm/Sửa dòng bảng dinh dưỡng chuẩn.
+// Muốn thêm/bớt icon: chỉ sửa ở đây, cả 3 form đổi theo. Ô nhập icon của form bảng chuẩn vẫn cho dán icon bất kỳ.
+const MM_ICON_GROUPS = [
+  { name: 'Tinh bột', icon: '🍚', list: ['🍚','🍙','🍘','🍞','🥖','🥐','🥯','🥨','🍜','🍝','🌽','🥔','🍠','🫓','🥞','🧇','🌾','🥣',
+                                         '🍛','🍱','🥟','🥠','🍡','🌮','🌯','🥪','🍔','🍕','🌭','🍽️',
+                                         '🥧','🍪','🍰','🍧','🍨'] },
+  { name: 'Đạm',      icon: '🥩', list: ['🥩','🍗','🍖','🥓','🦐','🦑','🦞','🦀','🐟','🍣','🍤','🥚','🍳','🧆','🫘','🥜','🌰','🧀','🥛','🍢'] },
+  { name: 'Rau củ',   icon: '🥦', list: ['🥦','🥕','🍅','🥬','🥒','🌶️','🫑','🧅','🧄','🍆','🥑','🍄','🌿','🫛','🥗','🎃','🌱','🫒',
+                                         '🍲','🥘','🍵'] },
   { name: 'Trái cây', icon: '🍎', list: ['🍎','🍏','🍐','🍊','🍋','🍌','🍉','🍇','🍓','🫐','🍈','🍒','🍑','🥭','🍍','🥥','🥝'] },
 ];
+
+/* Vẽ bảng icon chia nhóm vào panel (chỉ vẽ lần đầu); pickFn là tên hàm xử lý khi chọn icon */
+function renderIconPanel(panelId, pickFn) {
+  const panel = document.getElementById(panelId);
+  if (panel.innerHTML.trim()) return panel;
+  panel.innerHTML = MM_ICON_GROUPS.map(g =>
+    `<div style="grid-column:1/-1;font-size:10px;font-weight:600;color:var(--text-muted);margin:4px 0 2px">${g.icon} ${g.name}</div>` +
+    g.list.map(ic => `<button type="button" class="icon-opt" onclick="${pickFn}('${ic}')">${ic}</button>`).join('')).join('');
+  return panel;
+}
 
 function ingredientInUse(id) {
   return loadKey(KEY.MENU, []).some(m => m.ingredientId === id)
@@ -656,21 +661,13 @@ function ingChipHtml(g) {
 }
 
 function toggleIngIconPanel() {
-  const panel = document.getElementById('ingIconPanel');
-  if (!panel.innerHTML) {
-    panel.innerHTML = ING_ICON_GROUPS.map(g =>
-      `<div style="grid-column:1/-1;font-size:10px;font-weight:600;color:var(--text-muted);margin:4px 0 2px">${g.icon} ${g.name}</div>` +
-      g.list.map(ic => `<button type="button" class="icon-opt" onclick="pickIngIcon('${ic}')">${ic}</button>`).join('')).join('');
-  }
+  const panel = renderIconPanel('ingIconPanel', 'pickIngIcon');
   panel.style.display = panel.style.display === 'none' ? 'grid' : 'none';
 }
 
 function toggleNutriIconPanel() {
-  const panel = document.getElementById('nutriIconPanel');
-  if (!panel.innerHTML) {
-    panel.innerHTML = NUTRI_ICONS.map(ic => `<button type="button" class="icon-opt" onclick="pickNutriIcon('${ic}')">${ic}</button>`).join('');
-  }
-  panel.style.display = panel.style.display === 'none' ? 'flex' : 'none';
+  const panel = renderIconPanel('nutriIconPanel', 'pickNutriIcon');
+  panel.style.display = panel.style.display === 'none' ? 'grid' : 'none';
 }
 
 function pickNutriIcon(ic) {

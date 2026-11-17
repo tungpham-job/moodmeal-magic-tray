@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏫</text></svg>">
   <title>Ban Giám Hiệu — MOODMEAL MAGIC TRAY</title>
-  <link rel="stylesheet" href="../css/base.css?v=20261118m">
-  <link rel="stylesheet" href="../css/school.css?v=20261118m">
+  <link rel="stylesheet" href="../css/base.css?v=20261118n">
+  <link rel="stylesheet" href="../css/school.css?v=20261118n">
 </head>
 <body class="page-school">
 <div class="school-layout">
@@ -467,52 +467,11 @@
           display:none;
           grid-template-columns: repeat(7,1fr);
           gap:4px; margin-top:8px;
-          padding:10px; background:#F8FAFB;
+          padding:10px; max-height:260px; overflow-y:auto; background:#F8FAFB;
           border:1.5px solid var(--border-light);
           border-radius:var(--radius-md);
         ">
-          <!-- Nhóm label -->
-          <div style="grid-column:1/-1;font-size:10px;font-weight:600;color:var(--text-muted);margin-bottom:2px">🍚 Tinh bột</div>
-          <button type="button" class="icon-opt" onclick="pickIcon('🍚')">🍚</button>
-          <button type="button" class="icon-opt" onclick="pickIcon('🍞')">🍞</button>
-          <button type="button" class="icon-opt" onclick="pickIcon('🥐')">🥐</button>
-          <button type="button" class="icon-opt" onclick="pickIcon('🍜')">🍜</button>
-          <button type="button" class="icon-opt" onclick="pickIcon('🍝')">🍝</button>
-          <button type="button" class="icon-opt" onclick="pickIcon('🌽')">🌽</button>
-          <button type="button" class="icon-opt" onclick="pickIcon('🥣')">🥣</button>
-
-          <div style="grid-column:1/-1;font-size:10px;font-weight:600;color:var(--text-muted);margin:4px 0 2px">🥩 Đạm</div>
-          <button type="button" class="icon-opt" onclick="pickIcon('🥩')">🥩</button>
-          <button type="button" class="icon-opt" onclick="pickIcon('🍗')">🍗</button>
-          <button type="button" class="icon-opt" onclick="pickIcon('🐟')">🐟</button>
-          <button type="button" class="icon-opt" onclick="pickIcon('🦐')">🦐</button>
-          <button type="button" class="icon-opt" onclick="pickIcon('🥚')">🥚</button>
-          <button type="button" class="icon-opt" onclick="pickIcon('🥓')">🥓</button>
-          <button type="button" class="icon-opt" onclick="pickIcon('🧆')">🧆</button>
-
-          <div style="grid-column:1/-1;font-size:10px;font-weight:600;color:var(--text-muted);margin:4px 0 2px">🥦 Rau củ</div>
-          <button type="button" class="icon-opt" onclick="pickIcon('🥦')">🥦</button>
-          <button type="button" class="icon-opt" onclick="pickIcon('🥕')">🥕</button>
-          <button type="button" class="icon-opt" onclick="pickIcon('🍅')">🍅</button>
-          <button type="button" class="icon-opt" onclick="pickIcon('🥬')">🥬</button>
-          <button type="button" class="icon-opt" onclick="pickIcon('🧅')">🧅</button>
-          <button type="button" class="icon-opt" onclick="pickIcon('🌿')">🌿</button>
-          <button type="button" class="icon-opt" onclick="pickIcon('🫛')">🫛</button>
-          <button type="button" class="icon-opt" onclick="pickIcon('🍲')">🍲</button>
-          <button type="button" class="icon-opt" onclick="pickIcon('🥘')">🥘</button>
-          <button type="button" class="icon-opt" onclick="pickIcon('🍵')">🍵</button>
-          <button type="button" class="icon-opt" onclick="pickIcon('🥗')">🥗</button>
-
-          <div style="grid-column:1/-1;font-size:10px;font-weight:600;color:var(--text-muted);margin:4px 0 2px">🍎 Trái cây</div>
-          <button type="button" class="icon-opt" onclick="pickIcon('🍎')">🍎</button>
-          <button type="button" class="icon-opt" onclick="pickIcon('🍌')">🍌</button>
-          <button type="button" class="icon-opt" onclick="pickIcon('🍊')">🍊</button>
-          <button type="button" class="icon-opt" onclick="pickIcon('🍇')">🍇</button>
-          <button type="button" class="icon-opt" onclick="pickIcon('🍓')">🍓</button>
-          <button type="button" class="icon-opt" onclick="pickIcon('🍉')">🍉</button>
-          <button type="button" class="icon-opt" onclick="pickIcon('🍐')">🍐</button>
-          <button type="button" class="icon-opt" onclick="pickIcon('🍍')">🍍</button>
-</div>
+        </div>
       </div>
 
       <!-- Hàng 5: Checkbox MỚI -->
@@ -647,7 +606,7 @@
           </div>
         </div>
       </div>
-      <div id="nutriIconPanel" style="display:none;flex-wrap:wrap;gap:4px;margin:-4px 0 12px;padding:10px;max-height:190px;overflow-y:auto;background:#F8FAFB;border:1.5px solid var(--border-light);border-radius:var(--radius-md)"></div>
+      <div id="nutriIconPanel" style="display:none;grid-template-columns:repeat(7,1fr);gap:4px;margin:-4px 0 12px;padding:10px;max-height:260px;overflow-y:auto;background:#F8FAFB;border:1.5px solid var(--border-light);border-radius:var(--radius-md)"></div>
       <div class="form-group-s">
         <label class="form-label-s">Khẩu phần (g) · Carbs · Protein · Fat (g trên 100 g)</label>
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
@@ -846,14 +805,14 @@
 </div>
 
 <!-- ══ SCRIPTS ══ -->
-<script src="../js/config.js?v=20261118m"></script>
-<script src="../js/seed.js?v=20261118m"></script>
-<script src="../js/utils.js?v=20261118m"></script>
-<script src="../js/store.js?v=20261118m"></script>
-<script src="../js/auth.js?v=20261118m"></script>
-<script src="../js/xp.js?v=20261118m"></script>
-<script src="../js/badges.js?v=20261118m"></script>
-<script src="js/school.js?v=20261118m"></script>
+<script src="../js/config.js?v=20261118n"></script>
+<script src="../js/seed.js?v=20261118n"></script>
+<script src="../js/utils.js?v=20261118n"></script>
+<script src="../js/store.js?v=20261118n"></script>
+<script src="../js/auth.js?v=20261118n"></script>
+<script src="../js/xp.js?v=20261118n"></script>
+<script src="../js/badges.js?v=20261118n"></script>
+<script src="js/school.js?v=20261118n"></script>
 <script>
   /* Filter accounts table by search */
   function filterAccountsTable(q) {
