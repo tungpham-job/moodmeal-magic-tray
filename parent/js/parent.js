@@ -384,7 +384,7 @@ function renderSection2() {
 }
 
 function groupLabel(g) {
-  return { tinBot: 'Tinh bột', dam: 'Đạm', rauCu: 'Rau củ', traiCay: 'Trái cây', canh: 'Canh' }[g] || g;
+  return { tinBot: 'Tinh bột', dam: 'Đạm', rauCu: 'Rau củ', traiCay: 'Trái cây' }[g] || g;
 }
 
 /* Mỗi khay chỉ được phản hồi một lần: đọc lại từ nhật ký (phòng bấm hai lần hoặc đã trả lời ở tab khác) */

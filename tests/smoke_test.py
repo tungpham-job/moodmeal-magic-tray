@@ -85,7 +85,7 @@ def run(browser, base):
     menu = ls('mm_daily_menu') or []
     check('có đúng 1 món "Trứng chiên" (hôm nay)', sum(m['name'] == 'Trứng chiên' for m in menu) == 1)
     check('chưa đăng nhập thì về trang đăng nhập', page.url.endswith('/index.html'), page.url)
-    check('ghi số phiên bản dữ liệu mm_schema_version = 2', ls('mm_schema_version') == 2, ls('mm_schema_version'))
+    check('ghi số phiên bản dữ liệu mm_schema_version = 3', ls('mm_schema_version') == 3, ls('mm_schema_version'))
 
     print('2. Đăng nhập 3 vai trò')
     check('học sinh → student/index.html', login('phambaotruc', 'hs001') == '/student/index.html')
@@ -223,6 +223,9 @@ def run(browser, base):
           all(isinstance(g.get('carbs'), (int, float)) and g.get('portion') for g in ings)
           and sorted(g['name'] for g in ings if g.get('alwaysUnlocked')) == ['Chuối', 'Cơm trắng', 'Rau muống', 'Thịt heo'])
     check('bảng dinh dưỡng chuẩn mm_nutrition_table có ≥ 12 dòng', len(ls('mm_nutrition_table') or []) >= 12)
+    check('khay mẫu: không còn nhóm canh, thay bằng Chuối (traiCay)',
+          all(x['group'] != 'canh' for t in ls('mm_tray_log') for x in t['tray'])
+          and sum(x['group'] == 'traiCay' and x['name'] == 'Chuối' for t in ls('mm_tray_log') if t['id'] in ('t01', 't03') for x in t['tray']) == 2)
     page.click('button[data-tab=ingredients]'); page.wait_for_timeout(200)
     check('tab Nguyên liệu có bảng chuẩn; Trứng = 3 điểm',
           page.locator('#nutritionTable tr:has-text("Trứng") td:nth-child(7) b').inner_text() == '3')
@@ -294,8 +297,8 @@ def run(browser, base):
     page.evaluate("c => localStorage.setItem('mm_xp_config', JSON.stringify(c))", cfg)
     page.evaluate("localStorage.removeItem('mm_schema_version')")           # dữ liệu cũ chưa có số phiên bản
     page.reload(); page.wait_for_timeout(400)
-    check('dữ liệu cũ không có phiên bản: nâng lên v2, giữ nguyên cấu hình BGH',
-          ls('mm_schema_version') == 2 and ls('mm_xp_config')['actions'][0]['xp'] == 88)
+    check('dữ liệu cũ không có phiên bản: nâng lên v3, giữ nguyên cấu hình BGH',
+          ls('mm_schema_version') == 3 and ls('mm_xp_config')['actions'][0]['xp'] == 88)
     ings = ls('mm_ingredients')                                                # mô phỏng dữ liệu v1
     for g in ings:
         g['group'] = 'Canh' if g['name'] == 'Rau muống' else g['group']
@@ -305,18 +308,26 @@ def run(browser, base):
     page.evaluate("localStorage.setItem('mm_schema_version', '1')")
     page.reload(); page.wait_for_timeout(400)
     ings = ls('mm_ingredients')
-    check('nâng v1 → v2: Canh → Rau củ, bổ sung số liệu, mở khóa sẵn, có bảng chuẩn',
-          ls('mm_schema_version') == 2 and all(g['group'] != 'Canh' for g in ings)
+    check('nâng v1 → v3: Canh → Rau củ, bổ sung số liệu, mở khóa sẵn, có bảng chuẩn',
+          ls('mm_schema_version') == 3 and all(g['group'] != 'Canh' for g in ings)
           and all(isinstance(g.get('carbs'), (int, float)) for g in ings)
           and sorted(g['name'] for g in ings if g.get('alwaysUnlocked')) == ['Chuối', 'Cơm trắng', 'Rau muống', 'Thịt heo']
           and len(ls('mm_nutrition_table') or []) >= 12)
+    old = [{'id': 'tx', 'studentId': 'phambaotruc', 'trayName': 'Khay cũ', 'nutritionScore': 80,
+            'tray': [{'group': 'tinBot', 'icon': '🍚', 'name': 'Cơm trắng'}, {'group': 'canh', 'icon': '🍲', 'name': 'Canh chua'}]}]
+    page.evaluate("v => localStorage.setItem('mm_tray_log', JSON.stringify(v))", old)
+    page.evaluate("localStorage.setItem('mm_schema_version', '2')")
+    page.reload(); page.wait_for_timeout(400)
+    tx = [t for t in ls('mm_tray_log') if t['id'] == 'tx'][0]
+    check('nâng v2 → v3: ô canh của khay cũ đổi thành 🍌 Chuối (Trái cây)',
+          ls('mm_schema_version') == 3 and [x['group'] for x in tx['tray']] == ['tinBot', 'traiCay'] and tx['tray'][1]['name'] == 'Chuối', tx)
     page.evaluate("localStorage.setItem('mm_schema_version', '99')")
     page.evaluate("localStorage.removeItem('mm_badges')")
     page.reload(); page.wait_for_timeout(400)
     check('dữ liệu mới hơn code (v99): không bị ghi đè hay seed lại',
           ls('mm_schema_version') == 99 and ls('mm_badges') is None)
     page.click('#btnReset'); page.wait_for_timeout(1200)
-    check('Đặt lại đưa phiên bản về v2', ls('mm_schema_version') == 2)
+    check('Đặt lại đưa phiên bản về v3', ls('mm_schema_version') == 3)
 
     print('9. DEMO_MODE = false (bản chạy thật)')
     ctx2 = browser.new_context()

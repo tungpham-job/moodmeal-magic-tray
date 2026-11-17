@@ -222,7 +222,7 @@ const DEFAULT_TRAY_LOG = [
       { group:'tinBot', icon:'🍚', name:'Cơm trắng' },
       { group:'dam',    icon:'🥩', name:'Thịt kho'  },
       { group:'rauCu',  icon:'🥦', name:'Bông cải'  },
-      { group:'canh',   icon:'🍲', name:'Canh chua' },
+      { group:'traiCay', icon:'🍌', name:'Chuối', ingredientId:'chuoi' },
     ],
     nutritionScore: 87,
     sentAt: '2026-10-21T11:45:00',
@@ -249,7 +249,7 @@ const DEFAULT_TRAY_LOG = [
       { group:'tinBot', icon:'🍚', name:'Cơm trắng' },
       { group:'dam',    icon:'🥚', name:'Trứng'     },
       { group:'rauCu',  icon:'🥕', name:'Cà rốt'   },
-      { group:'canh',   icon:'🥬', name:'Canh rau'  },
+      { group:'traiCay', icon:'🍌', name:'Chuối', ingredientId:'chuoi' },
     ],
     nutritionScore: 80,
     sentAt: '2026-10-22T11:50:00',
@@ -273,10 +273,11 @@ const LEGACY_FOOD_PLANET = {
    v2 = nhóm dinh dưỡng đổi thành Tinh bột · Đạm · Rau củ · Trái cây (bỏ "Canh"),
         nguyên liệu có khẩu phần + Carbs/Protein/Fat + alwaysUnlocked, thêm bảng chuẩn
         mm_nutrition_table, bỏ cột "NL mở khóa" của Level.
+   v3 = khay đã gửi: ô nhóm cũ 'canh' đổi thành ô Trái cây 🍌 Chuối (mã nhóm khay: tinBot · dam · rauCu · traiCay).
    Dữ liệu cũ chưa có số phiên bản được coi là v0; các hàm nâng cấp chạy lần lượt tới bản hiện tại.
    Muốn đổi cấu trúc: tăng số này và thêm MM_MIGRATIONS[n] = function () {…}
    — hàm nâng dữ liệu từ bản n-1 lên bản n. */
-const MM_SCHEMA_VERSION = 2;
+const MM_SCHEMA_VERSION = 3;
 const MM_MIGRATIONS = {
   2: function () {
     const K = MM_KEYS;
@@ -308,6 +309,17 @@ const MM_MIGRATIONS = {
       cfg.levels.forEach(l => { delete l.unlock; });
       store.set(K.XP_CONFIG, cfg);
     }
+  },
+  3: function () {
+    const log = store.get(MM_KEYS.TRAY_LOG, null);
+    if (!Array.isArray(log)) return;
+    log.forEach(t => {
+      if (!Array.isArray(t.tray) || !t.tray.some(x => x.group === 'canh')) return;
+      const hasFruit = t.tray.some(x => x.group === 'traiCay');
+      t.tray = t.tray.filter(x => x.group !== 'canh');
+      if (!hasFruit) t.tray.push({ group: 'traiCay', icon: '🍌', name: 'Chuối', ingredientId: 'chuoi' });
+    });
+    store.set(MM_KEYS.TRAY_LOG, log);
   },
 };
 
