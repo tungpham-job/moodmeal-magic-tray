@@ -458,5 +458,9 @@ body.page-student {
 .why-btn { margin-top: 6px; padding: 0; border: none; background: none; font-family: inherit; font-size: 11px; color: var(--purple-mid); cursor: pointer; }
 .why-box { display: none; margin-top: 6px; border-top: 1px solid #F1F5F9; padding-top: 6px; font-size: 10.5px; color: #455A64; line-height: 1.6; }
 .why-box.show { display: block; }
+.why-crit { margin-top: 4px; color: #37474F; }
+.why-crit:first-child { margin-top: 0; }
+.why-crit b { font-weight: 800; }
+.why-sub { padding-left: 14px; }
 .score-section .score-val { white-space: nowrap; margin-left: 8px; }
 .score-section .score-hint { flex: 1; line-height: 1.35; }

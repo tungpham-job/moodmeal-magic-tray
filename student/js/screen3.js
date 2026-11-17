@@ -114,10 +114,11 @@ function updateScore() {
   }
 
   const F = mmScoreFormula();
-  const why = [`Đủ 4 nhóm: +${r.groupsPts} / ${r.groupsMax}`, `Cân bằng năng lượng: +${r.balancePts} / ${r.balanceMax}`];
-  if (r.pct) Object.keys(MACRO_LABEL).forEach(k =>
-    why.push(`${MACRO_LABEL[k]} ${Math.round(r.pct[k])}% · nên ${F.targets[k][0]}–${F.targets[k][1]}% · +${Math.round(r.parts[k])} / ${Math.round(r.macroMax)}`));
-  document.getElementById('whyBox').innerHTML = why.map(escHtml).join('<br>');
+  const subs = r.pct ? Object.keys(MACRO_LABEL).map(k =>
+    `<div class="why-sub">+ ${escHtml(MACRO_LABEL[k])} ${Math.round(r.pct[k])}% · nên ${F.targets[k][0]}–${F.targets[k][1]}% · +${Math.round(r.parts[k])} / ${Math.round(r.macroMax)}</div>`).join('') : '';
+  document.getElementById('whyBox').innerHTML =
+    `<div class="why-crit"><b>Tiêu chí 1:</b> Đủ 4 nhóm: +${r.groupsPts} / ${r.groupsMax}</div>` +
+    `<div class="why-crit"><b>Tiêu chí 2:</b> Cân bằng năng lượng: +${r.balancePts} / ${r.balanceMax}</div>${subs}`;
 }
 
 function toggleWhy() {

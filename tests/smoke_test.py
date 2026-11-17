@@ -182,7 +182,10 @@ def run(browser, base):
     page.click('.ing-item:has-text("Bông cải xanh")'); page.wait_for_timeout(100)
     check('chọn Bông cải xanh (bé đã thử): vào ô Rau củ', page.inner_text('#cell-rauCu .cell-label') == 'Bông cải xanh')
     page.click('#whyBtn'); page.wait_for_timeout(100)
-    check('"Xem vì sao" hiện điểm đủ nhóm và cân bằng', 'Cân bằng năng lượng' in page.inner_text('#whyBox'))
+    wy = page.evaluate("(() => { const b = document.getElementById('whyBox'); return { crit: [...b.querySelectorAll('.why-crit')].map(x => x.textContent.trim()), subs: [...b.querySelectorAll('.why-sub')].map(x => x.textContent.trim()) }; })()")
+    check('"Xem vì sao": Tiêu chí 1 (đủ 4 nhóm) và Tiêu chí 2 (cân bằng năng lượng) tách rõ, 3 chất là mục con của tiêu chí 2',
+          len(wy['crit']) == 2 and wy['crit'][0].startswith('Tiêu chí 1: Đủ 4 nhóm: +') and wy['crit'][1].startswith('Tiêu chí 2: Cân bằng năng lượng: +')
+          and len(wy['subs']) == 3 and all(x.startswith('+ ') and 'nên' in x for x in wy['subs']), wy)
     shown = int(page.inner_text('#scoreVal').split(' ')[0])
     page.fill('#trayName', XSS_NAME)
     page.click('#familyBtn'); page.wait_for_timeout(700)
