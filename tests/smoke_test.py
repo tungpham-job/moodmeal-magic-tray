@@ -281,9 +281,11 @@ def run(browser, base):
     page.evaluate('resetNutritionTable()'); page.wait_for_timeout(150)
     check('Khôi phục mặc định: bảng chuẩn đủ lại', any(t['id'] == 'com-trang' for t in ls('mm_nutrition_table')))
     # Công thức tính điểm Cân bằng năng lượng
-    check('Bảng dinh dưỡng: có khung Công thức tính điểm trước các dòng nguyên liệu',
-          page.locator('#nutritionTable #sf_carbs_lo').count() == 1 and page.input_value('#sf_carbs_lo') == '55' and page.input_value('#sf_tol') == '15'
-          and page.evaluate("document.getElementById('sf_carbs_lo').compareDocumentPosition(document.querySelector('#nutritionTable table')) & 4") > 0)
+    check('Công thức tính điểm: thẻ riêng nằm DƯỚI Bảng dinh dưỡng, nút ở góc phải tiêu đề',
+          page.locator('#scoreFormulaBox #sf_carbs_lo').count() == 1 and page.locator('#nutritionTable #sf_carbs_lo').count() == 0
+          and page.input_value('#sf_carbs_lo') == '55' and page.input_value('#sf_tol') == '15'
+          and page.evaluate("document.getElementById('nutritionTable').compareDocumentPosition(document.getElementById('scoreFormulaBox')) & 4") > 0
+          and page.evaluate("(() => { const b = document.querySelector('#scoreFormulaBox button[onclick=\"saveScoreFormula()\"]').getBoundingClientRect(); const t = document.querySelector('#scoreFormulaBox .content-card-title').getBoundingClientRect(); const n = document.querySelector('#nutritionTable button').getBoundingClientRect(); return b.left > t.right && Math.abs(b.top - t.top) < 30 && Math.abs((document.querySelector('#scoreFormulaBox .content-card').getBoundingClientRect().right - document.querySelectorAll('#scoreFormulaBox button')[1].getBoundingClientRect().right) - (document.querySelector('#nutritionTable .content-card').getBoundingClientRect().right - document.querySelectorAll('#nutritionTable .content-card-header button')[1].getBoundingClientRect().right)) < 2; })()"))
     dflt = lambda: page.evaluate("mmTrayScore([{group:'tinBot',portion:150,carbs:28,protein:2.7,fat:0.3},{group:'dam',portion:60,carbs:0,protein:20,fat:21},{group:'rauCu',portion:80,carbs:3,protein:2,fat:0.2},{group:'traiCay',portion:100,carbs:22,protein:1.1,fat:0.3}]).total")
     t0 = dflt()
     page.fill('#sf_carbs_lo', '70'); page.fill('#sf_carbs_hi', '60'); page.click('button[onclick="saveScoreFormula()"]'); page.wait_for_timeout(150)

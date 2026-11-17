@@ -831,24 +831,35 @@ const SF_MACROS = [['carbs', 'Tinh bột (Carbs)'], ['protein', 'Đạm (Protein
 function scoreFormulaHtml() {
   const F = mmScoreFormula();
   const inp = (id, v, w) => `<input type="number" class="form-control" id="${id}" value="${v}" step="any" min="0" style="width:${w || 70}px;padding:4px 6px">`;
-  return `<div style="margin:0 16px 14px;padding:12px 14px;background:#F8FAFB;border:1.5px solid var(--border-light);border-radius:var(--radius-md)">
-    <div style="font-weight:600;font-size:13px;margin-bottom:4px">⚖️ Công thức tính điểm Cân bằng năng lượng</div>
-    <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">Áp dụng cho điểm khay cơm của học sinh (thang 100) và cột Thành phần dinh dưỡng ở Đề xuất Thực đơn. Năng lượng: 4 kcal/g Carbs, 4 kcal/g Đạm, 9 kcal/g Béo. Khoảng chuẩn mặc định chưa đối chiếu nguồn chính thức.</div>
-    <div style="display:grid;grid-template-columns:auto auto auto;gap:6px 14px;align-items:center;justify-content:start;font-size:13px">
-      <b>Chất</b><b>Khoảng chuẩn (% năng lượng)</b><span></span>
-      ${SF_MACROS.map(([k, lb]) => `<span>${lb}</span><span>${inp('sf_' + k + '_lo', F.targets[k][0])} – ${inp('sf_' + k + '_hi', F.targets[k][1])} %</span><span></span>`).join('')}
+  return `<div class="content-card" style="margin-top:16px">
+    <div class="content-card-header">
+      <span class="content-card-title">⚖️ Công thức tính điểm Cân bằng năng lượng</span>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-primary btn-sm" onclick="saveScoreFormula()">💾 Lưu công thức</button>
+        <button class="btn btn-secondary btn-sm" onclick="resetScoreFormula()">Khôi phục mặc định</button>
+      </div>
     </div>
-    <div style="display:flex;flex-wrap:wrap;gap:14px 24px;margin-top:12px;font-size:13px;align-items:center">
-      <label>Mức trừ: lệch ngoài khoảng ${inp('sf_tol', F.tolerance)} điểm % thì chất đó về 0 điểm</label>
-      <label>Điểm mỗi nhóm có mặt (tối đa 4 nhóm) ${inp('sf_group', F.groupPts)}</label>
-      <label>Điểm tối đa mỗi chất ${inp('sf_macro', F.macroPts)}</label>
-    </div>
-    <div id="sfSummary" style="font-size:11px;color:var(--text-muted);margin-top:8px"></div>
-    <div style="display:flex;gap:8px;margin-top:10px">
-      <button class="btn btn-primary btn-sm" onclick="saveScoreFormula()">💾 Lưu công thức</button>
-      <button class="btn btn-secondary btn-sm" onclick="resetScoreFormula()">Khôi phục mặc định</button>
+    <div style="padding:0 16px 14px">
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">Áp dụng cho điểm khay cơm của học sinh (thang 100) và cột Thành phần dinh dưỡng ở Đề xuất Thực đơn. Năng lượng: 4 kcal/g Carbs, 4 kcal/g Đạm, 9 kcal/g Béo. Khoảng chuẩn mặc định chưa đối chiếu nguồn chính thức.</div>
+      <div style="display:grid;grid-template-columns:auto auto;gap:6px 14px;align-items:center;justify-content:start;font-size:13px">
+        <b>Chất</b><b>Khoảng chuẩn (% năng lượng)</b>
+        ${SF_MACROS.map(([k, lb]) => `<span>${lb}</span><span>${inp('sf_' + k + '_lo', F.targets[k][0])} – ${inp('sf_' + k + '_hi', F.targets[k][1])} %</span>`).join('')}
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:14px 24px;margin-top:12px;font-size:13px;align-items:center">
+        <label>Mức trừ: lệch ngoài khoảng ${inp('sf_tol', F.tolerance)} điểm % thì chất đó về 0 điểm</label>
+        <label>Điểm mỗi nhóm có mặt (tối đa 4 nhóm) ${inp('sf_group', F.groupPts)}</label>
+        <label>Điểm tối đa mỗi chất ${inp('sf_macro', F.macroPts)}</label>
+      </div>
+      <div id="sfSummary" style="font-size:11px;color:var(--text-muted);margin-top:8px"></div>
     </div>
   </div>`;
+}
+function renderScoreFormula() {
+  const box = document.getElementById('scoreFormulaBox');
+  if (!box) return;
+  box.innerHTML = scoreFormulaHtml();
+  box.querySelectorAll('input').forEach(e => e.addEventListener('input', updateScoreFormulaSummary));
+  updateScoreFormulaSummary();
 }
 function readScoreFormulaForm() {
   const v = id => parseFloat(document.getElementById(id).value);
@@ -883,13 +894,13 @@ function saveScoreFormula() {
   if (err) { showToast(err, 'error'); return; }
   saveKey(KEY.SCORE_FORMULA, f);
   showToast('✅ Đã lưu công thức tính điểm');
-  renderNutritionTable(); renderProposalsIfOpen();
+  renderScoreFormula(); renderProposalsIfOpen();
 }
 function resetScoreFormula() {
   if (!confirm('Khôi phục công thức tính điểm về mặc định?')) return;
   saveKey(KEY.SCORE_FORMULA, DEFAULT_SCORE_FORMULA);
   showToast('Đã khôi phục công thức mặc định');
-  renderNutritionTable(); renderProposalsIfOpen();
+  renderScoreFormula(); renderProposalsIfOpen();
 }
 function renderProposalsIfOpen() {
   if (document.getElementById('proposalsTbody')) renderProposals();
@@ -910,7 +921,6 @@ function renderNutritionTable() {
         <button class="btn btn-secondary btn-sm" onclick="resetNutritionTable()">Khôi phục mặc định</button>
       </div>
     </div>
-    ${scoreFormulaHtml()}
     <div style="padding:0 16px 8px;font-size:11px;color:var(--text-muted)">Số liệu trên 100 g; khẩu phần là phần của một ô khay. Điểm (0–10) tự tính từ Carbs, Protein, Fat. Dấu * = số liệu tham khảo, cần đối chiếu Bảng thành phần thực phẩm Việt Nam.</div>
     <div style="overflow-x:auto"><table class="data-table">
       <thead><tr><th>Nhóm</th><th>Nguyên liệu</th><th>Khẩu phần</th><th>Carbs</th><th>Protein</th><th>Fat</th><th>Điểm</th><th></th></tr></thead>
@@ -928,8 +938,7 @@ function renderNutritionTable() {
           </td></tr>`;
       }).join('')}</tbody>
     </table></div></div>`;
-  box.querySelectorAll('[id^="sf_"]').forEach(e => e.addEventListener('input', updateScoreFormulaSummary));
-  updateScoreFormulaSummary();
+  renderScoreFormula();
 }
 
 function setNutriFields(t) {
