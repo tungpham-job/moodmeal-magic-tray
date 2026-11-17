@@ -301,6 +301,10 @@ def run(browser, base):
           page.locator('#module-proposals th:has-text("Thành phần dinh dưỡng")').count() == 1 and page.locator('#module-proposals :text("Chưa đạt")').count() == 0)
     cells = page.eval_on_selector_all('#proposalsTbody tr', 'r => r.map(x => x.children[4].textContent)')
     check('mỗi khay hiện % Tinh bột · Đạm · Béo (hoặc —)', len(cells) >= 3 and all(('%' in c) or c.strip() == '—' for c in cells) and any('%' in c for c in cells), cells)
+    sc = page.eval_on_selector_all('#proposalsTbody tr', 'r => r.map(x => x.children[5].textContent.replace(/\\s+/g, " ").trim())')
+    hd = page.eval_on_selector_all('#module-proposals thead th', 'h => h.map(x => x.textContent.trim())')
+    check('cột Điểm đứng ngay sau Thành phần dinh dưỡng, dạng "76 / 100"',
+          hd.index('Điểm') == hd.index('Thành phần dinh dưỡng') + 1 and len(sc) >= 3 and all(__import__('re').match(r'^\d+ / 100\*?$', c) for c in sc), (hd, sc))
     page.evaluate("switchModule('settings')"); page.wait_for_timeout(150); page.click('button[data-tab=ingredients]')
     page.click('button[data-tab=xp]'); page.wait_for_timeout(150)
     check('bảng Level không còn cột "NL mở khóa"', page.locator('#tab-xp th:has-text("NL mở khóa")').count() == 0)

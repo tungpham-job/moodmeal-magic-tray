@@ -1427,7 +1427,7 @@ function renderProposals() {
 
 /* Thành phần dinh dưỡng của khay: % năng lượng Tinh bột / Đạm / Béo, tính từ bảng dinh dưỡng chuẩn.
    Ô khay tìm theo ingredientId, khay cũ không có thì tìm theo tên; không tìm thấy thì bỏ qua (thêm dấu *). */
-function trayMacroCell(t) {
+function trayResolve(t) {
   const table = loadKey(KEY.NUTRITION, DEFAULT_NUTRITION_TABLE);
   const ings  = loadKey(KEY.INGREDIENTS, DEFAULT_INGREDIENTS);
   const norm = x => String(x || '').trim().toLowerCase();
@@ -1438,10 +1438,24 @@ function trayMacroCell(t) {
     if (src && [src.portion, src.carbs, src.protein, src.fat].every(v => typeof v === 'number')) found.push({ group: it.group, portion: src.portion, carbs: src.carbs, protein: src.protein, fat: src.fat });
     else missing.push(it.name);
   });
+  return { found, missing };
+}
+function trayMacroCell(t) {
+  const { found, missing } = trayResolve(t);
   const r = mmTrayPct(found);
   if (!r.pct) return '<span style="color:#aaa">—</span>';
   const star = missing.length ? `<span title="Chưa có số liệu: ${escHtml(missing.join(', '))}" style="color:#E67E22;cursor:help">*</span>` : '';
   return `<span title="Tinh bột / Đạm / Béo (% năng lượng)">🍚 ${Math.round(r.pct.carbs)}% · 🥩 ${Math.round(r.pct.protein)}% · 🧈 ${Math.round(r.pct.fat)}%</span>${star}`;
+}
+
+/* Cột ĐIỂM: điểm cân bằng năng lượng tính lại theo công thức hiện hành của BGH khi mọi ô khay có số liệu;
+   thiếu số liệu thì hiện điểm đã lưu lúc học sinh gửi (kèm dấu *). */
+function trayScoreCell(t) {
+  const { found, missing } = trayResolve(t);
+  if (found.length && !missing.length) return `<b>${mmTrayScore(found).total}</b> / 100`;
+  if (typeof t.nutritionScore === 'number')
+    return `<b>${t.nutritionScore}</b> / 100<span title="Điểm lưu lúc gửi (khay có nguyên liệu chưa có số liệu)" style="color:#E67E22;cursor:help">*</span>`;
+  return '<span style="color:#aaa">—</span>';
 }
 
 function renderProposalTable(trays) {
@@ -1466,6 +1480,7 @@ function renderProposalTable(trays) {
         <td style="font-size:13px">${escHtml(t.trayName)}</td>
         <td style="font-size:18px;letter-spacing:2px" title="${escHtml(t.tray.map(x=>x.name).join(' · '))}">${icons}</td>
         <td style="font-size:12px;white-space:nowrap">${trayMacroCell(t)}</td>
+        <td style="font-size:13px;white-space:nowrap">${trayScoreCell(t)}</td>
         <td style="font-size:11px;color:#888">${formatTime(t.sentAt)}</td>
         <td>${confirmCell}</td>
         <td>
