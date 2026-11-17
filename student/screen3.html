@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎨</text></svg>">
   <title>Thiết kế Khay – MoodMeal</title>
-  <link rel="stylesheet" href="../css/base.css?v=20261118i">
-  <link rel="stylesheet" href="../css/student.css?v=20261118i">
+  <link rel="stylesheet" href="../css/base.css?v=20261118k">
+  <link rel="stylesheet" href="../css/student.css?v=20261118k">
 </head>
 <body class="page-student">
 <div class="phone-frame">
@@ -24,59 +24,31 @@
   </div>
 
   <div class="screen-content">
-    <!-- Khay 2x2 -->
+    <!-- Khay 4 ô: Tinh bột · Đạm · Rau củ · Trái cây -->
     <div class="tray-section-label">Khay hôm nay</div>
-    <div class="tray-grid">
-      <div class="tray-cell filled" id="cell-tinBot" data-group="tinBot" onclick="cellClick('tinBot')">
-        <div class="cell-icon">🍚</div>
-        <div class="cell-label">Cơm trắng</div>
-        <div class="cell-group">Tinh bột</div>
-        <button class="cell-remove" onclick="removeCell(event,'tinBot')">✕</button>
-      </div>
-      <div class="tray-cell filled" id="cell-dam" data-group="dam" onclick="cellClick('dam')">
-        <div class="cell-icon">🥩</div>
-        <div class="cell-label">Thịt kho</div>
-        <div class="cell-group">Đạm</div>
-        <button class="cell-remove" onclick="removeCell(event,'dam')">✕</button>
-      </div>
-      <div class="tray-cell" id="cell-rauCu" data-group="rauCu" onclick="cellClick('rauCu')">
-        <div class="cell-plus">+</div>
-        <div class="cell-label">Rau củ</div>
-      </div>
-      <div class="tray-cell" id="cell-canh" data-group="canh" onclick="cellClick('canh')">
-        <div class="cell-plus">+</div>
-        <div class="cell-label">Canh</div>
-      </div>
+    <div class="tray-grid" id="trayGrid"></div>
+
+    <!-- Nguyên liệu theo nhóm (dữ liệu BGH: bé đã thử hoặc mở khóa sẵn) -->
+    <div class="ing-section">
+      <div class="ing-tabs" id="ingTabs"></div>
+      <div class="ing-grid" id="ingGrid"></div>
+      <div class="ing-msg" id="trayMsg"></div>
     </div>
 
-    <!-- Nutrition tags -->
-    <div class="nutrition-ring" id="nutritionTags"></div>
-
-    <!-- Score -->
+    <!-- Điểm khay -->
     <div class="score-section">
       <div class="score-row">
-        <span class="score-label">Điểm dinh dưỡng</span>
-        <span class="score-val" id="scoreVal">65 / 100</span>
+        <span class="score-label">Khay của em</span>
+        <span class="score-stars" id="scoreStars" aria-hidden="true">☆☆☆☆☆</span>
       </div>
-      <div class="score-track"><div class="score-fill" id="scoreFill" style="width:65%"></div></div>
-      <div class="score-hint" id="scoreHint"></div>
-    </div>
-
-    <!-- Nguyên liệu -->
-    <div class="ing-section">
-      <div class="ing-label">Nguyên liệu đã mở khóa — bấm để thêm</div>
-      <div class="ing-row" id="ingRow">
-        <button class="ing-btn" data-group="tinBot" data-icon="🍚" data-name="Cơm trắng" data-score="12" onclick="addIng(this)">🍚 <span style="font-size:8px;color:#888">Cơm trắng</span></button>
-        <button class="ing-btn" data-group="tinBot" data-icon="🍞" data-name="Bánh mì"   data-score="10" onclick="addIng(this)">🍞 <span style="font-size:8px;color:#888">Bánh mì</span></button>
-        <button class="ing-btn" data-group="dam"    data-icon="🥩" data-name="Thịt kho"  data-score="12" onclick="addIng(this)">🥩 <span style="font-size:8px;color:#888">Thịt kho</span></button>
-        <button class="ing-btn" data-group="dam"    data-icon="🐟" data-name="Cá hấp"    data-score="12" onclick="addIng(this)">🐟 <span style="font-size:8px;color:#888">Cá hấp</span></button>
-        <button class="ing-btn" data-group="rauCu"  data-icon="🥦" data-name="Bông cải"  data-score="15" onclick="addIng(this)">🥦</button>
-        <button class="ing-btn" data-group="rauCu"  data-icon="🥕" data-name="Cà rốt"    data-score="12" onclick="addIng(this)">🥕</button>
-        <button class="ing-btn" data-group="rauCu"  data-icon="🍅" data-name="Cà chua"   data-score="10" onclick="addIng(this)">🍅</button>
-        <button class="ing-btn" data-group="canh"   data-icon="🍲" data-name="Canh chua" data-score="10" onclick="addIng(this)">🍲</button>
-        <button class="ing-btn" data-group="canh"   data-icon="🥬" data-name="Canh rau"  data-score="8"  onclick="addIng(this)">🥬</button>
-        <button class="ing-btn" data-group="dam"    data-icon="🥚" data-name="Trứng"     data-score="6"  onclick="addIng(this)">🥚</button>
+      <div class="score-row">
+        <span class="score-hint" id="scoreHint" style="margin-top:0"></span>
+        <span class="score-val" id="scoreVal">0 / 100</span>
       </div>
+      <div class="macro-bar" id="macroBar"></div>
+      <div class="macro-legend" id="macroLegend"></div>
+      <button type="button" class="why-btn" id="whyBtn" onclick="toggleWhy()" aria-expanded="false">Xem vì sao ›</button>
+      <div class="why-box" id="whyBox"></div>
     </div>
 
     <!-- Tên khay -->
@@ -106,14 +78,14 @@
   </nav>
 </div>
 
-<script src="../js/config.js?v=20261118i"></script>
-<script src="../js/seed.js?v=20261118i"></script>
-<script src="../js/utils.js?v=20261118i"></script>
-<script src="../js/store.js?v=20261118i"></script>
-<script src="../js/auth.js?v=20261118i"></script>
-<script src="../js/xp.js?v=20261118i"></script>
-<script src="js/nav.js?v=20261118i"></script>
-<script src="js/screen3.js?v=20261118i"></script>
+<script src="../js/config.js?v=20261118k"></script>
+<script src="../js/seed.js?v=20261118k"></script>
+<script src="../js/utils.js?v=20261118k"></script>
+<script src="../js/store.js?v=20261118k"></script>
+<script src="../js/auth.js?v=20261118k"></script>
+<script src="../js/xp.js?v=20261118k"></script>
+<script src="js/nav.js?v=20261118k"></script>
+<script src="js/screen3.js?v=20261118k"></script>
 <script>
   const SESSION = auth.check('student');
   if (SESSION) {

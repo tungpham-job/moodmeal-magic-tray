@@ -431,3 +431,32 @@ body.page-student {
 /* ── Spacers ─────────────────────────────────── */
 .gap  { height: 8px; }
 .gap2 { height: 4px; }
+
+/* ── Khay 4 ô + nguyên liệu theo tab + điểm cân bằng (screen3, v3.1) ── */
+.tray-grid       { grid-template-columns: repeat(4, 1fr); gap: 6px; padding: 10px 12px 6px; }
+.tray-cell       { min-height: 76px; padding: 6px 2px; border-width: 2px; text-align: center; }
+.tray-cell .cell-icon  { font-size: 22px; }
+.tray-cell .cell-label { font-size: 9.5px; line-height: 1.2; padding: 0 2px; }
+.tray-cell .cell-group { font-size: 8.5px; }
+.tray-cell.active      { border-color: var(--purple-mid); box-shadow: 0 0 0 2px rgba(125,60,152,0.2); }
+.ing-tabs { display: flex; gap: 5px; margin-bottom: 8px; }
+.ing-tab  { flex: 1; padding: 6px 0; border: none; border-radius: 9px; background: #F1F5F9; font-size: 10px; font-family: inherit; color: #455A64; cursor: pointer; }
+.ing-tab.on { background: var(--purple-mid); color: #fff; }
+.ing-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.ing-item { display: flex; align-items: center; gap: 8px; padding: 6px 8px; background: #fff; border: 1.5px solid #E8ECF0; border-radius: 10px; font-family: inherit; text-align: left; cursor: pointer; }
+.ing-item .ii-icon { font-size: 22px; }
+.ing-item b   { display: block; font-size: 11px; font-weight: 600; color: #37474F; }
+.ing-item small { font-size: 10px; color: #607D8B; }
+.ing-item.sel { border-color: var(--purple-mid); background: var(--purple-light); }
+.ing-item.locked { background: #F8FAFC; opacity: 0.7; cursor: default; }
+.ing-empty { grid-column: 1 / -1; font-size: 11px; color: #607D8B; padding: 6px 2px; }
+.ing-msg  { font-size: 10.5px; color: #B7791F; min-height: 14px; margin-top: 6px; }
+.score-stars { font-size: 18px; letter-spacing: 2px; color: #F5B301; }
+.macro-bar   { display: flex; height: 14px; border-radius: 7px; overflow: hidden; margin: 8px 0 3px; background: #ECEFF1; }
+.macro-bar span { display: block; height: 14px; transition: width 0.4s ease; }
+.macro-legend { display: flex; justify-content: space-between; font-size: 10px; color: #607D8B; }
+.why-btn { margin-top: 6px; padding: 0; border: none; background: none; font-family: inherit; font-size: 11px; color: var(--purple-mid); cursor: pointer; }
+.why-box { display: none; margin-top: 6px; border-top: 1px solid #F1F5F9; padding-top: 6px; font-size: 10.5px; color: #455A64; line-height: 1.6; }
+.why-box.show { display: block; }
+.score-section .score-val { white-space: nowrap; margin-left: 8px; }
+.score-section .score-hint { flex: 1; line-height: 1.35; }

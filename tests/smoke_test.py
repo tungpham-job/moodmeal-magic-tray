@@ -170,11 +170,27 @@ def run(browser, base):
     check('ô tên khay giới hạn 40 ký tự', maxlen == '40', maxlen)
     fb = page.evaluate("(() => { const b = document.getElementById('familyBtn'); return {h: Math.round(b.getBoundingClientRect().height), f: getComputedStyle(b).fontSize}; })()")
     check('nút "Gửi cho ba mẹ nấu tối nay": cao 45px, chữ 15px', fb['h'] == 45 and fb['f'] == '15px', fb)
-    page.click('.ing-btn[data-name="Bông cải"]'); page.click('.ing-btn[data-name="Canh chua"]')
+    check('khay mặc định: 4 ô điền sẵn nguyên liệu mở khóa sẵn, điểm 76',
+          page.locator('.tray-cell.filled').count() == 4 and page.inner_text('#scoreVal') == '76 / 100'
+          and page.inner_text('#cell-tinBot .cell-label') == 'Cơm trắng' and page.inner_text('#cell-traiCay .cell-label') == 'Chuối')
+    page.click('.ing-tab:has-text("Rau củ")'); page.wait_for_timeout(100)
+    check('nguyên liệu chưa thử hiện khóa 🔒', page.locator('.ing-item.locked').count() >= 1)
+    page.click('.ing-item:has-text("Bông cải xanh")'); page.wait_for_timeout(100)
+    check('ô nhóm đã có nguyên liệu: hiện nhắc bỏ trước', 'Bấm ✕' in page.inner_text('#trayMsg'))
+    page.click('#cell-rauCu .cell-remove'); page.wait_for_timeout(100)
+    check('bỏ nguyên liệu: ô về trống, điểm giảm', page.locator('#cell-rauCu.filled').count() == 0 and page.inner_text('#scoreVal') != '76 / 100')
+    page.click('.ing-item:has-text("Bông cải xanh")'); page.wait_for_timeout(100)
+    check('chọn Bông cải xanh (bé đã thử): vào ô Rau củ', page.inner_text('#cell-rauCu .cell-label') == 'Bông cải xanh')
+    page.click('#whyBtn'); page.wait_for_timeout(100)
+    check('"Xem vì sao" hiện điểm đủ nhóm và cân bằng', 'Cân bằng năng lượng' in page.inner_text('#whyBox'))
+    shown = int(page.inner_text('#scoreVal').split(' ')[0])
     page.fill('#trayName', XSS_NAME)
     page.click('#familyBtn'); page.wait_for_timeout(700)
     trays = [t for t in ls('mm_tray_log') if t['studentId'] == 'phambaotruc' and t['trayName'] == XSS_NAME]
     check('khay được ghi vào mm_tray_log', len(trays) == 1, len(trays))
+    check('khay ghi mã nhóm mới (tinBot/dam/rauCu/traiCay), kèm id nguyên liệu và điểm đã hiển thị',
+          bool(trays) and [x['group'] for x in trays[0]['tray']] == ['tinBot', 'dam', 'rauCu', 'traiCay']
+          and all(x.get('ingredientId') for x in trays[0]['tray']) and trays[0]['nutritionScore'] == shown, trays[:1])
     page.reload(); page.wait_for_timeout(500)
     check('tải lại: nút gửi khay bị khóa (1 khay/ngày)', page.evaluate("document.getElementById('familyBtn').disabled"))
     check('không có script chạy ở trang Học sinh', page.evaluate('window.__xss') is None)
