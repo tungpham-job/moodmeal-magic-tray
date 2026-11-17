@@ -56,6 +56,22 @@ function mmScoreFormula() {
   return f;
 }
 
+/* Tìm số liệu dinh dưỡng cho từng ô của một khay đã gửi (tray_log): theo ingredientId, khay cũ không có thì theo tên.
+   Trả về { found: [{group, portion, carbs, protein, fat}], missing: [tên ô chưa có số liệu] }. */
+function mmTrayResolve(t) {
+  const table = store.get(MM_KEYS.NUTRITION, DEFAULT_NUTRITION_TABLE);
+  const ings  = store.get(MM_KEYS.INGREDIENTS, DEFAULT_INGREDIENTS);
+  const norm = x => String(x || '').trim().toLowerCase();
+  const found = [], missing = [];
+  ((t && t.tray) || []).forEach(it => {
+    const src = (it.ingredientId && (table.find(r => r.id === it.ingredientId) || ings.find(r => r.id === it.ingredientId)))
+      || table.find(r => norm(r.name) === norm(it.name)) || ings.find(r => norm(r.name) === norm(it.name));
+    if (src && [src.portion, src.carbs, src.protein, src.fat].every(v => typeof v === 'number')) found.push({ group: it.group, portion: src.portion, carbs: src.carbs, protein: src.protein, fat: src.fat });
+    else missing.push(it.name);
+  });
+  return { found, missing };
+}
+
 /* Điểm khay cơm 0–100 theo cân bằng năng lượng.
    items: [{group, portion, carbs, protein, fat}] (carbs/protein/fat: g trên 100 g, portion: g).
    Theo công thức của BGH (mmScoreFormula): mỗi nhóm có mặt được groupPts (tối đa 4 nhóm); mỗi chất (Carbs, Đạm, Béo)

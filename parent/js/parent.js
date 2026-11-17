@@ -375,12 +375,39 @@ function renderSection2() {
   wrap.innerHTML = `
     <div class="tray-name-display">${escHtml(TRAY_ITEM.trayName)} ${icons}</div>
     <div class="tray-items-row">${itemsHTML}</div>
+    ${trayNutritionHtml(TRAY_ITEM)}
     <div class="tray-meta">
-      <span class="tray-score">⭐ ${TRAY_ITEM.nutritionScore}/100 điểm dinh dưỡng</span>
       <span class="tray-sent-time">Con gửi lúc ${formatTime(TRAY_ITEM.sentAt)}</span>
     </div>`;
 
   document.getElementById('confirmActions').style.display = 'flex';
+}
+
+/* Điểm và thành phần dinh dưỡng của khay: tính theo công thức BGH hiện hành khi mọi ô khay có số liệu;
+   thiếu số liệu thì dùng điểm đã lưu lúc con gửi (dấu *) và chỉ vẽ thanh tỉ lệ cho các ô có số liệu. */
+const PARENT_MACROS = [['carbs', 'Tinh bột', '#F59E0B'], ['protein', 'Đạm', '#8B5CF6'], ['fat', 'Béo', '#EF4444']];
+function trayNutritionHtml(t) {
+  const { found, missing } = mmTrayResolve(t);
+  const base = mmTrayPct(found);
+  let score = null, star = false;
+  if (found.length && !missing.length) score = mmTrayScore(found).total;
+  else if (typeof t.nutritionScore === 'number') { score = t.nutritionScore; star = true; }
+  if (score === null && !base.pct) return '';
+  const starHtml = star || (missing.length && base.pct)
+    ? `<span class="tray-star" title="${escHtml(missing.length ? 'Chưa có số liệu: ' + missing.join(', ') : 'Điểm lưu lúc con gửi')}">*</span>` : '';
+  const head = score === null ? '' : `
+    <div class="tray-score-row">
+      <span class="tray-score-label">Điểm khay</span>
+      <span class="tray-score-val">${score}<small> / 100</small>${starHtml}</span>
+    </div>`;
+  const bar = base.pct ? `
+    <div class="tray-macro-bar" role="img" aria-label="${PARENT_MACROS.map(([k, l]) => l + ' ' + Math.round(base.pct[k]) + '%').join(', ')}">
+      ${PARENT_MACROS.map(([k, , c]) => `<span style="width:${base.pct[k].toFixed(1)}%;background:${c}"></span>`).join('')}
+    </div>
+    <div class="tray-macro-legend">
+      ${PARENT_MACROS.map(([k, l, c]) => `<span><i style="background:${c}"></i>${l} ${Math.round(base.pct[k])}%</span>`).join('')}
+    </div>` : '';
+  return `<div class="tray-nutrition">${head}${bar}</div>`;
 }
 
 function groupLabel(g) {

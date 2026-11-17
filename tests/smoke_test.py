@@ -200,6 +200,10 @@ def run(browser, base):
     page.wait_for_timeout(600)
     check('tên khay hiện dạng chữ, không chạy mã', page.evaluate('window.__xss') is None and page.locator('img[src="x"]').count() == 0)
     check('tên khay hiển thị nguyên văn', XSS_NAME in page.inner_text('body'))
+    pn = page.evaluate("(() => { const w = document.getElementById('trayPreviewWrap'); const sp = [...w.querySelectorAll('.tray-macro-bar span')].map(s => parseFloat(s.style.width)); return { score: (w.querySelector('.tray-score-val')||{}).textContent, legend: (w.querySelector('.tray-macro-legend')||{}).textContent, sum: sp.reduce((a,b)=>a+b,0), n: sp.length }; })()")
+    check('Phụ huynh: khay có điểm "N / 100" (bằng điểm học sinh thấy), thanh tỉ lệ 3 chất và chú thích %',
+          pn['score'] and pn['score'].replace(' ', '').startswith(f'{shown}/100') and pn['n'] == 3 and abs(pn['sum'] - 100) < 1
+          and all(w in pn['legend'] for w in ('Tinh bột', 'Đạm', 'Béo')) and '%' in pn['legend'], pn)
     page.click('#btnConfirmYes'); page.wait_for_timeout(700)
     pc = [r for r in (ls('mm_xp_log') or []) if r['actionId'] == 'parent_confirm']
     check('con nhận XP parent_confirm', len(pc) == 1, len(pc))

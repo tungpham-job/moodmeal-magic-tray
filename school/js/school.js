@@ -1427,19 +1427,7 @@ function renderProposals() {
 
 /* Thành phần dinh dưỡng của khay: % năng lượng Tinh bột / Đạm / Béo, tính từ bảng dinh dưỡng chuẩn.
    Ô khay tìm theo ingredientId, khay cũ không có thì tìm theo tên; không tìm thấy thì bỏ qua (thêm dấu *). */
-function trayResolve(t) {
-  const table = loadKey(KEY.NUTRITION, DEFAULT_NUTRITION_TABLE);
-  const ings  = loadKey(KEY.INGREDIENTS, DEFAULT_INGREDIENTS);
-  const norm = x => String(x || '').trim().toLowerCase();
-  const found = [], missing = [];
-  (t.tray || []).forEach(it => {
-    const src = (it.ingredientId && (table.find(r => r.id === it.ingredientId) || ings.find(r => r.id === it.ingredientId)))
-      || table.find(r => norm(r.name) === norm(it.name)) || ings.find(r => norm(r.name) === norm(it.name));
-    if (src && [src.portion, src.carbs, src.protein, src.fat].every(v => typeof v === 'number')) found.push({ group: it.group, portion: src.portion, carbs: src.carbs, protein: src.protein, fat: src.fat });
-    else missing.push(it.name);
-  });
-  return { found, missing };
-}
+function trayResolve(t) { return mmTrayResolve(t); }
 function trayMacroCell(t) {
   const { found, missing } = trayResolve(t);
   const r = mmTrayPct(found);

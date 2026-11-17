@@ -270,6 +270,17 @@ body.page-parent {
 .tray-item-name  { font-size: 11px; font-weight: 600; color: var(--purple-dark); }
 .tray-item-group { font-size: 9px; color: var(--purple-mid); }
 
+.tray-nutrition { display: flex; flex-direction: column; gap: 6px; }
+.tray-score-row { display: flex; justify-content: space-between; align-items: baseline; }
+.tray-score-label { font-size: 12px; color: var(--purple-mid); font-weight: 600; }
+.tray-score-val { font-size: 20px; font-weight: 800; color: var(--purple-dark); }
+.tray-score-val small { font-size: 12px; font-weight: 600; }
+.tray-star { font-size: 12px; color: #E67E22; margin-left: 2px; cursor: help; }
+.tray-macro-bar { display: flex; height: 10px; border-radius: 5px; overflow: hidden; background: #eee; }
+.tray-macro-bar span { display: block; height: 100%; }
+.tray-macro-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 11px; color: var(--purple-dark); }
+.tray-macro-legend i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 4px; }
+
 .tray-meta {
   display: flex; justify-content: space-between;
   align-items: center;
