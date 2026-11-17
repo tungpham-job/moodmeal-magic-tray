@@ -84,7 +84,7 @@ def run(browser, base):
     menu = ls('mm_daily_menu') or []
     check('có đúng 1 món "Trứng chiên" (hôm nay)', sum(m['name'] == 'Trứng chiên' for m in menu) == 1)
     check('chưa đăng nhập thì về trang đăng nhập', page.url.endswith('/index.html'), page.url)
-    check('ghi số phiên bản dữ liệu mm_schema_version = 1', ls('mm_schema_version') == 1, ls('mm_schema_version'))
+    check('ghi số phiên bản dữ liệu mm_schema_version = 2', ls('mm_schema_version') == 2, ls('mm_schema_version'))
 
     print('2. Đăng nhập 3 vai trò')
     check('học sinh → student/index.html', login('phambaotruc', 'hs001') == '/student/index.html')
@@ -198,6 +198,32 @@ def run(browser, base):
     page.click('button[data-module=settings]')
     for tab in ('menu', 'ingredients', 'xp', 'badges', 'criteria'):
         page.click(f'button[data-tab={tab}]'); page.wait_for_timeout(200)
+    ings = ls('mm_ingredients') or []
+    check('nguyên liệu: chỉ 4 nhóm, không còn "Canh"',
+          {g['group'] for g in ings} <= {'Tinh bột', 'Đạm', 'Rau củ', 'Trái cây'}
+          and all(m['group'] != 'Canh' for m in (ls('mm_daily_menu') or [])))
+    check('nguyên liệu có khẩu phần + Carbs/Protein/Fat; mở khóa sẵn = Cơm trắng, Thịt heo, Rau muống, Chuối',
+          all(isinstance(g.get('carbs'), (int, float)) and g.get('portion') for g in ings)
+          and sorted(g['name'] for g in ings if g.get('alwaysUnlocked')) == ['Chuối', 'Cơm trắng', 'Rau muống', 'Thịt heo'])
+    check('bảng dinh dưỡng chuẩn mm_nutrition_table có ≥ 12 dòng', len(ls('mm_nutrition_table') or []) >= 12)
+    page.click('button[data-tab=ingredients]'); page.wait_for_timeout(200)
+    check('tab Nguyên liệu có bảng chuẩn; Trứng = 3 điểm',
+          page.locator('#nutritionTable tr:has-text("Trứng") td:nth-child(7) b').inner_text() == '3')
+    page.evaluate('openAddIngredient()'); page.wait_for_timeout(150)
+    page.select_option('#ingFromTable', 'cam'); page.wait_for_timeout(100)
+    check('chọn "Cam" từ bảng chuẩn: tự điền tên, nhóm và số liệu',
+          page.input_value('#ingName') == 'Cam' and page.input_value('#ingGroup') == 'Trái cây'
+          and page.input_value('#ingCarbs') == '12' and page.input_value('#ingPortion') == '80')
+    page.click('#modalIngredient .btn-primary'); page.wait_for_timeout(200)
+    cam = next((g for g in (ls('mm_ingredients') or []) if g['name'] == 'Cam'), None)
+    check('lưu nguyên liệu Cam: có số liệu, chưa mở khóa sẵn',
+          bool(cam) and cam['carbs'] == 12 and cam['portion'] == 80 and not cam['alwaysUnlocked'], cam)
+    page.evaluate("deleteNutri('com-trang')"); page.wait_for_timeout(150)
+    check('xóa dòng bảng chuẩn', all(t['id'] != 'com-trang' for t in ls('mm_nutrition_table')))
+    page.evaluate('resetNutritionTable()'); page.wait_for_timeout(150)
+    check('Khôi phục mặc định: bảng chuẩn đủ lại', any(t['id'] == 'com-trang' for t in ls('mm_nutrition_table')))
+    page.click('button[data-tab=xp]'); page.wait_for_timeout(150)
+    check('bảng Level không còn cột "NL mở khóa"', page.locator('#tab-xp th:has-text("NL mở khóa")').count() == 0)
     page.click('button[data-tab=menu]')
     check('lịch thực đơn tuần có chip "Trứng chiên"', page.locator('.menu-chip:has-text("Trứng chiên")').count() == 1)
     cfg = ls('mm_xp_config'); cfg['actions'][0]['xp'] = 77
@@ -230,15 +256,29 @@ def run(browser, base):
     page.evaluate("c => localStorage.setItem('mm_xp_config', JSON.stringify(c))", cfg)
     page.evaluate("localStorage.removeItem('mm_schema_version')")           # dữ liệu cũ chưa có số phiên bản
     page.reload(); page.wait_for_timeout(400)
-    check('dữ liệu cũ không có phiên bản: ghi v1, không đổi dữ liệu',
-          ls('mm_schema_version') == 1 and ls('mm_xp_config')['actions'][0]['xp'] == 88)
+    check('dữ liệu cũ không có phiên bản: nâng lên v2, giữ nguyên cấu hình BGH',
+          ls('mm_schema_version') == 2 and ls('mm_xp_config')['actions'][0]['xp'] == 88)
+    ings = ls('mm_ingredients')                                                # mô phỏng dữ liệu v1
+    for g in ings:
+        g['group'] = 'Canh' if g['name'] == 'Rau muống' else g['group']
+        for k in ('carbs', 'protein', 'fat', 'portion', 'alwaysUnlocked'): g.pop(k, None)
+    page.evaluate("v => localStorage.setItem('mm_ingredients', JSON.stringify(v))", ings)
+    page.evaluate("localStorage.removeItem('mm_nutrition_table')")
+    page.evaluate("localStorage.setItem('mm_schema_version', '1')")
+    page.reload(); page.wait_for_timeout(400)
+    ings = ls('mm_ingredients')
+    check('nâng v1 → v2: Canh → Rau củ, bổ sung số liệu, mở khóa sẵn, có bảng chuẩn',
+          ls('mm_schema_version') == 2 and all(g['group'] != 'Canh' for g in ings)
+          and all(isinstance(g.get('carbs'), (int, float)) for g in ings)
+          and sorted(g['name'] for g in ings if g.get('alwaysUnlocked')) == ['Chuối', 'Cơm trắng', 'Rau muống', 'Thịt heo']
+          and len(ls('mm_nutrition_table') or []) >= 12)
     page.evaluate("localStorage.setItem('mm_schema_version', '99')")
     page.evaluate("localStorage.removeItem('mm_badges')")
     page.reload(); page.wait_for_timeout(400)
     check('dữ liệu mới hơn code (v99): không bị ghi đè hay seed lại',
           ls('mm_schema_version') == 99 and ls('mm_badges') is None)
     page.click('#btnReset'); page.wait_for_timeout(1200)
-    check('Đặt lại đưa phiên bản về v1', ls('mm_schema_version') == 1)
+    check('Đặt lại đưa phiên bản về v2', ls('mm_schema_version') == 2)
 
     print('9. DEMO_MODE = false (bản chạy thật)')
     ctx2 = browser.new_context()
@@ -254,7 +294,8 @@ def run(browser, base):
     check('không có nhật ký, khay, tiêu chí, thực đơn mẫu',
           all(ls2(k) == [] for k in ('mm_fas_log', 'mm_tray_log', 'mm_grading_criteria', 'mm_daily_menu')))
     check('vẫn có mặc định hệ thống (XP, danh hiệu, nguyên liệu)',
-          bool(ls2('mm_xp_config')) and bool(ls2('mm_badges')) and bool(ls2('mm_ingredients')))
+          bool(ls2('mm_xp_config')) and bool(ls2('mm_badges')) and bool(ls2('mm_ingredients'))
+          and len(ls2('mm_nutrition_table') or []) >= 12)
     p2.evaluate("localStorage.setItem('mm_demo_date', '2026-12-25')"); p2.reload(); p2.wait_for_timeout(300)
     same = p2.evaluate("toLocalDateStr(new Date()) === toLocalDateStr(new MM_RealDate())")
     check('bỏ qua ngày giả lập (đồng hồ demo tắt)', same)

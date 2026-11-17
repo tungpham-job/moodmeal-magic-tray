@@ -9,6 +9,7 @@ const KEY = {
   ACCOUNTS:  MM_KEYS.ACCOUNTS,
   MENU:      MM_KEYS.MENU,
   INGREDIENTS: MM_KEYS.INGREDIENTS,
+  NUTRITION: MM_KEYS.NUTRITION,
   XP_CONFIG: MM_KEYS.XP_CONFIG,
   BADGES:    MM_KEYS.BADGES,
   CRITERIA:  MM_KEYS.CRITERIA,
@@ -478,7 +479,7 @@ function menuGoToday() {
 }
 
 function groupIcon(group) {
-  return { 'Tinh bột': '🍚', 'Đạm': '🥩', 'Rau củ': '🥦', 'Canh': '🍲' }[group] || '🍽️';
+  return { 'Tinh bột': '🍚', 'Đạm': '🥩', 'Rau củ': '🥦', 'Trái cây': '🍎' }[group] || '🍽️';
 }
 
 /* Tạo date string dạng YYYY-MM-DD theo LOCAL time (tránh lệch UTC+7) */
@@ -597,7 +598,7 @@ function deleteMenuItem(id) {
    Danh mục nguyên liệu do BGH quản lý (thỉnh thoảng, không hằng ngày).
    `id` của nguyên liệu là foodId của nhật ký FAS. */
 const PLANET_ORDER = ['Rau củ', 'Đạm', 'Xanh lá', 'Trái cây'];
-const GROUP_ORDER  = ['Tinh bột', 'Đạm', 'Rau củ', 'Canh'];
+const GROUP_ORDER  = ['Tinh bột', 'Đạm', 'Rau củ', 'Trái cây'];
 const ING_ICONS    = ['🍚','🍞','🍜','🌽','🥩','🍗','🐟','🦐','🥚','🥓','🥦','🥕','🍅','🥬','🧅','🥒','🍆','🥔','🍎','🍌','🍊','🍇','🍓','🍲','🥣','🍄','🫛','🌿'];
 
 function ingredientInUse(id) {
@@ -606,6 +607,7 @@ function ingredientInUse(id) {
 }
 
 function renderIngredientsTab() {
+  renderNutritionTable();
   const list = loadKey(KEY.INGREDIENTS, DEFAULT_INGREDIENTS);
   const box  = document.getElementById('ingredientsList');
   if (!list.length) {
@@ -634,7 +636,7 @@ function ingChipHtml(g) {
     ? `<button class="btn btn-sm btn-ghost btn-icon" title="${off ? 'Dùng lại' : 'Ngừng dùng (đã có trong thực đơn/FAS nên không xóa được)'}" onclick="toggleIngredient('${g.id}')">${off ? '✅' : '🚫'}</button>`
     : `<button class="btn btn-sm btn-ghost btn-icon" title="Xóa" onclick="deleteIngredient('${g.id}')">🗑</button>`;
   return `<span style="display:inline-flex;align-items:center;gap:4px;border:1px solid var(--border);border-radius:10px;padding:2px 4px 2px 10px;font-size:12px;${off ? 'opacity:.5' : ''}">
-    ${g.icon} ${escHtml(g.name)}${off ? ' <em style="font-size:10px">(ngừng dùng)</em>' : ''}
+    ${g.icon} ${escHtml(g.name)}${g.alwaysUnlocked ? ' <span title="Mở khóa sẵn cho tất cả các bé">🔓</span>' : ''}${off ? ' <em style="font-size:10px">(ngừng dùng)</em>' : ''}
     <button class="btn btn-sm btn-ghost btn-icon" title="Sửa" onclick="openEditIngredient('${g.id}')">✏️</button>${del}</span>`;
 }
 
@@ -652,12 +654,62 @@ function pickIngIcon(ic) {
   document.getElementById('ingIconPanel').style.display = 'none';
 }
 
+const NUTRI_GROUPS = ['Tinh bột', 'Đạm', 'Rau củ', 'Trái cây'];
+
+function fillIngFromTableList() {
+  const rows = loadKey(KEY.NUTRITION, DEFAULT_NUTRITION_TABLE);
+  const have = loadKey(KEY.INGREDIENTS, DEFAULT_INGREDIENTS).map(g => g.id);
+  let html = '<option value="">— Nhập tay —</option>';
+  NUTRI_GROUPS.forEach(gr => {
+    const inGr = rows.filter(t => t.group === gr);
+    if (!inGr.length) return;
+    html += `<optgroup label="${escHtml(gr)}">` + inGr.map(t =>
+      `<option value="${t.id}"${have.includes(t.id) ? ' disabled' : ''}>${escHtml(t.icon)} ${escHtml(t.name)}${have.includes(t.id) ? ' (đã có)' : ''}</option>`).join('') + '</optgroup>';
+  });
+  document.getElementById('ingFromTable').innerHTML = html;
+}
+
+function setIngFields(o) {
+  document.getElementById('ingName').value    = o.name || '';
+  document.getElementById('ingGroup').value   = o.group || 'Tinh bột';
+  document.getElementById('ingPlanet').value  = o.planet || 'Rau củ';
+  document.getElementById('ingIcon').value    = o.icon || '';
+  document.getElementById('ingIconDisplay').textContent = o.icon || '🍽️';
+  document.getElementById('ingPortion').value = o.portion == null ? '' : o.portion;
+  document.getElementById('ingCarbs').value   = o.carbs   == null ? '' : o.carbs;
+  document.getElementById('ingProtein').value = o.protein == null ? '' : o.protein;
+  document.getElementById('ingFat').value     = o.fat     == null ? '' : o.fat;
+  document.getElementById('ingUnlocked').checked = !!o.alwaysUnlocked;
+  updateIngScore();
+}
+
+/* Đọc 4 ô số liệu; trả về null nếu thiếu hoặc không hợp lệ */
+function readMacroInputs(prefix) {
+  const get = id => document.getElementById(prefix + id).value;
+  const v = { portion: get('Portion'), carbs: get('Carbs'), protein: get('Protein'), fat: get('Fat') };
+  if (Object.values(v).some(x => x === '' || isNaN(Number(x)) || Number(x) < 0) || Number(v.portion) <= 0) return null;
+  return { portion: Number(v.portion), carbs: Number(v.carbs), protein: Number(v.protein), fat: Number(v.fat) };
+}
+
+function updateIngScore() {
+  const m = readMacroInputs('ing');
+  const sc = m ? mmIngredientScore(Object.assign({ group: document.getElementById('ingGroup').value }, m)) : null;
+  document.getElementById('ingScore').textContent = sc === null ? '—' : sc;
+}
+
+function pickFromNutritionTable(id) {
+  if (!id) return;
+  const t = loadKey(KEY.NUTRITION, DEFAULT_NUTRITION_TABLE).find(x => x.id === id);
+  if (!t) return;
+  setIngFields(Object.assign({}, t, { alwaysUnlocked: document.getElementById('ingUnlocked').checked }));
+}
+
 function openAddIngredient() {
   document.getElementById('modalIngredientTitle').textContent = '+ Thêm nguyên liệu';
   document.getElementById('ingEditId').value = '';
-  document.getElementById('ingName').value = '';
-  document.getElementById('ingIcon').value = '';
-  document.getElementById('ingIconDisplay').textContent = '🍽️';
+  fillIngFromTableList();
+  document.getElementById('ingFromTableWrap').style.display = '';
+  setIngFields({});
   document.getElementById('ingIconPanel').style.display = 'none';
   document.getElementById('ingEditWarn').style.display = 'none';
   openModal('modalIngredient');
@@ -668,11 +720,8 @@ function openEditIngredient(id) {
   if (!g) return;
   document.getElementById('modalIngredientTitle').textContent = 'Sửa nguyên liệu';
   document.getElementById('ingEditId').value = id;
-  document.getElementById('ingName').value = g.name;
-  document.getElementById('ingGroup').value = g.group;
-  document.getElementById('ingPlanet').value = g.planet;
-  document.getElementById('ingIcon').value = g.icon;
-  document.getElementById('ingIconDisplay').textContent = g.icon;
+  document.getElementById('ingFromTableWrap').style.display = 'none';
+  setIngFields(g);
   document.getElementById('ingIconPanel').style.display = 'none';
   document.getElementById('ingEditWarn').style.display = ingredientInUse(id) ? 'block' : 'none';
   openModal('modalIngredient');
@@ -693,7 +742,10 @@ function saveIngredient() {
   const group  = document.getElementById('ingGroup').value;
   const planet = document.getElementById('ingPlanet').value;
   const icon   = document.getElementById('ingIcon').value || groupIcon(group);
+  const alwaysUnlocked = document.getElementById('ingUnlocked').checked;
   if (!name) { showToast('Vui lòng nhập tên nguyên liệu!', 'error'); return; }
+  const macro = readMacroInputs('ing');
+  if (!macro) { showToast('Nhập đủ khẩu phần (lớn hơn 0), Carbs, Protein, Fat (0 nếu không có).', 'error'); return; }
 
   const list = loadKey(KEY.INGREDIENTS, DEFAULT_INGREDIENTS);
   const norm = t => t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').toLowerCase().replace(/\s+/g, ' ').trim();
@@ -705,7 +757,7 @@ function saveIngredient() {
     const g = list.find(x => x.id === editId);
     if (!g) return;
     const changed = g.name !== name || g.group !== group || g.planet !== planet;
-    Object.assign(g, { name, group, planet, icon });
+    Object.assign(g, { name, group, planet, icon, alwaysUnlocked }, macro);
     saveKey(KEY.INGREDIENTS, list);
     if (changed) {
       // Đồng bộ nhóm/hành tinh/tên vào thực đơn và nhật ký FAS (nối theo id, không mất lịch sử)
@@ -717,7 +769,9 @@ function saveIngredient() {
       saveKey(KEY.FAS_LOG, fas);
     }
   } else {
-    list.push({ id: makeIngredientId(name, list), name, icon, group, planet, active: true });
+    const fromTable = document.getElementById('ingFromTable').value;
+    const id = fromTable && !list.some(g => g.id === fromTable) ? fromTable : makeIngredientId(name, list);
+    list.push(Object.assign({ id, name, icon, group, planet, alwaysUnlocked, active: true }, macro));
     saveKey(KEY.INGREDIENTS, list);
   }
   closeModal('modalIngredient');
@@ -743,6 +797,116 @@ function deleteIngredient(id) {
   showToast('Đã xóa nguyên liệu');
 }
 
+/* ── Bảng dinh dưỡng chuẩn (danh sách để chọn khi thêm nguyên liệu) ── */
+function renderNutritionTable() {
+  const box = document.getElementById('nutritionTable');
+  if (!box) return;
+  const rows = loadKey(KEY.NUTRITION, DEFAULT_NUTRITION_TABLE);
+  const ord = g => { const i = NUTRI_GROUPS.indexOf(g); return i < 0 ? 99 : i; };
+  const sorted = rows.slice().sort((a, b) => ord(a.group) - ord(b.group));
+  const num = v => (v == null ? '—' : v);
+  box.innerHTML = `<div class="content-card" style="margin-top:16px">
+    <div class="content-card-header">
+      <span class="content-card-title">Bảng dinh dưỡng chuẩn</span>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-secondary btn-sm" onclick="openAddNutri()">+ Thêm dòng</button>
+        <button class="btn btn-secondary btn-sm" onclick="resetNutritionTable()">Khôi phục mặc định</button>
+      </div>
+    </div>
+    <div style="padding:0 16px 8px;font-size:11px;color:var(--text-muted)">Số liệu trên 100 g; khẩu phần là phần của một ô khay. Điểm (0–10) tự tính từ Carbs, Protein, Fat. Dấu * = số liệu tham khảo, cần đối chiếu Bảng thành phần thực phẩm Việt Nam.</div>
+    <div style="overflow-x:auto"><table class="data-table">
+      <thead><tr><th>Nhóm</th><th>Nguyên liệu</th><th>Khẩu phần</th><th>Carbs</th><th>Protein</th><th>Fat</th><th>Điểm</th><th></th></tr></thead>
+      <tbody>${sorted.map(t => {
+        const sc = mmIngredientScore(t), star = t.ref ? '*' : '';
+        return `<tr>
+          <td>${escHtml(t.group)}</td>
+          <td>${escHtml(t.icon)} ${escHtml(t.name)}</td>
+          <td>${num(t.portion)} g</td>
+          <td>${num(t.carbs)}${star}</td><td>${num(t.protein)}${star}</td><td>${num(t.fat)}${star}</td>
+          <td><b>${sc === null ? '—' : sc}</b></td>
+          <td style="white-space:nowrap">
+            <button class="btn btn-sm btn-ghost btn-icon" title="Sửa" onclick="openEditNutri('${t.id}')">✏️</button>
+            <button class="btn btn-sm btn-ghost btn-icon" title="Xóa dòng (khôi phục được bằng nút Khôi phục mặc định)" onclick="deleteNutri('${t.id}')">🗑</button>
+          </td></tr>`;
+      }).join('')}</tbody>
+    </table></div></div>`;
+}
+
+function setNutriFields(t) {
+  document.getElementById('nutriGroup').value   = t.group || 'Tinh bột';
+  document.getElementById('nutriPlanet').value  = t.planet || 'Rau củ';
+  document.getElementById('nutriName').value    = t.name || '';
+  document.getElementById('nutriIcon').value    = t.icon || '';
+  document.getElementById('nutriPortion').value = t.portion == null ? '' : t.portion;
+  document.getElementById('nutriCarbs').value   = t.carbs   == null ? '' : t.carbs;
+  document.getElementById('nutriProtein').value = t.protein == null ? '' : t.protein;
+  document.getElementById('nutriFat').value     = t.fat     == null ? '' : t.fat;
+  document.getElementById('nutriRef').checked   = !!t.ref;
+}
+
+function openAddNutri() {
+  document.getElementById('modalNutriTitle').textContent = '+ Thêm dòng vào bảng chuẩn';
+  document.getElementById('nutriEditId').value = '';
+  setNutriFields({ ref: true });
+  openModal('modalNutri');
+}
+
+function openEditNutri(id) {
+  const t = loadKey(KEY.NUTRITION, DEFAULT_NUTRITION_TABLE).find(x => x.id === id);
+  if (!t) return;
+  document.getElementById('modalNutriTitle').textContent = 'Sửa dòng bảng chuẩn';
+  document.getElementById('nutriEditId').value = id;
+  setNutriFields(t);
+  openModal('modalNutri');
+}
+
+function saveNutri() {
+  const editId = document.getElementById('nutriEditId').value;
+  const name   = document.getElementById('nutriName').value.trim();
+  if (!name) { showToast('Vui lòng nhập tên nguyên liệu!', 'error'); return; }
+  const macro = readMacroInputs('nutri');
+  if (!macro) { showToast('Nhập đủ khẩu phần (lớn hơn 0), Carbs, Protein, Fat (0 nếu không có).', 'error'); return; }
+  const group = document.getElementById('nutriGroup').value;
+  const row = Object.assign({
+    group, name,
+    icon:   document.getElementById('nutriIcon').value.trim() || groupIcon(group),
+    planet: document.getElementById('nutriPlanet').value,
+    ref:    document.getElementById('nutriRef').checked,
+  }, macro);
+
+  const rows = loadKey(KEY.NUTRITION, DEFAULT_NUTRITION_TABLE).slice();
+  const norm = t => t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').toLowerCase().replace(/\s+/g, ' ').trim();
+  if (rows.some(t => t.id !== editId && norm(t.name) === norm(name))) {
+    showToast('Dòng này đã có trong bảng chuẩn!', 'error'); return;
+  }
+  if (editId) {
+    const t = rows.find(x => x.id === editId);
+    if (!t) return;
+    Object.assign(t, row);
+  } else {
+    rows.push(Object.assign({ id: makeIngredientId(name, rows) }, row));
+  }
+  saveKey(KEY.NUTRITION, rows);
+  closeModal('modalNutri');
+  renderNutritionTable();
+  showToast('Đã lưu bảng chuẩn!');
+}
+
+function deleteNutri(id) {
+  const rows = loadKey(KEY.NUTRITION, DEFAULT_NUTRITION_TABLE);
+  const t = rows.find(x => x.id === id);
+  if (!t || !confirm(`Xóa "${t.name}" khỏi bảng chuẩn? (Nguyên liệu đã thêm không bị ảnh hưởng.)`)) return;
+  saveKey(KEY.NUTRITION, rows.filter(x => x.id !== id));
+  renderNutritionTable();
+}
+
+function resetNutritionTable() {
+  if (!confirm('Khôi phục bảng dinh dưỡng chuẩn về mặc định? Các dòng đã thêm hoặc sửa trong bảng chuẩn sẽ mất (nguyên liệu đã thêm không bị ảnh hưởng).')) return;
+  saveKey(KEY.NUTRITION, DEFAULT_NUTRITION_TABLE);
+  renderNutritionTable();
+  showToast('Đã khôi phục bảng chuẩn mặc định');
+}
+
 /* Tab 2 — XP & Level */
 function renderXPTab() {
   const cfg = loadKey(KEY.XP_CONFIG, DEFAULT_XP_CONFIG);
@@ -754,7 +918,6 @@ function renderXPTab() {
       <td>${escHtml(lv.name)}</td>
       <td>${lv.xpFrom}</td>
       <td>${lv.xpTo}</td>
-      <td>${lv.unlock}</td>
     </tr>`).join('');
 
   // Bảng actions (chỉ xem)
@@ -773,7 +936,6 @@ function openEditLevels() {
       <td><input class="inline-input" style="width:150px" data-f="name" data-i="${i}" value="${escHtml(lv.name)}"></td>
       <td><input class="inline-input" type="number" data-f="xpFrom" data-i="${i}" value="${lv.xpFrom}"></td>
       <td><input class="inline-input" type="number" data-f="xpTo" data-i="${i}" value="${lv.xpTo}"></td>
-      <td><input class="inline-input" type="number" data-f="unlock" data-i="${i}" value="${lv.unlock}"></td>
     </tr>`).join('');
   openModal('modalXpLevels');
 }

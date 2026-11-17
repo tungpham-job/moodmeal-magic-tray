@@ -16,6 +16,7 @@ const MM_KEYS = {
   ACCOUNTS:    'mm_accounts',
   MENU:        'mm_daily_menu',
   INGREDIENTS: 'mm_ingredients',
+  NUTRITION:   'mm_nutrition_table',  // bảng dinh dưỡng chuẩn để BGH chọn nguyên liệu
   XP_CONFIG:   'mm_xp_config',
   BADGES:      'mm_badges',
   CRITERIA:    'mm_grading_criteria',

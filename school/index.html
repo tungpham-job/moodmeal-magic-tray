@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏫</text></svg>">
   <title>Ban Giám Hiệu — MOODMEAL MAGIC TRAY</title>
-  <link rel="stylesheet" href="../css/base.css?v=20261118f">
-  <link rel="stylesheet" href="../css/school.css?v=20261118f">
+  <link rel="stylesheet" href="../css/base.css?v=20261118g">
+  <link rel="stylesheet" href="../css/school.css?v=20261118g">
 </head>
 <body class="page-school">
 <div class="school-layout">
@@ -125,6 +125,7 @@
             <button class="btn btn-secondary" style="margin-left:auto" onclick="refreshTab('ingredients')">↻ Làm mới</button>
           </div>
           <div id="ingredientsList"></div>
+          <div id="nutritionTable"></div>
         </div>
 
         <!-- Tab: XP & Level -->
@@ -145,7 +146,6 @@
                     <th>Tên level</th>
                     <th>XP từ</th>
                     <th>XP đến</th>
-                    <th>NL mở khóa</th>
                   </tr>
                 </thead>
                 <tbody id="xpLevelsBody"></tbody>
@@ -428,7 +428,7 @@
           <option>Tinh bột</option>
           <option>Đạm</option>
           <option>Rau củ</option>
-          <option>Canh</option>
+          <option>Trái cây</option>
         </select>
       </div>
 
@@ -552,11 +552,15 @@
     </div>
     <div class="modal-body">
       <input type="hidden" id="ingEditId">
+      <div class="form-group-s" id="ingFromTableWrap">
+        <label class="form-label-s">Chọn từ bảng dinh dưỡng chuẩn</label>
+        <select class="form-control" id="ingFromTable" onchange="pickFromNutritionTable(this.value)"></select>
+      </div>
       <div class="form-row">
         <div class="form-group-s">
           <label class="form-label-s">Nhóm dinh dưỡng</label>
-          <select class="form-control" id="ingGroup">
-            <option>Tinh bột</option><option>Đạm</option><option>Rau củ</option><option>Canh</option>
+          <select class="form-control" id="ingGroup" onchange="updateIngScore()">
+            <option>Tinh bột</option><option>Đạm</option><option>Rau củ</option><option>Trái cây</option>
           </select>
         </div>
         <div class="form-group-s">
@@ -578,6 +582,19 @@
         </div>
         <div id="ingIconPanel" style="display:none;flex-wrap:wrap;gap:4px;margin-top:8px;padding:10px;background:#F8FAFB;border:1.5px solid var(--border-light);border-radius:var(--radius-md)"></div>
       </div>
+      <div class="form-group-s">
+        <label class="form-label-s">Khẩu phần (g) · Carbs · Protein · Fat (g trên 100 g)</label>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+          <input class="form-control" type="number" min="1" step="1"   id="ingPortion" placeholder="Khẩu phần" oninput="updateIngScore()">
+          <input class="form-control" type="number" min="0" step="0.1" id="ingCarbs"   placeholder="Carbs"     oninput="updateIngScore()">
+          <input class="form-control" type="number" min="0" step="0.1" id="ingProtein" placeholder="Protein"   oninput="updateIngScore()">
+          <input class="form-control" type="number" min="0" step="0.1" id="ingFat"     placeholder="Fat"       oninput="updateIngScore()">
+        </div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:6px">Điểm dinh dưỡng (tự tính): <b id="ingScore">—</b> / 10</div>
+      </div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;margin:4px 0 10px;cursor:pointer">
+        <input type="checkbox" id="ingUnlocked"> <span>Mở khóa sẵn — có sẵn cho tất cả các bé, không cần thử trước</span>
+      </label>
       <div id="ingEditWarn" style="display:none;font-size:11px;color:#B7791F;background:#FFF8E6;border-radius:8px;padding:8px 10px">
         ⚠️ Nguyên liệu này đã dùng trong thực đơn / FAS. Đổi nhóm hoặc hành tinh sẽ áp dụng cho cả dữ liệu cũ.
       </div>
@@ -585,6 +602,60 @@
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('modalIngredient')">Hủy</button>
       <button class="btn btn-primary" onclick="saveIngredient()">Lưu nguyên liệu</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Thêm/Sửa dòng bảng dinh dưỡng chuẩn -->
+<div class="modal-overlay" id="modalNutri">
+  <div class="modal-box" style="max-width:460px">
+    <div class="modal-header">
+      <span class="modal-title" id="modalNutriTitle">+ Thêm dòng vào bảng chuẩn</span>
+      <button class="modal-close" onclick="closeModal('modalNutri')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="nutriEditId">
+      <div class="form-row">
+        <div class="form-group-s">
+          <label class="form-label-s">Nhóm dinh dưỡng</label>
+          <select class="form-control" id="nutriGroup">
+            <option>Tinh bột</option><option>Đạm</option><option>Rau củ</option><option>Trái cây</option>
+          </select>
+        </div>
+        <div class="form-group-s">
+          <label class="form-label-s">Hành tinh</label>
+          <select class="form-control" id="nutriPlanet">
+            <option>Rau củ</option><option>Đạm</option><option>Xanh lá</option><option>Trái cây</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group-s">
+          <label class="form-label-s">Tên nguyên liệu *</label>
+          <input class="form-control" id="nutriName" placeholder="vd: Đậu phụ">
+        </div>
+        <div class="form-group-s">
+          <label class="form-label-s">Icon (emoji)</label>
+          <input class="form-control" id="nutriIcon" maxlength="4" placeholder="🍽️">
+        </div>
+      </div>
+      <div class="form-group-s">
+        <label class="form-label-s">Khẩu phần (g) · Carbs · Protein · Fat (g trên 100 g)</label>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+          <input class="form-control" type="number" min="1" step="1"   id="nutriPortion" placeholder="Khẩu phần">
+          <input class="form-control" type="number" min="0" step="0.1" id="nutriCarbs"   placeholder="Carbs">
+          <input class="form-control" type="number" min="0" step="0.1" id="nutriProtein" placeholder="Protein">
+          <input class="form-control" type="number" min="0" step="0.1" id="nutriFat"     placeholder="Fat">
+        </div>
+      </div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;margin:4px 0 10px;cursor:pointer">
+        <input type="checkbox" id="nutriRef"> <span>Số liệu tham khảo (hiện dấu *), cần đối chiếu nguồn chính thức</span>
+      </label>
+      <div style="font-size:11px;color:var(--text-muted)">Sửa bảng chuẩn không đổi các nguyên liệu đã thêm trước đó (mỗi nguyên liệu giữ số liệu riêng).</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modalNutri')">Hủy</button>
+      <button class="btn btn-primary" onclick="saveNutri()">Lưu</button>
     </div>
   </div>
 </div>
@@ -636,7 +707,7 @@
     </div>
     <div class="modal-body">
       <table class="data-table">
-        <thead><tr><th>Level</th><th>Tên level</th><th>XP từ</th><th>XP đến</th><th>NL mở khóa</th></tr></thead>
+        <thead><tr><th>Level</th><th>Tên level</th><th>XP từ</th><th>XP đến</th></tr></thead>
         <tbody id="xpLevelsEditBody"></tbody>
       </table>
     </div>
@@ -766,14 +837,14 @@
 </div>
 
 <!-- ══ SCRIPTS ══ -->
-<script src="../js/config.js?v=20261118f"></script>
-<script src="../js/seed.js?v=20261118f"></script>
-<script src="../js/utils.js?v=20261118f"></script>
-<script src="../js/store.js?v=20261118f"></script>
-<script src="../js/auth.js?v=20261118f"></script>
-<script src="../js/xp.js?v=20261118f"></script>
-<script src="../js/badges.js?v=20261118f"></script>
-<script src="js/school.js?v=20261118f"></script>
+<script src="../js/config.js?v=20261118g"></script>
+<script src="../js/seed.js?v=20261118g"></script>
+<script src="../js/utils.js?v=20261118g"></script>
+<script src="../js/store.js?v=20261118g"></script>
+<script src="../js/auth.js?v=20261118g"></script>
+<script src="../js/xp.js?v=20261118g"></script>
+<script src="../js/badges.js?v=20261118g"></script>
+<script src="js/school.js?v=20261118g"></script>
 <script>
   /* Filter accounts table by search */
   function filterAccountsTable(q) {

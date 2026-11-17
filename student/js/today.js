@@ -14,7 +14,7 @@ const PLANETS = [
   { key: 'traiCay', name: 'Trái cây', icon: '🍎', total: 4, bar: '#BDC3C7', text: '#BDC3C7' },
 ];
 
-const GROUP_ICON = { 'Tinh bột': '🍚', 'Đạm': '🥩', 'Rau củ': '🥦', 'Canh': '🍲' };
+const GROUP_ICON = { 'Tinh bột': '🍚', 'Đạm': '🥩', 'Rau củ': '🥦', 'Trái cây': '🍎' };
 
 /* Hành tinh của một số món trong dữ liệu mẫu (dùng khi dòng FAS cũ chưa ghi
    hành tinh và tên món không có trong thực đơn). Khóa đã bỏ dấu, viết thường. */

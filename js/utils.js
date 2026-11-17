@@ -28,3 +28,17 @@ function normFood(s) {
     .replace(/đ/g, 'd').replace(/Đ/g, 'D')
     .toLowerCase().replace(/\s+/g, ' ').trim();
 }
+
+/* Điểm dinh dưỡng của MỘT nguyên liệu (0–10), tính từ Carbs / Protein / Fat (g/100 g).
+   Năng lượng: 4 kcal/g Carbs, 4 kcal/g Protein, 9 kcal/g Fat.
+   Điểm = 10 × tỷ lệ năng lượng đến từ chất chính của nhóm:
+     Tinh bột → Carbs · Đạm → Protein · Rau củ và Trái cây → Carbs + Protein (ít béo).
+   Chỉ là quy ước đơn giản cho trò chơi, không phải chuẩn y khoa. Thiếu số liệu → null. */
+function mmIngredientScore(g) {
+  if (!g || [g.carbs, g.protein, g.fat].some(v => typeof v !== 'number' || isNaN(v))) return null;
+  const c = 4 * g.carbs, p = 4 * g.protein, f = 9 * g.fat;
+  const total = c + p + f;
+  if (total <= 0) return null;
+  const main = g.group === 'Tinh bột' ? c : g.group === 'Đạm' ? p : c + p;
+  return Math.round(10 * main / total);
+}
