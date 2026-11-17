@@ -608,7 +608,13 @@ const NUTRI_ICONS = [...new Set([
   '🍲','🥘','🍛','🍱','🥣','🥟','🥠','🍡','🌮','🌯','🥪','🍔','🍕','🌭','🍧','🍨','🍽️'
 ])];
 
-const ING_ICONS    = ['🍚','🍞','🍜','🌽','🥩','🍗','🐟','🦐','🥚','🥓','🥦','🥕','🍅','🥬','🧅','🥒','🍆','🥔','🍎','🍌','🍊','🍇','🍓','🍲','🥣','🍄','🫛','🌿'];
+// Icon mẫu của form Thêm/Sửa nguyên liệu, chia theo nhóm dinh dưỡng như bảng icon của form thêm món
+const ING_ICON_GROUPS = [
+  { name: 'Tinh bột', icon: '🍚', list: ['🍚','🍙','🍘','🍞','🥖','🥐','🥯','🥨','🍜','🍝','🌽','🥔','🍠','🫓','🥞','🧇','🌾','🥣'] },
+  { name: 'Đạm',      icon: '🥩', list: ['🥩','🍗','🍖','🥓','🦐','🦑','🦞','🦀','🐟','🍣','🍤','🥚','🍳','🧆','🫘','🥜','🌰','🧀','🥛'] },
+  { name: 'Rau củ',   icon: '🥦', list: ['🥦','🥕','🍅','🥬','🥒','🌶️','🫑','🧅','🧄','🍆','🥑','🍄','🌿','🫛','🥗','🎃','🌱'] },
+  { name: 'Trái cây', icon: '🍎', list: ['🍎','🍏','🍐','🍊','🍋','🍌','🍉','🍇','🍓','🫐','🍈','🍒','🍑','🥭','🍍','🥥','🥝'] },
+];
 
 function ingredientInUse(id) {
   return loadKey(KEY.MENU, []).some(m => m.ingredientId === id)
@@ -652,9 +658,11 @@ function ingChipHtml(g) {
 function toggleIngIconPanel() {
   const panel = document.getElementById('ingIconPanel');
   if (!panel.innerHTML) {
-    panel.innerHTML = ING_ICONS.map(ic => `<button type="button" class="icon-opt" onclick="pickIngIcon('${ic}')">${ic}</button>`).join('');
+    panel.innerHTML = ING_ICON_GROUPS.map(g =>
+      `<div style="grid-column:1/-1;font-size:10px;font-weight:600;color:var(--text-muted);margin:4px 0 2px">${g.icon} ${g.name}</div>` +
+      g.list.map(ic => `<button type="button" class="icon-opt" onclick="pickIngIcon('${ic}')">${ic}</button>`).join('')).join('');
   }
-  panel.style.display = panel.style.display === 'none' ? 'flex' : 'none';
+  panel.style.display = panel.style.display === 'none' ? 'grid' : 'none';
 }
 
 function toggleNutriIconPanel() {

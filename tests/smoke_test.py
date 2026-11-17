@@ -232,6 +232,12 @@ def run(browser, base):
     page.evaluate('openAddIngredient()'); page.wait_for_timeout(150)
     opts = page.eval_on_selector_all('#ingFromTable option', 'o => o.map(x => x.value)')
     check('danh sách "chọn từ bảng chuẩn" không hiện nguyên liệu đã có', 'com-trang' not in opts and 'cam' in opts, opts)
+    page.click('#modalIngredient button[onclick="toggleIngIconPanel()"]'); page.wait_for_timeout(100)
+    heads = page.locator('#ingIconPanel > div').all_inner_texts()
+    check('form nguyên liệu: bảng icon chia 4 nhóm Tinh bột · Đạm · Rau củ · Trái cây',
+          [h.split(' ', 1)[1] for h in heads] == ['Tinh bột', 'Đạm', 'Rau củ', 'Trái cây'] and page.locator('#ingIconPanel .icon-opt').count() >= 60, heads)
+    page.locator('#ingIconPanel .icon-opt').nth(3).click()
+    check('chọn icon từ bảng: ô icon của form cập nhật', page.input_value('#ingIcon') != '')
     page.select_option('#ingFromTable', 'cam'); page.wait_for_timeout(100)
     check('chọn "Cam" từ bảng chuẩn: tự điền tên, nhóm và số liệu',
           page.input_value('#ingName') == 'Cam' and page.input_value('#ingGroup') == 'Trái cây'
