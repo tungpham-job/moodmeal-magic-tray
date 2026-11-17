@@ -160,6 +160,8 @@ def run(browser, base):
     page.goto(base + '/student/screen3.html'); page.wait_for_timeout(500)
     maxlen = page.get_attribute('#trayName', 'maxlength')
     check('ô tên khay giới hạn 40 ký tự', maxlen == '40', maxlen)
+    fb = page.evaluate("(() => { const b = document.getElementById('familyBtn'); return {h: Math.round(b.getBoundingClientRect().height), f: getComputedStyle(b).fontSize}; })()")
+    check('nút "Gửi cho ba mẹ nấu tối nay": cao 45px, chữ 15px', fb['h'] == 45 and fb['f'] == '15px', fb)
     page.click('.ing-btn[data-name="Bông cải"]'); page.click('.ing-btn[data-name="Canh chua"]')
     page.fill('#trayName', XSS_NAME)
     page.click('#familyBtn'); page.wait_for_timeout(700)
