@@ -156,6 +156,13 @@ def run(browser, base):
     ta_on = page.evaluate("document.querySelector('#taCard-0 .ta-btn.selected')?.innerText")
     check('tải lại: khối "thử lại" bị khóa và hiện "Muốn"', ta_locked and ta_on == 'Muốn', ta_on)
 
+    page.goto(base + '/student/screen1.html'); page.wait_for_timeout(500)
+    icons = {}
+    for pn in ('Đạm', 'Xanh lá'):
+        page.evaluate("n => showPopup(PLANET_STATES.find(p => p.name === n).key)", pn)
+        icons[pn] = page.locator('#popupContent .popup-item .pi-icon').first.inner_text()
+    check('popup hành tinh: món đã thử dùng icon nguyên liệu (Trứng 🥚, Bông cải xanh 🥦)', icons == {'Đạm': '🥚', 'Xanh lá': '🥦'}, icons)
+
     print('4. Học sinh: gửi khay (tên khay chứa mã HTML độc)')
     page.goto(base + '/student/screen3.html'); page.wait_for_timeout(500)
     maxlen = page.get_attribute('#trayName', 'maxlength')

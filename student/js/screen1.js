@@ -89,6 +89,17 @@ function renderScreen1() {
   renderProgress();
 }
 
+/* Icon của một món bé đã thử: icon nguyên liệu (theo id, dòng FAS cũ thì theo tên); không có thì icon hành tinh */
+function triedFoodIcon(f, planetIcon) {
+  const id = f.latest && f.latest.foodId;
+  let ing = id ? getIngredient(id) : null;
+  if (!ing) {
+    const n = normFood(f.name);
+    ing = readJson(MM_KEYS.INGREDIENTS, []).find(g => normFood(g.name) === n) || null;
+  }
+  return (ing && ing.icon) || planetIcon;
+}
+
 /* Popup theo hành tinh */
 function showPopup(key) {
   const p = PLANET_STATES.find(x => x.key === key);
@@ -98,7 +109,7 @@ function showPopup(key) {
 
   if (p.state === 'unlocked') {
     title = `${p.icon} Hành tinh ${p.name} — Đã mở khóa!`;
-    p.tried.forEach(f => items.push({ icon: p.icon, name: f.name, fas: `FAS: ${Number(f.latest.score).toFixed(1)} ⭐` }));
+    p.tried.forEach(f => items.push({ icon: triedFoodIcon(f, p.icon), name: f.name, fas: `FAS: ${Number(f.latest.score).toFixed(1)} ⭐` }));
     if (target && target.planet === p.name &&
         !p.tried.some(f => foodKeyOf(target) === (f.latest.foodId || normFood(f.name)))) {
       items.unshift({ icon: foodIcon(target), name: target.name, fas: '→ Thử hôm nay!' });
