@@ -599,6 +599,15 @@ function deleteMenuItem(id) {
    `id` của nguyên liệu là foodId của nhật ký FAS. */
 const PLANET_ORDER = ['Rau củ', 'Đạm', 'Xanh lá', 'Trái cây'];
 const GROUP_ORDER  = ['Tinh bột', 'Đạm', 'Rau củ', 'Trái cây'];
+// Icon mẫu cho form "bảng dinh dưỡng chuẩn" (nhiều hơn ING_ICONS; ô nhập vẫn cho dán icon bất kỳ)
+const NUTRI_ICONS = [...new Set([
+  '🍚','🍙','🍘','🍞','🥖','🥐','🥯','🥨','🍜','🍝','🌽','🥔','🍠','🫓','🥞','🧇','🌾','🥧','🍪','🍰',
+  '🥩','🍗','🍖','🥓','🦐','🦑','🦞','🦀','🐟','🍣','🍤','🍢','🥚','🍳','🧆','🫘','🥜','🌰','🧀','🥛','🍖',
+  '🥦','🥕','🍅','🥬','🥒','🌶️','🫑','🧅','🧄','🍆','🥑','🍄','🌿','🫛','🥗','🫒','🎃','🌱',
+  '🍎','🍏','🍐','🍊','🍋','🍌','🍉','🍇','🍓','🫐','🍈','🍒','🍑','🥭','🍍','🥥','🥝',
+  '🍲','🥘','🍛','🍱','🥣','🥟','🥠','🍡','🌮','🌯','🥪','🍔','🍕','🌭','🍧','🍨','🍽️'
+])];
+
 const ING_ICONS    = ['🍚','🍞','🍜','🌽','🥩','🍗','🐟','🦐','🥚','🥓','🥦','🥕','🍅','🥬','🧅','🥒','🍆','🥔','🍎','🍌','🍊','🍇','🍓','🍲','🥣','🍄','🫛','🌿'];
 
 function ingredientInUse(id) {
@@ -646,6 +655,19 @@ function toggleIngIconPanel() {
     panel.innerHTML = ING_ICONS.map(ic => `<button type="button" class="icon-opt" onclick="pickIngIcon('${ic}')">${ic}</button>`).join('');
   }
   panel.style.display = panel.style.display === 'none' ? 'flex' : 'none';
+}
+
+function toggleNutriIconPanel() {
+  const panel = document.getElementById('nutriIconPanel');
+  if (!panel.innerHTML) {
+    panel.innerHTML = NUTRI_ICONS.map(ic => `<button type="button" class="icon-opt" onclick="pickNutriIcon('${ic}')">${ic}</button>`).join('');
+  }
+  panel.style.display = panel.style.display === 'none' ? 'flex' : 'none';
+}
+
+function pickNutriIcon(ic) {
+  document.getElementById('nutriIcon').value = ic;
+  document.getElementById('nutriIconPanel').style.display = 'none';
 }
 
 function pickIngIcon(ic) {
@@ -842,6 +864,7 @@ function setNutriFields(t) {
   document.getElementById('nutriProtein').value = t.protein == null ? '' : t.protein;
   document.getElementById('nutriFat').value     = t.fat     == null ? '' : t.fat;
   document.getElementById('nutriRef').checked   = !!t.ref;
+  document.getElementById('nutriIconPanel').style.display = 'none';
 }
 
 function openAddNutri() {

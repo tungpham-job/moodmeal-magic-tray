@@ -233,6 +233,13 @@ def run(browser, base):
     page.click('#modalIngredient .btn-primary'); page.wait_for_timeout(200)
     check('trùng tên: xác nhận thì vẫn ghi nguyên liệu',
           sum(g['name'].lower() == 'cam' for g in ls('mm_ingredients')) == 2)
+    page.evaluate('openAddNutri()'); page.click('#modalNutri button[onclick="toggleNutriIconPanel()"]'); page.wait_for_timeout(100)
+    n_ic = page.locator('#nutriIconPanel .icon-opt').count()
+    page.locator('#nutriIconPanel .icon-opt').nth(5).click()
+    check('form bảng chuẩn: ≥ 80 icon mẫu, chọn được và vẫn dán được',
+          n_ic >= 80 and page.input_value('#nutriIcon') != '' and page.evaluate("document.getElementById('nutriIconPanel').style.display") == 'none', n_ic)
+    page.fill('#nutriIcon', '🧁'); check('ô icon nhận icon dán từ ngoài', page.input_value('#nutriIcon') == '🧁')
+    page.evaluate("closeModal('modalNutri')")
     page.evaluate("deleteNutri('com-trang')"); page.wait_for_timeout(150)
     check('xóa dòng bảng chuẩn', all(t['id'] != 'com-trang' for t in ls('mm_nutrition_table')))
     page.evaluate('resetNutritionTable()'); page.wait_for_timeout(150)
