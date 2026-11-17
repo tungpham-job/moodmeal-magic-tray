@@ -59,7 +59,8 @@ def run(browser, base):
     page.on('console', lambda m: m.type == 'error' and problems.append(f'{page.url} · console: {m.text}'))
     page.on('requestfailed', lambda r: problems.append(f'{r.url} · tải thất bại'))
     page.on('response', lambda r: r.status >= 400 and problems.append(f'{r.url} · HTTP {r.status}'))
-    page.on('dialog', lambda d: d.accept())
+    accept_dialog = lambda d: d.accept()
+    page.on('dialog', accept_dialog)
 
     def ls(key):
         return json.loads(page.evaluate(f"localStorage.getItem('{key}')") or 'null')
@@ -210,6 +211,8 @@ def run(browser, base):
     check('tab Nguyên liệu có bảng chuẩn; Trứng = 3 điểm',
           page.locator('#nutritionTable tr:has-text("Trứng") td:nth-child(7) b').inner_text() == '3')
     page.evaluate('openAddIngredient()'); page.wait_for_timeout(150)
+    opts = page.eval_on_selector_all('#ingFromTable option', 'o => o.map(x => x.value)')
+    check('danh sách "chọn từ bảng chuẩn" không hiện nguyên liệu đã có', 'com-trang' not in opts and 'cam' in opts, opts)
     page.select_option('#ingFromTable', 'cam'); page.wait_for_timeout(100)
     check('chọn "Cam" từ bảng chuẩn: tự điền tên, nhóm và số liệu',
           page.input_value('#ingName') == 'Cam' and page.input_value('#ingGroup') == 'Trái cây'
@@ -218,6 +221,18 @@ def run(browser, base):
     cam = next((g for g in (ls('mm_ingredients') or []) if g['name'] == 'Cam'), None)
     check('lưu nguyên liệu Cam: có số liệu, chưa mở khóa sẵn',
           bool(cam) and cam['carbs'] == 12 and cam['portion'] == 80 and not cam['alwaysUnlocked'], cam)
+    page.evaluate('openAddIngredient()'); page.wait_for_timeout(100)
+    page.fill('#ingName', 'cam'); page.fill('#ingPortion', '80'); page.fill('#ingCarbs', '12'); page.fill('#ingProtein', '1'); page.fill('#ingFat', '0')
+    msgs = []
+    page.remove_listener('dialog', accept_dialog)
+    page.once('dialog', lambda d: (msgs.append(d.message), d.dismiss()))
+    page.click('#modalIngredient .btn-primary'); page.wait_for_timeout(200)
+    check('trùng tên: có cảnh báo, chọn Hủy thì không ghi thêm',
+          len(msgs) == 1 and sum(g['name'].lower() == 'cam' for g in ls('mm_ingredients')) == 1, msgs)
+    page.on('dialog', accept_dialog)
+    page.click('#modalIngredient .btn-primary'); page.wait_for_timeout(200)
+    check('trùng tên: xác nhận thì vẫn ghi nguyên liệu',
+          sum(g['name'].lower() == 'cam' for g in ls('mm_ingredients')) == 2)
     page.evaluate("deleteNutri('com-trang')"); page.wait_for_timeout(150)
     check('xóa dòng bảng chuẩn', all(t['id'] != 'com-trang' for t in ls('mm_nutrition_table')))
     page.evaluate('resetNutritionTable()'); page.wait_for_timeout(150)

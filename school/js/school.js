@@ -661,10 +661,10 @@ function fillIngFromTableList() {
   const have = loadKey(KEY.INGREDIENTS, DEFAULT_INGREDIENTS).map(g => g.id);
   let html = '<option value="">— Nhập tay —</option>';
   NUTRI_GROUPS.forEach(gr => {
-    const inGr = rows.filter(t => t.group === gr);
+    const inGr = rows.filter(t => t.group === gr && !have.includes(t.id));
     if (!inGr.length) return;
     html += `<optgroup label="${escHtml(gr)}">` + inGr.map(t =>
-      `<option value="${t.id}"${have.includes(t.id) ? ' disabled' : ''}>${escHtml(t.icon)} ${escHtml(t.name)}${have.includes(t.id) ? ' (đã có)' : ''}</option>`).join('') + '</optgroup>';
+      `<option value="${t.id}">${escHtml(t.icon)} ${escHtml(t.name)}</option>`).join('') + '</optgroup>';
   });
   document.getElementById('ingFromTable').innerHTML = html;
 }
@@ -750,7 +750,7 @@ function saveIngredient() {
   const list = loadKey(KEY.INGREDIENTS, DEFAULT_INGREDIENTS);
   const norm = t => t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').toLowerCase().replace(/\s+/g, ' ').trim();
   if (list.some(g => g.id !== editId && norm(g.name) === norm(name))) {
-    showToast('Nguyên liệu này đã có!', 'error'); return;
+    if (!confirm(`Đã có nguyên liệu tên "${name}". Vẫn lưu thêm một nguyên liệu trùng tên?`)) return;
   }
 
   if (editId) {
