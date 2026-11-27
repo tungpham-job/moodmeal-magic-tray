@@ -394,3 +394,28 @@ body.page-student {
 /* ── Spacers ─────────────────────────────────── */
 .gap  { height: 8px; }
 .gap2 { height: 4px; }
+
+/* ── Màn Thử món: danh sách món, bấm mới mở nội dung (accordion) ── */
+.it { margin: 8px 12px 0; border: 1.5px solid #E3E8EC; border-radius: 14px; background: #fff; overflow: hidden; transition: border-color .15s; }
+.it.open { border-color: var(--green-dark); box-shadow: 0 0 0 2px var(--green-light); }
+.it.done { background: #F1FAF4; border-color: #CDEED9; }
+.it.done.open { border-color: #2E9E4F; box-shadow: none; }
+.it-hd { width: 100%; display: flex; align-items: center; gap: 10px; padding: 9px 12px; border: none; background: transparent; text-align: left; font-family: inherit; cursor: pointer; color: inherit; }
+.it-ic { width: 40px; height: 40px; border-radius: 12px; background: var(--green-light); display: flex; align-items: center; justify-content: center; font-size: 22px; flex: none; }
+.it-nm { font-size: 14px; font-weight: 700; color: var(--text-main); min-width: 0; }
+.it-nm small { display: block; font-weight: 500; color: var(--text-muted); font-size: 11.5px; }
+.it-st { margin-left: auto; text-align: right; font-size: 11.5px; white-space: nowrap; }
+.it-pend { color: #607D8B; font-weight: 600; }
+.it-done { display: block; color: #2E9E4F; font-weight: 800; font-size: 12px; }
+.it-done b { font-weight: 800; }
+.it-done small { display: block; color: #37474F; font-weight: 600; font-size: 11.5px; }
+.it-chev { margin-left: 4px; color: #90A4AE; font-size: 12px; transition: transform .15s; flex: none; }
+.it.open .it-chev { transform: rotate(180deg); }
+.it-body { border-top: 1px dashed #D5DEE3; padding-bottom: 6px; }
+.it-body[hidden] { display: none; }
+.it-body .food-card { margin: 8px 10px 0; box-shadow: none; }
+.it-body .home-note { margin: 8px 14px 0; }
+.it-lock { display: none; margin: 4px 12px 8px; font-size: 11.5px; color: #2E9E4F; font-weight: 700; text-align: center; }
+.it.done .food-card, .it.done .ta-card, .it.done .confirm-btn, .it.done .skip-note, .it.done .gap, .it.done .home-note { display: none; }
+.it.done .it-lock { display: block; }
+.it.done .emoji-label { padding-top: 10px; }

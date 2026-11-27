@@ -1,8 +1,8 @@
 /* ═══════════════════════════════════════════
    screen2.js — Thử món & Đánh giá
-   Hiện MỌI món trong thực đơn hôm nay (BGH thiết lập); món đã đánh giá thu gọn 1 dòng, món chưa đánh giá hiện đầy đủ
-   và đánh giá từng món. Mỗi món có phần đánh giá, TRY AGAIN, nút xác nhận
-   và biểu đồ riêng.  (cần js/today.js load trước file này)
+   Hiện MỌI món trong thực đơn hôm nay (BGH thiết lập) dạng danh sách gọn (đã đánh giá lẫn chưa đánh giá). Bấm vào một món
+   thì nội dung mở ngay bên dưới (emoji cảm xúc, TRY AGAIN, nút xác nhận); chỉ mở một món một lúc, mở tab thì đóng hết.
+   Món đã đánh giá: hiện ✔ Đã đánh giá + cảm xúc, bấm vào xem lại nhưng khóa.  (cần js/today.js load trước file này)
 ═══════════════════════════════════════════ */
 
 /* Điểm FAS theo mức emoji: ❤️ 4 · 🙂 3 · 😐 2 · 🙁 1 · 🚫 Chưa thử 0
@@ -115,24 +115,66 @@ function restoreDone(i, entry) {
   const xp = document.querySelector(`#food-${i} .food-xp`);
   if (xp) xp.textContent = f.home ? '✅ Em đã đánh giá bữa tối ở nhà rồi' : '✅ Hôm nay em đã đánh giá món này rồi';
 
+  markDoneUi(i);
+}
+
+/* Dòng đầu của món chuyển sang "✔ Đã đánh giá" + cảm xúc; thân món khóa (không đánh giá lại) */
+function markDoneUi(i) {
+  const f = FOODS[i];
+  const box = document.getElementById(`food-${i}`), st = document.getElementById(`st-${i}`), q = document.getElementById(`emojiQ-${i}`);
+  if (box) box.classList.add('done');
+  if (st) st.innerHTML = statusHtml(f);
+  if (q) q.textContent = 'Em đã đánh giá món này:';
+}
+
+/* Chữ trạng thái ở dòng đầu mỗi món */
+const FACE_OF = { 4: ['❤️', 'Rất thích'], 3: ['🙂', 'Có thể ăn'], 2: ['😐', 'Chưa quen'], 1: ['🙁', 'Không thích'], 0: ['🚫', 'Chưa thử'] };
+function statusHtml(f) {
+  if (!f.done) return '<span class="it-pend">Chưa đánh giá</span>';
+  const e = f.todayEntry;
+  const lv = f.selected != null ? f.selected : (e ? (e.rating != null ? e.rating : e.score) : null);
+  const face = FACE_OF[lv] || ['', ''];
+  return `<span class="it-done"><b>✔ Đã đánh giá</b><small>${face[0]} ${face[1]}</small></span>`;
+}
+
+/* Mở / đóng thân một món. Chỉ mở một món một lúc. */
+function setOpen(i, on) {
+  const body = document.getElementById(`body-${i}`), hd = document.getElementById(`hd-${i}`), box = document.getElementById(`food-${i}`);
+  if (!body) return;
+  body.hidden = !on;
+  if (hd) hd.setAttribute('aria-expanded', on ? 'true' : 'false');
+  if (box) box.classList.toggle('open', on);
+}
+function toggleFood(i) {
+  const body = document.getElementById(`body-${i}`);
+  if (!body) return;
+  const wasOpen = !body.hidden;
+  FOODS.forEach((_, k) => setOpen(k, false));
+  if (!wasOpen) {
+    setOpen(i, true);
+    const box = document.getElementById(`food-${i}`);
+    if (box && box.scrollIntoView) setTimeout(() => box.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
+  }
 }
 
 /* ── Vẽ danh sách ─────────────────────────────── */
-function foodBlockHtml(f, i, pos) {
+function foodBlockHtml(f, i) {
   const badge = f.history.length ? `Lần thử thứ ${f.nextAttempt} của nhóm` : 'Lần thử đầu tiên của nhóm!';
   const tag   = f.home ? 'Bữa tối ở nhà 🏠' : (f.item.isNew ? 'Món mới hôm nay' : 'Hôm nay có trong thực đơn');
   const faces = [[4, '❤️', 'Rất thích'], [3, '🙂', 'Có thể ăn'], [2, '😐', 'Chưa quen'], [1, '🙁', 'Không thích'], [0, '🚫', 'Chưa thử']]
     .map(([v, e, l], k) => `<button type="button" class="emoji-btn${v === 0 ? ' not-tried' : ''}" role="radio" aria-checked="false" aria-label="${l}, ${v} điểm" tabindex="${k === 0 ? 0 : -1}" data-val="${v}" onclick="pickEmoji(${i}, this)" onkeydown="emojiKey(event, ${i})"><span class="e-tick" aria-hidden="true">✓</span><span class="e-icon" aria-hidden="true">${e}</span><span class="e-label">${l}</span></button>`)
     .join('');
-  const divider = !pos.first ? 'border-top:6px solid #F0F2F5;margin-top:10px;padding-top:2px;' : '';
 
   return `
-  <div class="food-block" id="food-${i}" style="${divider}">
-    ${pos.schoolFirst ? '<div class="section-label school-label" id="schoolLabel">🏫 Bữa trưa ở trường</div>' : ''}
-    ${f.home ? `<div class="section-label home-label" id="homeLabel-${i}">🏠 Bữa tối ở nhà</div>
-      <div class="home-note">Bạn đã thử món chưa? Đánh giá trước cuối ${escHtml(dayLabel(f.deadline))} nhé!</div>`
-      : (f.schoolTotal > 1 ? `<div class="section-label">Món ${f.seq} / ${f.schoolTotal}</div>` : '')}
-    <div class="food-card${f.home ? ' home-card' : ''}" style="margin-top:${f.home || f.schoolTotal > 1 ? 2 : 10}px">
+  <div class="it${f.done ? ' done' : ''}" id="food-${i}">
+    <button type="button" class="it-hd" id="hd-${i}" aria-expanded="false" aria-controls="body-${i}" onclick="toggleFood(${i})">
+      <span class="it-ic" aria-hidden="true">${escHtml(foodIcon(f.item))}</span>
+      <span class="it-nm">${escHtml(f.item.name)}<small>Nhóm ${escHtml(f.groupName)}${f.home ? ' · Bữa tối ở nhà 🏠' : ''}</small></span>
+      <span class="it-st" id="st-${i}">${statusHtml(f)}</span><span class="it-chev" aria-hidden="true">▼</span>
+    </button>
+    <div class="it-body" id="body-${i}" hidden>
+    ${f.home ? `<div class="home-note">Bạn đã thử món chưa? Đánh giá trước cuối ${escHtml(dayLabel(f.deadline))} nhé!</div>` : ''}
+    <div class="food-card${f.home ? ' home-card' : ''}">
       <div class="food-img">
         <span style="font-size:56px">${escHtml(foodIcon(f.item))}</span>
         <div class="food-badge">${badge}</div>
@@ -170,26 +212,13 @@ function foodBlockHtml(f, i, pos) {
       ✓ Xác nhận đánh giá
     </button>
 
+    <div class="it-lock">🔒 Đã xác nhận, không đánh giá lại</div>
+
     <div class="toast" id="toast-${i}"></div>
     <div class="sr-only" id="live-${i}" role="status" aria-live="polite"></div>
 
     <div class="gap2"></div>
-  </div>`;
-}
-
-/* Dòng thu gọn của món đã đánh giá hôm nay */
-function doneRowHtml(f) {
-  const e = f.todayEntry;
-  const lv = e.rating != null ? e.rating : e.score;
-  const face = { 4: ['❤️', 'Rất thích'], 3: ['🙂', 'Có thể ăn'], 2: ['😐', 'Chưa quen'], 1: ['🙁', 'Không thích'], 0: ['🚫', 'Chưa thử'] }[lv] || ['', ''];
-  return `
-  <div class="done-row">
-    <span class="d-icon">${escHtml(foodIcon(f.item))}</span>
-    <div class="d-main">
-      <div class="d-name">${escHtml(f.item.name)}</div>
-      <div class="d-group">Nhóm ${escHtml(f.groupName)}${f.home ? ' · Bữa tối ở nhà 🏠' : ''}</div>
     </div>
-    <div class="d-res"><b>✔ Đã đánh giá</b><span>${face[0]} ${face[1]}</span></div>
   </div>`;
 }
 
@@ -209,17 +238,18 @@ function renderFoods() {
     return;
   }
 
-  /* Món đã đánh giá thu gọn thành 1 dòng (kèm cảm xúc đã chọn) và xếp lên trên;
-     món chưa đánh giá hiện đầy đủ ngay bên dưới. Chỉ thu gọn khi tải màn hình: món vừa xác nhận
-     trong lần mở này vẫn giữ nguyên thẻ để bé thấy kết quả. */
-  const doneIdx = [], pendIdx = [];
-  FOODS.forEach((f, i) => (f.todayEntry ? doneIdx : pendIdx).push(i));
-  doneIdx.forEach(i => { const f = FOODS[i]; f.done = true; f.selected = f.todayEntry.rating != null ? f.todayEntry.rating : f.todayEntry.score; f.tryAgain = !!f.todayEntry.tryAgain; });
-  const firstSchool = pendIdx.find(i => !FOODS[i].home);
-  let html = doneIdx.map(i => doneRowHtml(FOODS[i])).join('');
-  if (doneIdx.length && pendIdx.length) html += '<div class="pending-label">MÓN CHƯA ĐÁNH GIÁ</div>';
-  html += pendIdx.map((i, k) => foodBlockHtml(FOODS[i], i, { first: k === 0, schoolFirst: i === firstSchool && !doneIdx.length })).join('');
+  /* Danh sách gọn: mọi món (đã/chưa đánh giá) là một dòng, đóng sẵn; bấm vào mới mở nội dung bên dưới.
+     Bữa tối ở nhà đứng đầu, rồi đến bữa trưa ở trường (giữ thứ tự thực đơn). */
+  const homeIdx = [], schoolIdx = [];
+  FOODS.forEach((f, i) => {
+    if (f.todayEntry) { f.done = true; f.selected = f.todayEntry.rating != null ? f.todayEntry.rating : f.todayEntry.score; f.tryAgain = !!f.todayEntry.tryAgain; }
+    (f.home ? homeIdx : schoolIdx).push(i);
+  });
+  let html = '';
+  if (homeIdx.length)   html += '<div class="section-label home-label" id="homeLabel">🏠 Bữa tối ở nhà</div>' + homeIdx.map(i => foodBlockHtml(FOODS[i], i)).join('');
+  if (schoolIdx.length) html += '<div class="section-label school-label" id="schoolLabel">🏫 Bữa trưa ở trường</div>' + schoolIdx.map(i => foodBlockHtml(FOODS[i], i)).join('');
   list.innerHTML = html;
+  FOODS.forEach((f, i) => { if (f.todayEntry) restoreDone(i, f.todayEntry); });   // khóa giao diện các món đã đánh giá
   updateSummary();
 }
 
@@ -392,7 +422,9 @@ function confirmEval(i) {
   const live = document.getElementById(`live-${i}`);
   if (live) live.textContent = toast.textContent;
 
+  markDoneUi(i);
   updateSummary();
+  setTimeout(() => setOpen(i, false), 3000);       // cho em đọc thông báo XP rồi tự đóng món
 
   setTimeout(() => { if (toast.scrollIntoView) toast.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }, 300);
 }

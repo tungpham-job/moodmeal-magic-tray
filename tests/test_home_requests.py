@@ -30,6 +30,7 @@ def run(browser, base):
     st.goto(base + '/student/screen2.html'); st.wait_for_timeout(600)
 
     print('A. Học sinh: bấm "Muốn" ở trường')
+    st.click('#hd-0'); st.wait_for_timeout(250)
     st.locator('#food-0 .emoji-btn').nth(4).click()                       # 🚫 Chưa thử
     st.locator('#food-0 .ta-btn').nth(0).click(); st.click('#confirmBtn-0'); st.wait_for_timeout(400)
     reqs = ls('mm_home_requests') or []
@@ -72,9 +73,11 @@ def run(browser, base):
     st.goto(base + '/student/screen2.html'); st.wait_for_timeout(600)
     check('có thẻ "Bữa tối ở nhà" đứng đầu', st.locator('.home-card').count() == 1 and st.locator('#food-0 .home-card').count() == 1 and 'Bữa tối ở nhà' in st.inner_text('#food-0'))
     check('tóm tắt nhắc món ở nhà chờ đánh giá', 'ở nhà chờ em đánh giá' in st.inner_text('#evalSummary').lower(), st.inner_text('#evalSummary'))
+    check('mở tab: các món đóng sẵn', st.locator('.it-body:visible').count() == 0)
+    st.click('#hd-0'); st.wait_for_timeout(250)
     nt = st.inner_text('#food-0 .home-note')
-    check('thẻ ở nhà: tiêu đề và ghi chú tách hai dòng, đúng nội dung', st.inner_text('#homeLabel-0').lower() == '🏠 bữa tối ở nhà' and nt.startswith('Bạn đã thử món chưa? Đánh giá trước cuối ') and nt.endswith(' nhé!'), nt)
-    check('có món đã đánh giá: hiện nhãn "MÓN CHƯA ĐÁNH GIÁ", không lặp tiêu đề "Bữa trưa ở trường"', st.locator('.pending-label').count() == 1 and st.locator('#schoolLabel').count() == 0 and st.locator('.done-row').count() == 1)
+    check('thẻ ở nhà: tiêu đề và ghi chú tách hai dòng, đúng nội dung', st.inner_text('#homeLabel').lower() == '🏠 bữa tối ở nhà' and nt.startswith('Bạn đã thử món chưa? Đánh giá trước cuối ') and nt.endswith(' nhé!'), nt)
+    check('cùng một danh sách: có nhãn "Bữa trưa ở trường", 1 món đã đánh giá, không còn nhãn tách nhóm', st.locator('#schoolLabel').count() == 1 and st.locator('.it.done').count() == 1 and st.locator('.pending-label').count() == 0 and st.locator('.done-row').count() == 0)
     check('thanh tóm tắt ghim: nền trắng, dính ở đầu vùng cuộn', st.evaluate("()=>{const c=getComputedStyle(document.getElementById('evalSummary'));return c.position==='sticky'&&c.top==='0px'&&c.backgroundColor==='rgb(255, 255, 255)'}"))
     check('yêu cầu declined không có thẻ', st.locator('.home-card').count() == 1)
     xp1 = len(ls('mm_xp_log') or [])
@@ -86,8 +89,8 @@ def run(browser, base):
     check('đánh giá ở nhà nhận first_try + emoji_rate', acts == ['first_try', 'emoji_rate'], acts)
     check('yêu cầu chuyển sang rated, có ratedAt', {r['id']: r for r in ls('mm_home_requests')}[rid_trung]['status'] == 'rated' and {r['id']: r for r in ls('mm_home_requests')}[rid_trung]['ratedAt'])
     st.reload(); st.wait_for_timeout(600)
-    check('tải lại: món ở nhà đã đánh giá thu gọn thành 1 dòng (kèm cảm xúc)', st.locator('#food-0').count() == 0 and 'Bữa tối ở nhà' in st.inner_text('.done-row:has-text("Trứng chiên") >> nth=1') + st.inner_text('.done-row >> nth=0') + st.inner_text('.done-row >> nth=1') and '🙂 Có thể ăn' in st.inner_text('#foodList'), st.inner_text('#foodList'))
-    check('đánh giá ở trường (Chưa thử) hôm nay thu gọn riêng: 2 dòng đã đánh giá', st.locator('.done-row').count() == 2 and '🚫 Chưa thử' in st.inner_text('#foodList'))
+    check('tải lại: món ở nhà đã đánh giá hiện "✔ Đã đánh giá" kèm cảm xúc (vẫn đóng)', 'Bữa tối ở nhà' in st.inner_text('#hd-0') and 'Đã đánh giá' in st.inner_text('#hd-0') and '🙂 Có thể ăn' in st.inner_text('#hd-0') and st.locator('.it-body:visible').count() == 0, st.inner_text('#foodList'))
+    check('đánh giá ở trường (Chưa thử) hôm nay cũng hiện đã đánh giá: 2 dòng đã đánh giá', st.locator('.it.done').count() == 2 and '🚫 Chưa thử' in st.inner_text('#foodList'))
     chain = st.evaluate("()=>{const L=JSON.parse(localStorage.getItem('mm_fas_log')),w=mmGroupRows(L,'phambaotruc','g-trung');return mmFasChainText(w)}")
     check('chuỗi nhóm Trứng: 0 → 3 (trường rồi nhà)', chain == '0 → 3', chain)
     st.goto(base + '/student/screen1.html'); st.wait_for_timeout(400)
