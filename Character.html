@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MoodMeal — Nhân vật đồng hành: sơ đồ tiến hóa và mockup</title>
+<style>
+:root{--green-dark:#0E6655;--green:#2E7D32;--green-light:#D5F5E3;--green-pale:#EAFAF1;--blue:#154360;--text:#263238;--muted:#607D8B;--line:#E3E8EC}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--text);background:#F0F2F5;line-height:1.5}
+.wrap{max-width:1100px;margin:0 auto;padding:24px 16px 60px}
+h1{font-size:22px;margin:0 0 4px}
+h2{font-size:17px;margin:34px 0 4px;color:var(--green-dark)}
+.sub{color:var(--muted);font-size:13px;margin:0 0 14px}
+.note{background:#FFF8E1;border:1px solid #FFE082;border-radius:10px;padding:10px 14px;font-size:13px;margin:12px 0}
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+/* ---- evolution table ---- */
+table.evo{width:100%;border-collapse:collapse;font-size:13px}
+table.evo th{font-size:12px;text-align:center;padding:8px 6px;background:var(--green-pale);border-bottom:2px solid var(--green-light)}
+table.evo th small{display:block;font-weight:400;color:var(--muted)}
+table.evo td{text-align:center;padding:10px 6px;border-bottom:1px solid var(--line);vertical-align:middle}
+table.evo td.sp{text-align:left;font-weight:700;white-space:nowrap}
+table.evo td.sp small{display:block;font-weight:400;color:var(--muted);font-size:11px}
+.stage-name{font-size:12px;font-weight:600;margin-top:2px}
+.arrow{color:#B0BEC5;font-size:18px}
+/* ---- phones ---- */
+.row{display:flex;gap:28px;flex-wrap:wrap;align-items:flex-start}
+.phone{width:340px;background:#1b1b1b;border-radius:36px;padding:10px;box-shadow:0 8px 24px rgba(0,0,0,.2);flex:none}
+.screen{background:#fff;border-radius:28px;overflow:hidden;height:760px;display:flex;flex-direction:column;position:relative}
+.notch{height:22px;background:#111;display:flex;justify-content:center;align-items:center}
+.notch i{width:90px;height:8px;border-radius:6px;background:#2a2a2a}
+.hero{background:linear-gradient(160deg,#117A55,#27A862);color:#fff;padding:14px 16px 12px}
+.hero .t{font-size:17px;font-weight:800}
+.hero .s{font-size:11px;opacity:.9;margin-bottom:10px}
+.who{display:flex;align-items:center;gap:10px;border-top:1px solid rgba(255,255,255,.25);padding-top:10px}
+.av{width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:22px}
+.who b{font-size:14px}.who span{font-size:11px;display:block;opacity:.9}
+.logout{margin-left:auto;font-size:11px;border:1px solid rgba(255,255,255,.4);border-radius:8px;padding:4px 8px}
+.xp{margin-top:8px;font-size:10.5px}.xp .bar{height:7px;background:rgba(255,255,255,.3);border-radius:5px;margin-top:3px;overflow:hidden}.xp .bar i{display:block;height:100%;width:62%;background:#6DEBB0}
+.body{flex:1;overflow:hidden;padding:0 0 8px}
+.pet{margin:12px 12px 0;border-radius:16px;background:linear-gradient(180deg,#F3FBF6,#DDF4E6);border:1.5px solid #BFE8CF;padding:8px 10px 10px;text-align:center;position:relative}
+.pet .stage{position:relative;height:150px;display:flex;align-items:flex-end;justify-content:center}
+.pet .ground{position:absolute;bottom:4px;left:50%;transform:translateX(-50%);width:90px;height:12px;border-radius:50%;background:rgba(0,0,0,.1)}
+.pet svg{position:relative;width:132px;height:132px;overflow:visible}
+.pet .nm{font-size:14px;font-weight:800;color:var(--green-dark)}
+.pet .lv{font-size:11px;color:#37474F}
+.pet .nxt{font-size:10px;color:var(--muted);margin-top:2px}
+.pet .btns{display:flex;gap:6px;justify-content:center;margin-top:7px}
+.mini{font-size:10.5px;border:1px solid #BFE8CF;background:#fff;color:var(--green-dark);border-radius:10px;padding:3px 9px;cursor:pointer;font-family:inherit}
+.goal{margin:10px 12px 0;background:#E8F8EE;border:1px solid #CDEED9;border-radius:12px;padding:9px 12px;font-size:12px}
+.goal b{display:block;color:var(--green-dark)}
+.lbl{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;margin:12px 14px 5px}
+.menu{margin:0 12px;border:1px solid var(--line);border-radius:12px;padding:9px 12px;font-size:13px;display:flex;align-items:center;gap:10px}
+.menu em{margin-left:auto;font-style:normal;font-size:9px;font-weight:700;background:#0E6655;color:#fff;border-radius:6px;padding:2px 6px}
+.big{margin:8px 12px 0;border-radius:14px;color:#fff;padding:12px 14px;font-size:13px;font-weight:700}
+.big small{display:block;font-weight:400;font-size:11px;opacity:.9}
+.nav{display:flex;border-top:1px solid var(--line);font-size:10px;text-align:center;padding:7px 0 9px;margin-top:auto}
+.nav div{flex:1}.nav b{color:var(--green-dark)}
+.cap{font-size:12px;color:var(--muted);text-align:center;margin-top:8px;width:340px}
+/* animations */
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+@keyframes float{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-12px) rotate(2deg)}}
+@keyframes sway{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg)}}
+@keyframes sparkle{0%,100%{opacity:.2;transform:scale(.6)}50%{opacity:1;transform:scale(1.1)}}
+.anim-bounce svg{animation:bounce 1.1s ease-in-out infinite}
+.anim-float svg{animation:float 2.4s ease-in-out infinite}
+@keyframes epic{0%,100%{transform:translateY(0) scale(1);filter:drop-shadow(0 0 5px rgba(255,193,7,.55))}50%{transform:translateY(-12px) scale(1.05);filter:drop-shadow(0 0 16px rgba(255,193,7,.95))}}
+.anim-epic svg{animation:epic 2s ease-in-out infinite}
+.pet.max{background:radial-gradient(circle at 50% 38%,#FFF8E1,#FFE9A8 60%,#FFD98A);border-color:#F6C453;box-shadow:0 0 0 2px rgba(255,193,7,.25),0 6px 18px rgba(255,160,0,.25)}
+.pet.max .nm{color:#B35F10}
+.anim-sway svg{animation:sway 1.6s ease-in-out infinite;transform-origin:50% 90%}
+.sp1,.sp2,.sp3{animation:sparkle 1.4s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+.sp2{animation-delay:.4s}.sp3{animation-delay:.8s}
+@keyframes evolve{0%{filter:brightness(1);transform:scale(1)}30%{filter:brightness(6) saturate(0);transform:scale(.8)}60%{filter:brightness(6) saturate(0);transform:scale(1.25)}100%{filter:brightness(1);transform:scale(1)}}
+.evolving svg{animation:evolve 1.8s ease-in-out 1 !important}
+.levelup{position:absolute;left:0;right:0;top:46%;text-align:center;font-weight:800;font-size:18px;color:#B35F10;text-shadow:0 2px 0 #fff;opacity:0;pointer-events:none}
+.show-up{animation:pop 2.2s ease-out 1}
+@keyframes pop{0%{opacity:0;transform:scale(.5)}20%{opacity:1;transform:scale(1.15)}80%{opacity:1}100%{opacity:0;transform:translateY(-16px)}}
+/* chooser */
+.choose{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;padding:0 10px}
+.opt{border:2px solid var(--line);border-radius:12px;padding:5px 2px;text-align:center;font-size:11.5px}
+.opt.picked{border-color:var(--green);background:var(--green-pale)}
+.opt svg{width:66px;height:66px}
+.opt b{display:block}.opt span{font-size:9px;color:var(--muted);display:block;line-height:1.2;padding:0 2px}
+.btnp{margin:12px 12px 0;background:var(--green-dark);color:#fff;border-radius:12px;text-align:center;padding:11px;font-weight:700;font-size:14px}
+/* BGH */
+.bgh{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.bgh-top{display:flex;gap:6px;padding:10px 14px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.tab{font-size:13px;padding:8px 12px;border-radius:8px 8px 0 0;color:var(--muted)}
+.tab.on{background:var(--green-pale);color:var(--green-dark);font-weight:700;border:1px solid var(--green-light);border-bottom:none}
+.bgh-in{display:grid;grid-template-columns:260px 1fr;min-height:440px}
+.side{border-right:1px solid var(--line);padding:12px;background:#FAFBFC}
+.sp-item{display:flex;align-items:center;gap:10px;padding:8px;border:1.5px solid var(--line);border-radius:10px;margin-bottom:8px;background:#fff;font-size:13px}
+.sp-item.on{border-color:var(--green);background:var(--green-pale)}
+.sp-item svg{width:40px;height:40px;flex:none}
+.sp-item small{display:block;color:var(--muted);font-size:11px}
+.tog{margin-left:auto;font-size:10px;border-radius:10px;padding:2px 8px;background:#E3F6E8;color:#1E6B3A;font-weight:700}
+.tog.off{background:#ECEFF1;color:#78909C}
+.btn{display:inline-block;font-size:12.5px;border-radius:8px;padding:6px 12px;border:1px solid var(--line);background:#fff;font-family:inherit}
+.btn.pri{background:var(--green-dark);color:#fff;border-color:var(--green-dark)}
+.edit{padding:14px 16px}
+.edit h3{margin:0 0 8px;font-size:15px}
+.fld{display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.fld label{font-size:11px;color:var(--muted);display:block;margin-bottom:2px}
+.inp{border:1px solid #CFD8DC;border-radius:8px;padding:6px 9px;font-size:13px;min-width:130px;background:#fff}
+table.lv{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:6px}
+table.lv th{background:#F5F7F8;text-align:left;font-size:11px;color:var(--muted);padding:6px 8px;border-bottom:1px solid var(--line)}
+table.lv td{padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+table.lv svg{width:52px;height:52px}
+.sel{border:1px solid #CFD8DC;border-radius:8px;padding:4px 8px;background:#fff;font-size:12px;display:inline-block}
+.sel:after{content:" ▾";color:#90A4AE}
+.imgbtn{font-size:11px;color:var(--green-dark);border:1px dashed #90C9AE;border-radius:8px;padding:3px 8px;background:var(--green-pale)}
+.foot{display:flex;justify-content:space-between;align-items:center;padding:10px 16px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:760px){.bgh-in{grid-template-columns:1fr}.side{border-right:none;border-bottom:1px solid var(--line)}.two{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>Nhân vật đồng hành MoodMeal — sơ đồ tiến hóa và mockup</h1>
+<p class="sub">Bản thiết kế để duyệt (chưa lập trình). Các nhân vật bên dưới là nhân vật <b>gốc do mình thiết kế</b> theo chủ đề thực phẩm, vẽ bằng hình học SVG.</p>
+<div class="note"><b>Về việc dùng Pokémon:</b> Pokémon là nhân vật có bản quyền của Nintendo/Game Freak/The Pokémon Company. Tôi không vẽ hay tái tạo các nhân vật đó, và nếu đưa vào sản phẩm dự thi STEMPETITION thì cũng có rủi ro về bản quyền. Vì vậy tôi thiết kế 9 dòng nhân vật gốc với cùng cơ chế "chọn nhân vật đầu game, lên cấp thì tiến hóa". Cơ chế chọn nhân vật và tiến hóa đều giữ nguyên, nên sau này bạn có thể đổi hình bằng tranh các em tự vẽ qua trang BGH.</div>
+
+<h2>1. Sơ đồ tiến hóa</h2>
+<p class="sub">9 dòng nhân vật × 4 cấp, khớp bảng Level hiện tại (Người mới 0–99 XP · Người khám phá 100–299 · Nhà thám hiểm 300–599 · Đại sứ dinh dưỡng 600+). Mỗi lần lên level là một lần tiến hóa.</p>
+<div class="card"><div style="overflow-x:auto"><table class="evo" id="evoTable"></table></div></div>
+
+<h2>2. Trang chủ học sinh</h2>
+<p class="sub">Nhân vật nằm ngay dưới thông tin học sinh và trên "🎯 Mục tiêu hôm nay". Mục "Chọn session hôm nay" (Bản đồ Hành tinh, Thử món &amp; Đánh giá) đã bỏ, học sinh dùng tab ở cạnh dưới. Bấm "▶ Xem tiến hóa" để xem hoạt ảnh lên cấp (nhân vật chớp sáng rồi đổi hình, kèm chữ Lên Level).</p>
+<div class="row">
+  <div>
+    <div class="phone"><div class="screen" id="homeScreen">
+      <div class="notch"><i></i></div>
+      <div class="hero">
+        <div class="t">🍱 MOODMEAL MAGIC TRAY</div>
+        <div class="s">🌱 Mỗi lần thử – Một lần khám phá</div>
+        <div class="who"><div class="av">🧒</div><div><b>Phạm Bảo Trúc</b><span>⭐ Level <i id="hLv">2</i> · <i id="hLvName">Người khám phá</i></span></div><div class="logout">🚪 Đăng xuất</div></div>
+        <div class="xp"><span id="hXp">185 / 300 XP</span><div class="bar"><i id="hBar"></i></div></div>
+      </div>
+      <div class="body">
+        <div class="pet" id="petCard">
+          <div class="stage anim-bounce" id="petStage"><div class="ground"></div><span id="petSvg"></span></div>
+          <div class="nm" id="petName">Lá Nhí</div>
+          <div class="lv" id="petLv">Dòng Lá · Level 2 · Người khám phá</div>
+          <div class="nxt" id="petNxt">Còn 115 XP để tiến hóa thành <b>Cây Khỏe</b></div>
+          <div class="btns"><button class="mini" onclick="playEvolve()">▶ Xem tiến hóa</button><button class="mini" onclick="nextSpecies()">🔄 Đổi nhân vật (demo)</button></div>
+          <div class="levelup" id="lvUp">🎉 Lên Level!</div>
+        </div>
+        <div class="goal"><b>🎯 Mục tiêu hôm nay</b>Thử "Trứng chiên" → +15 XP · Khám phá Hành tinh Trứng!</div>
+        <div class="lbl">Thực đơn bữa trưa hôm nay</div>
+        <div class="menu">🥚 <span>Trứng chiên</span><em>MỚI!</em></div>
+      </div>
+      <div class="nav"><div><b>🏠<br>Trang chủ</b></div><div>🌍<br>Hành tinh</div><div>🍱<br>Thử món</div></div>
+    </div></div>
+    <div class="cap">Trang chủ học sinh: bỏ mục "Chọn session hôm nay"; học sinh chuyển màn bằng 3 tab ở cạnh dưới</div>
+  </div>
+
+  <div>
+    <div class="phone"><div class="screen">
+      <div class="notch"><i></i></div>
+      <div class="hero" style="padding-bottom:16px"><div class="t">🥚 Chọn bạn đồng hành!</div><div class="s">Bạn này sẽ cùng em khám phá thực phẩm và lớn lên mỗi lần em lên cấp</div></div>
+      <div class="body" style="padding-top:10px"><div class="choose" id="chooser"></div>
+        <div class="btnp">✓ Chọn bạn này</div>
+        <div style="font-size:10.5px;color:var(--muted);text-align:center;margin-top:8px;padding:0 16px">Có 9 bạn đồng hành để chọn (mỗi nhóm thực phẩm một bạn). Chỉ hiện lần đầu em đăng nhập. Em có thể đổi bạn đồng hành ở Trang chủ (mỗi lần đổi, bạn mới bắt đầu từ hình dạng của Level hiện tại).</div>
+      </div>
+    </div></div>
+    <div class="cap">Màn chọn nhân vật lần đầu đăng nhập</div>
+  </div>
+</div>
+
+<h2>3. Phụ huynh và BGH: chỉ hiện Level và tên Level</h2>
+<p class="sub">Hai giao diện này không hiển thị hình nhân vật, chỉ có dòng chữ như hiện nay.</p>
+<div class="two">
+  <div class="card"><b style="font-size:13px">Phụ huynh — thẻ của con</b><div style="margin-top:8px;display:flex;align-items:center;gap:10px"><div class="av" style="background:#E8F8EE">🧒</div><div><b>Phạm Bảo Trúc</b><div style="font-size:12px;color:var(--muted)">⭐ Level 2 · Người khám phá</div></div></div></div>
+  <div class="card"><b style="font-size:13px">BGH — bảng Tài khoản / Báo cáo</b><table style="width:100%;font-size:12.5px;margin-top:8px;border-collapse:collapse"><tr style="color:var(--muted);font-size:11px"><td>Học sinh</td><td>Level</td><td>Tên Level</td></tr><tr><td>Phạm Bảo Trúc</td><td>2</td><td>Người khám phá</td></tr><tr><td>Nguyễn Minh An</td><td>3</td><td>Nhà thám hiểm</td></tr></table></div>
+</div>
+
+<h2>4. BGH: thiết lập Nhân vật</h2>
+<p class="sub">Thêm tab "Nhân vật" trong Thiết lập (bên cạnh Thực đơn · Nguyên liệu · XP &amp; Level · Danh hiệu). BGH quản lý danh sách nhân vật và hình + hoạt ảnh cho từng cấp.</p>
+<div class="bgh">
+  <div class="bgh-top"><div class="tab">Thực đơn</div><div class="tab">Nguyên liệu</div><div class="tab">XP &amp; Level</div><div class="tab">Danh hiệu</div><div class="tab on">🐣 Nhân vật</div></div>
+  <div class="bgh-in">
+    <div class="side">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px"><b style="font-size:13px">Danh sách nhân vật</b><span class="btn pri">+ Thêm</span></div>
+      <div id="spList" style="max-height:430px;overflow-y:auto;padding-right:2px"></div>
+      <div style="font-size:11px;color:var(--muted)">Nhân vật bị tắt sẽ không hiện ở màn chọn. Học sinh đã chọn vẫn giữ nhân vật của mình. Nhân vật đã có học sinh dùng thì không có nút xóa.</div>
+    </div>
+    <div class="edit">
+      <h3>Chỉnh sửa: <span id="edName">Lá</span></h3>
+      <div class="fld">
+        <div><label>Tên dòng nhân vật</label><div class="inp" id="edInp">Lá</div></div>
+        <div><label>Mô tả ngắn (hiện ở màn chọn)</label><div class="inp" style="min-width:260px" id="edDesc">Bạn nhỏ của rau xanh</div></div>
+        <div><label>Trạng thái</label><span class="tog">Đang bật</span></div>
+      </div>
+      <b style="font-size:13px">Hình và hoạt ảnh theo cấp</b>
+      <table class="lv"><thead><tr><th>Level</th><th>Tên Level (từ XP &amp; Level)</th><th>Tên hình dạng</th><th>Hình</th><th>Hoạt ảnh chờ</th><th>Hiệu ứng khi lên cấp</th></tr></thead><tbody id="lvRows"></tbody></table>
+      <div style="font-size:11px;color:var(--muted);margin-top:8px">Hình: chọn từ thư viện có sẵn hoặc tải ảnh PNG/SVG (nền trong suốt, tối đa 300 KB). Hoạt ảnh chờ: Nhún nhảy · Lơ lửng · Lắc lư · Lấp lánh. Tên Level lấy từ bảng XP &amp; Level, không nhập lại ở đây.</div>
+    </div>
+  </div>
+  <div class="foot"><span>Có 9 nhân vật · 4 cấp mỗi nhân vật (khớp 4 Level hiện có)</span><span><span class="btn">Khôi phục mặc định</span> <span class="btn pri">💾 Lưu nhân vật</span></span></div>
+</div>
+</div>
+
+<script>
+/* ---------- nhân vật gốc: 4 dòng × 4 cấp ---------- */
+const SPECIES = [
+ {id:'la', name:'Lá', desc:'Bạn nhỏ của rau xanh', color:'#4CAF50', dark:'#2E7D32', belly:'#C8E6C9', stages:['Mầm Bé','Lá Nhí','Cây Khỏe','Đại Thụ Xanh']},
+ {id:'song', name:'Sóng', desc:'Bạn nhỏ của hải sản', color:'#4FC3F7', dark:'#0277BD', belly:'#E1F5FE', stages:['Giọt Nhỏ','Cá Sóng','Rồng Biển','Thủy Long']},
+ {id:'nang', name:'Nắng', desc:'Bạn nhỏ của trái cây', color:'#FFB74D', dark:'#E65100', belly:'#FFF3E0', stages:['Hạt Nắng','Quả Nắng','Cam Lửa','Mặt Trời Vàng']},
+ {id:'may', name:'Mây', desc:'Bạn nhỏ của trứng', color:'#CE93D8', dark:'#6A1B9A', belly:'#F3E5F5', stages:['Trứng Mây','Gà Mây','Chim Mây','Phượng Mây']},
+
+ {id:'cu', name:'Củ', desc:'Bạn nhỏ của các loại củ', color:'#F06292', dark:'#AD1457', belly:'#FCE4EC', stages:['Củ Con','Củ Dền','Củ Lực Sĩ','Vua Củ']},
+ {id:'dau', name:'Đậu', desc:'Bạn nhỏ của các loại đậu', color:'#AED581', dark:'#558B2F', belly:'#F1F8E9', stages:['Hạt Đậu','Đậu Nhí','Đậu Cuộn','Đậu Thần']},
+ {id:'gao', name:'Gạo', desc:'Bạn nhỏ của tinh bột', color:'#FFF3C4', dark:'#A1887F', belly:'#FFFDE7', stages:['Hạt Gạo','Gạo Nón','Gạo Vàng','Kim Long']},
+ {id:'bi', name:'Bí', desc:'Bạn nhỏ của rau quả', color:'#EF5350', dark:'#B71C1C', belly:'#FFEBEE', stages:['Cà Con','Cà Chua','Cà Dây','Cà Vương']},
+ {id:'lua', name:'Lửa', desc:'Bạn nhỏ của thịt', color:'#FF8A65', dark:'#BF360C', belly:'#FBE9E7', stages:['Tia Lửa','Bếp Nhí','Bếp Hồng','Bếp Trưởng']},
+];
+const LEVELS=[{n:1,name:'Người mới',xp:'0–99'},{n:2,name:'Người khám phá',xp:'100–299'},{n:3,name:'Nhà thám hiểm',xp:'300–599'},{n:4,name:'Đại sứ dinh dưỡng',xp:'600+'}];
+const ANIMS=['Nhún nhảy','Lơ lửng','Lắc lư','Lấp lánh'];
+
+function face(cx,cy,s,dark){
+  const e=5*s;
+  return `<ellipse cx="${cx-9*s}" cy="${cy}" rx="${e*.8}" ry="${e}" fill="#263238"/><ellipse cx="${cx+9*s}" cy="${cy}" rx="${e*.8}" ry="${e}" fill="#263238"/>
+  <circle cx="${cx-9*s+1.5*s}" cy="${cy-2*s}" r="${1.6*s}" fill="#fff"/><circle cx="${cx+9*s+1.5*s}" cy="${cy-2*s}" r="${1.6*s}" fill="#fff"/>
+  <ellipse cx="${cx-16*s}" cy="${cy+7*s}" rx="${4*s}" ry="${2.6*s}" fill="#FF8A80" opacity=".7"/><ellipse cx="${cx+16*s}" cy="${cy+7*s}" rx="${4*s}" ry="${2.6*s}" fill="#FF8A80" opacity=".7"/>
+  <path d="M${cx-4*s} ${cy+7*s} Q${cx} ${cy+11*s} ${cx+4*s} ${cy+7*s}" fill="none" stroke="#263238" stroke-width="${1.8*s}" stroke-linecap="round"/>`;
+}
+function sparkles(n,col){
+  const pos=[[22,26],[100,34],[96,86]];
+  return pos.slice(0,n).map((p,i)=>`<path class="sp${i+1}" d="M${p[0]} ${p[1]-6} L${p[0]+2} ${p[1]-2} L${p[0]+6} ${p[1]} L${p[0]+2} ${p[1]+2} L${p[0]} ${p[1]+6} L${p[0]-2} ${p[1]+2} L${p[0]-6} ${p[1]} L${p[0]-2} ${p[1]-2}Z" fill="${col}"/>`).join('');
+}
+let UID=0;
+function star(cx,cy,R,r,fill,dark){let p='';for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,rad=i%2?r:R;p+=(i?'L':'M')+(cx+rad*Math.cos(a)).toFixed(1)+' '+(cy+rad*Math.sin(a)).toFixed(1);}return `<path d="${p}Z" fill="${fill}" stroke="${dark||'#F9A825'}" stroke-width="1.2" stroke-linejoin="round"/>`;}
+function creature(sp,stage){ /* stage 0..3 */
+  const S=SPECIES.find(x=>x.id===sp), c=S.color, d=S.dark, b=S.belly;
+  const r=[24,28,32,36][stage], cy=[80,76,72,68][stage], cx=60;
+  let back='', front='', top='';
+  const body=`<ellipse cx="${cx}" cy="${cy}" rx="${r}" ry="${r*.92}" fill="${c}" stroke="${d}" stroke-width="2"/><ellipse cx="${cx}" cy="${cy+r*.35}" rx="${r*.6}" ry="${r*.45}" fill="${b}" opacity=".8"/>`;
+  const f=face(cx,cy-r*.1,[.8,.9,1,1.05][stage],d);
+  const feet=`<ellipse cx="${cx-r*.5}" cy="${cy+r*.88}" rx="9" ry="5" fill="${d}"/><ellipse cx="${cx+r*.5}" cy="${cy+r*.88}" rx="9" ry="5" fill="${d}"/>`;
+  const leaf=(x,y,rot,sz,col)=>`<path d="M0 0 C ${sz*.6} ${-sz*.5} ${sz*.6} ${-sz*1.1} 0 ${-sz*1.5} C ${-sz*.6} ${-sz*1.1} ${-sz*.6} ${-sz*.5} 0 0Z" fill="${col}" stroke="${d}" stroke-width="1.5" transform="translate(${x} ${y}) rotate(${rot})"/>`;
+  if(sp==='la'){
+    const ty=cy-r*.9;
+    if(stage===0) top=leaf(cx,ty+3,0,12,'#81C784');
+    if(stage===1) top=leaf(cx,ty+3,-30,14,'#81C784')+leaf(cx,ty+3,30,14,'#66BB6A');
+    if(stage===2) top=leaf(cx,ty+3,-50,16,'#81C784')+leaf(cx,ty+3,0,18,'#66BB6A')+leaf(cx,ty+3,50,16,'#81C784')+`<circle cx="${cx}" cy="${ty-26}" r="4" fill="#FFEB3B" stroke="${d}"/>`;
+    if(stage===3) top=leaf(cx,ty+3,-70,18,'#81C784')+leaf(cx,ty+3,-35,20,'#66BB6A')+leaf(cx,ty+3,0,22,'#81C784')+leaf(cx,ty+3,35,20,'#66BB6A')+leaf(cx,ty+3,70,18,'#81C784')+`<circle cx="${cx-18}" cy="${ty-16}" r="4.5" fill="#F48FB1" stroke="${d}"/><circle cx="${cx+18}" cy="${ty-16}" r="4.5" fill="#FFEB3B" stroke="${d}"/><circle cx="${cx}" cy="${ty-30}" r="5" fill="#F48FB1" stroke="${d}"/>`;
+    if(stage>=2) back=`<path d="M${cx-r} ${cy} q-14 -4 -16 8 q8 6 16 -2Z M${cx+r} ${cy} q14 -4 16 8 q-8 6 -16 -2Z" fill="#81C784" stroke="${d}" stroke-width="1.5"/>`;
+  }
+  if(sp==='song'){
+    if(stage===0) top=`<path d="M${cx} ${cy-r-14} Q${cx+8} ${cy-r-2} ${cx} ${cy-r+4} Q${cx-8} ${cy-r-2} ${cx} ${cy-r-14}Z" fill="${c}" stroke="${d}" stroke-width="1.5"/>`;
+    if(stage>=1) back+=`<path d="M${cx-r+2} ${cy+4} L${cx-r-12} ${cy-6} L${cx-r-10} ${cy+14}Z M${cx+r-2} ${cy+4} L${cx+r+12} ${cy-6} L${cx+r+10} ${cy+14}Z" fill="${d}" opacity=".85"/>`;
+    if(stage>=1) top=`<path d="M${cx-10} ${cy-r+3} Q${cx} ${cy-r-16} ${cx+10} ${cy-r+3}Z" fill="${d}"/>`;
+    if(stage>=2) back+=`<path d="M${cx+r-4} ${cy+r*.5} q18 6 16 -14 q-4 10 -16 4Z" fill="${d}"/>`;
+    if(stage>=2) top+=`<path d="M${cx-24} ${cy-r-2} q6 -14 12 0 q6 -14 12 0 q6 -14 12 0 q6 -14 12 0" fill="none" stroke="#B3E5FC" stroke-width="3" stroke-linecap="round"/>`;
+    if(stage===3) top+=`<circle cx="${cx-30}" cy="${cy-r-4}" r="4" fill="#fff" stroke="${d}"/><circle cx="${cx+32}" cy="${cy-r+2}" r="3.5" fill="#fff" stroke="${d}"/><path d="M${cx-8} ${cy-r-8} L${cx} ${cy-r-24} L${cx+8} ${cy-r-8}Z" fill="#FFD54F" stroke="${d}" stroke-width="1.5"/>`;
+  }
+  if(sp==='nang'){
+    const n=[0,4,8,8][stage]; let rays='';
+    for(let i=0;i<n;i++){const a=i*(360/n);rays+=`<path d="M0 ${-r-3} L5 ${-r-14} L-5 ${-r-14}Z" fill="#FFD54F" stroke="${d}" stroke-width="1.2" transform="translate(${cx} ${cy}) rotate(${a})"/>`;}
+    back=rays;
+    if(stage===0) top=`<path d="M${cx} ${cy-r+2} q-2 -12 8 -16" fill="none" stroke="#66BB6A" stroke-width="3" stroke-linecap="round"/><ellipse cx="${cx+9}" cy="${cy-r-14}" rx="6" ry="3.5" fill="#66BB6A"/>`;
+    if(stage>=1) top=`<path d="M${cx} ${cy-r+2} q0 -8 4 -12" fill="none" stroke="#6D4C41" stroke-width="3" stroke-linecap="round"/><ellipse cx="${cx+9}" cy="${cy-r-8}" rx="8" ry="4" fill="#66BB6A" stroke="${d}"/>`;
+    if(stage===3) back=`<circle cx="${cx}" cy="${cy}" r="${r+18}" fill="none" stroke="#FFE082" stroke-width="3" stroke-dasharray="3 5"/>`+rays;
+  }
+  if(sp==='may'){
+    if(stage===0) top=`<path d="M${cx-r+2} ${cy-r*.2} L${cx-r*.6} ${cy-r*.45} L${cx-r*.3} ${cy-r*.2} L${cx} ${cy-r*.5} L${cx+r*.3} ${cy-r*.2} L${cx+r*.6} ${cy-r*.45} L${cx+r-2} ${cy-r*.2} Q${cx} ${cy-r*1.5} ${cx-r+2} ${cy-r*.2}Z" fill="#fff" stroke="${d}" stroke-width="1.5"/>`;
+    if(stage>=1){const w=[0,14,20,26][stage]; back=`<path d="M${cx-r+2} ${cy-2} q${-w} ${-w*.9} ${-w*1.1} ${w*.3} q${w*.3} ${w*.7} ${w*1.1} ${w*.3}Z M${cx+r-2} ${cy-2} q${w} ${-w*.9} ${w*1.1} ${w*.3} q${-w*.3} ${w*.7} ${-w*1.1} ${w*.3}Z" fill="#fff" stroke="${d}" stroke-width="1.5"/>`;}
+    if(stage>=1) top=`<path d="M${cx-6} ${cy-r+1} q6 -14 12 0" fill="#FF8A65" stroke="${d}" stroke-width="1.2"/>`;
+    if(stage>=2) top+=`<path d="M${cx} ${cy+2} l0 0" /><path d="M${cx-4} ${cy+3} L${cx} ${cy+9} L${cx+4} ${cy+3}Z" fill="#FFB300" stroke="${d}" stroke-width="1"/>`;
+    if(stage===3) top+=`<path d="M${cx-14} ${cy-r+2} q-4 -22 4 -26 M${cx} ${cy-r} q0 -24 0 -30 M${cx+14} ${cy-r+2} q4 -22 -4 -26" fill="none" stroke="#FF8A65" stroke-width="4" stroke-linecap="round"/><path d="M${cx-r-26} ${cy+14} q12 14 24 4 M${cx+r+26} ${cy+14} q-12 14 -24 4" fill="none" stroke="#FFD180" stroke-width="3" stroke-linecap="round"/>`;
+  }
+  const ty0=cy-r*.9;
+  if(sp==='cu'){
+    if(stage===0) top=leaf(cx,ty0+3,-20,12,'#81C784')+leaf(cx,ty0+3,20,12,'#66BB6A');
+    if(stage===1) top=leaf(cx,ty0+3,-35,15,'#81C784')+leaf(cx,ty0+3,0,17,'#66BB6A')+leaf(cx,ty0+3,35,15,'#81C784');
+    if(stage>=2) top=leaf(cx,ty0+3,-55,17,'#81C784')+leaf(cx,ty0+3,-20,20,'#66BB6A')+leaf(cx,ty0+3,20,20,'#81C784')+leaf(cx,ty0+3,55,17,'#66BB6A');
+    if(stage>=2) back=`<path d="M${cx-r} ${cy+2} q-16 -10 -14 6 q8 8 14 0Z M${cx+r} ${cy+2} q16 -10 14 6 q-8 8 -14 0Z" fill="${c}" stroke="${d}" stroke-width="1.5"/>`;
+    if(stage===3) top+=star(cx,ty0-34,7,3,'#FFD54F');
+  }
+  if(sp==='dau'){
+    if(stage===0) top=`<path d="M${cx} ${cy-r+2} q-10 -8 -2 -16 q8 -2 6 6" fill="none" stroke="${d}" stroke-width="3" stroke-linecap="round"/>`;
+    if(stage>=1){const w=[0,10,14,18][stage]; back=`<path d="M${cx-r-2} ${cy+6} q-${w} -${w*1.2} -2 -${w*1.8} q${w*.9} ${w*.8} 2 ${w*1.8}Z M${cx+r+2} ${cy+6} q${w} -${w*1.2} 2 -${w*1.8} q-${w*.9} ${w*.8} -2 ${w*1.8}Z" fill="#7CB342" stroke="${d}" stroke-width="1.5"/>`;
+      top=`<path d="M${cx} ${cy-r+2} q-12 -6 -6 -16 q10 -4 8 6 M${cx} ${cy-r+2} q12 -6 6 -16 q-10 -4 -8 6" fill="none" stroke="${d}" stroke-width="3" stroke-linecap="round"/>`;}
+    if(stage===3) top+=`<circle cx="${cx-34}" cy="${cy-r-6}" r="5" fill="#C5E1A5" stroke="${d}"/><circle cx="${cx+36}" cy="${cy-r+4}" r="5" fill="#C5E1A5" stroke="${d}"/><circle cx="${cx}" cy="${cy-r-26}" r="5" fill="#C5E1A5" stroke="${d}"/>`;
+  }
+  if(sp==='gao'){
+    const hw=[0,24,30,36][stage];
+    if(stage===0) top=`<path d="M${cx-8} ${cy-r+3} l-3 -12 M${cx} ${cy-r+1} l0 -15 M${cx+8} ${cy-r+3} l3 -12" stroke="#D4A017" stroke-width="3" stroke-linecap="round"/>`;
+    if(stage>=1) top=`<path d="M${cx-hw} ${cy-r*.45} L${cx} ${cy-r-hw*.55} L${cx+hw} ${cy-r*.45}Q${cx} ${cy-r*.2} ${cx-hw} ${cy-r*.45}Z" fill="#F5DEB3" stroke="${d}" stroke-width="1.5"/><path d="M${cx-hw*.5} ${cy-r*.4} L${cx} ${cy-r-hw*.5} M${cx+hw*.5} ${cy-r*.4} L${cx} ${cy-r-hw*.5}" stroke="${d}" stroke-width="1" opacity=".6"/><path d="M${cx-hw*.7} ${cy-r*.3} q${hw*.7} ${r*.45} ${hw*1.4} 0" fill="none" stroke="#E57373" stroke-width="2"/>`;
+    if(stage>=2) back=`<path d="M${cx-r*.4} ${cy-r*.2} q-18 -20 -10 -34 M${cx} ${cy-r*.2} q0 -26 0 -40 M${cx+r*.4} ${cy-r*.2} q18 -20 10 -34" fill="none" stroke="#D4A017" stroke-width="3" stroke-linecap="round"/>`;
+    if(stage===3) top+=`<ellipse cx="${cx-24}" cy="${cy-r-24}" rx="3" ry="6" fill="#FFD54F"/><ellipse cx="${cx}" cy="${cy-r-32}" rx="3" ry="6" fill="#FFD54F"/><ellipse cx="${cx+24}" cy="${cy-r-24}" rx="3" ry="6" fill="#FFD54F"/>`;
+  }
+  if(sp==='bi'){
+    const cs=[7,10,12,14][stage], cyy=cy-r*.92;
+    let calyx=''; const nn=stage===0?5:6; for(let i=0;i<nn;i++){calyx+=`<path d="M0 0 L${cs*.45} ${-cs*1.1} L${-cs*.45} ${-cs*1.1}Z" fill="#66BB6A" stroke="#2E7D32" stroke-width="1" transform="translate(${cx} ${cyy}) rotate(${(i-(nn-1)/2)*(stage===0?32:26)})"/>`;}
+    top=calyx+`<path d="M${cx} ${cyy-4} q0 -10 3 -14" stroke="#2E7D32" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+    if(stage>=2) back=`<path d="M${cx-r} ${cy+2} q-16 -8 -14 6 q8 8 14 0Z M${cx+r} ${cy+2} q16 -8 14 6 q-8 8 -14 0Z" fill="#66BB6A" stroke="#2E7D32" stroke-width="1.5"/>`;
+    if(stage>=1) top+=`<path d="M${cx+4} ${cyy-16} q10 -6 12 2 q-8 4 -12 -2" fill="none" stroke="#2E7D32" stroke-width="2"/>`;
+    if(stage===3) top+=`<path d="M${cx-13} ${cyy-9} L${cx-14} ${cyy-24} L${cx-7} ${cyy-16} L${cx} ${cyy-28} L${cx+7} ${cyy-16} L${cx+14} ${cyy-24} L${cx+13} ${cyy-9}Z" fill="#FFD54F" stroke="#F57F17" stroke-width="1.6" stroke-linejoin="round"/><circle cx="${cx}" cy="${cyy-14}" r="2.6" fill="#E53935"/><circle cx="${cx-8}" cy="${cyy-12}" r="1.8" fill="#42A5F5"/><circle cx="${cx+8}" cy="${cyy-12}" r="1.8" fill="#66BB6A"/>`;
+  }
+  if(sp==='lua'){
+    const flame=(x,y,h,w,col)=>`<path d="M${x} ${y} Q${x-w} ${y-h*.4} ${x-w*.2} ${y-h} Q${x+w*.1} ${y-h*.6} ${x+w*.9} ${y-h*.7} Q${x+w*1.1} ${y-h*.2} ${x} ${y}Z" fill="${col}" stroke="${d}" stroke-width="1.2"/>`;
+    const fy=cy-r*.85;
+    if(stage===0) top=flame(cx,fy+3,16,8,'#FFB74D');
+    if(stage===1) top=flame(cx-8,fy+3,16,7,'#FFB74D')+flame(cx+8,fy+3,18,8,'#FF9800');
+    if(stage===2) top=flame(cx-14,fy+4,18,8,'#FFB74D')+flame(cx,fy+2,26,10,'#FF9800')+flame(cx+14,fy+4,18,8,'#FFB74D');
+    if(stage===3) top=flame(cx-22,fy+6,20,8,'#FFB74D')+flame(cx-10,fy+3,28,10,'#FF9800')+flame(cx+4,fy+1,36,12,'#FF7043')+flame(cx+18,fy+4,26,9,'#FF9800')+flame(cx+28,fy+8,18,7,'#FFB74D');
+    if(stage>=2) back=`<path d="M${cx-r-2} ${cy+4} q-12 -4 -12 8 q8 4 12 -2Z M${cx+r+2} ${cy+4} q12 -4 12 8 q-8 4 -12 -2Z" fill="${c}" stroke="${d}" stroke-width="1.5"/>`;
+  }
+  if(sp==='sao'){
+    if(stage===0) top=star(cx,cy-r-8,8,3.6,'#FFD54F');
+    if(stage===1) top=star(cx,cy-r-10,9,4,'#FFD54F')+`<path d="M${cx-30} ${cy-r+2} a9 9 0 1 0 8 12 a7 7 0 1 1 -8 -12Z" fill="#E8EAF6" stroke="${d}" stroke-width="1"/>`;
+    if(stage===2) top=star(cx,cy-r-12,10,4.4,'#FFD54F')+star(cx-32,cy-r+6,6,2.6,'#FFE082')+star(cx+32,cy-r+8,6,2.6,'#FFE082');
+    if(stage===3) top=star(cx,cy-r-16,13,5.6,'#FFD54F')+star(cx-34,cy-r,7,3,'#FFE082')+star(cx+34,cy-r+2,7,3,'#FFE082')+`<ellipse cx="${cx}" cy="${cy}" rx="${r+22}" ry="${r*.42}" fill="none" stroke="#C5CAE9" stroke-width="2" stroke-dasharray="2 5" transform="rotate(-12 ${cx} ${cy})"/>`;
+    if(stage>=2) back=`<path d="M${cx-r} ${cy+4} q-14 -4 -14 8 q8 4 14 -2Z M${cx+r} ${cy+4} q14 -4 14 8 q-8 4 -14 -2Z" fill="${c}" stroke="${d}" stroke-width="1.5"/>`;
+  }
+  /* Gạo cấp 4: Kim Long = Gạo Vàng nâng cấp. Giữ nguyên thân tròn, nón lá, rơm vàng và khuôn mặt; thêm sừng, râu, vảy, đuôi rồng và thân vàng óng */
+  let isDragon=false, bodyD='';
+  if(sp==='gao' && stage===3){
+    isDragon=true;
+    const dg='#E65100', hw=36;
+    /* sừng nhô ra hai bên nón, đuôi rồng cuộn bên phải, mây dưới chân (vẽ phía sau) */
+    back+=`<path d="M${cx-20} 44 C${cx-30} 34 ${cx-38} 30 ${cx-46} 12 C${cx-46} 24 ${cx-40} 22 ${cx-30} 40Z" fill="#8D6E63" stroke="#4E342E" stroke-width="1.5" stroke-linejoin="round"/>
+      <path d="M${cx+20} 44 C${cx+30} 34 ${cx+38} 30 ${cx+46} 12 C${cx+46} 24 ${cx+40} 22 ${cx+30} 40Z" fill="#8D6E63" stroke="#4E342E" stroke-width="1.5" stroke-linejoin="round"/>
+      <path d="M${cx+r-6} ${cy+18} C${cx+r+22} ${cy+30} ${cx+r+34} ${cy+6} ${cx+r+20} ${cy-10} C${cx+r+16} ${cy-18} ${cx+r+22} ${cy-24} ${cx+r+30} ${cy-26} C${cx+r+18} ${cy-28} ${cx+r+8} ${cy-20} ${cx+r+10} ${cy-8} C${cx+r+16} ${cy+4} ${cx+r+8} ${cy+14} ${cx+r-6} ${cy+4}Z" fill="#FFC107" stroke="${dg}" stroke-width="1.8" stroke-linejoin="round"/>
+      <path d="M${cx+r+30} ${cy-26} q8 -2 10 -10 q-10 0 -14 8Z M${cx+r+30} ${cy-26} q10 4 16 -2 q-8 -6 -16 2Z" fill="#FF7043" stroke="${dg}" stroke-width="1.2" stroke-linejoin="round"/>
+      <g fill="#fff" stroke="#FFE082" stroke-width="1.4" opacity=".95"><ellipse cx="${cx-26}" cy="${cy+r*.9+4}" rx="16" ry="5"/><ellipse cx="${cx+24}" cy="${cy+r*.9+6}" rx="18" ry="5"/></g>`;
+    /* thân vàng óng, vảy rồng trên bụng (thay thân kem của Gạo Vàng) */
+    bodyD=`<ellipse cx="${cx}" cy="${cy}" rx="${r}" ry="${r*.92}" fill="#FFE29A" stroke="${dg}" stroke-width="2"/>
+      <ellipse cx="${cx}" cy="${cy+r*.35}" rx="${r*.6}" ry="${r*.45}" fill="#FFF8E1" opacity=".9"/>
+      <g fill="none" stroke="#FFB300" stroke-width="1.5" stroke-linecap="round"><path d="M${cx-14} ${cy+14} q4 5 8 0 q4 5 8 0 q4 5 8 0 q4 5 8 0"/><path d="M${cx-10} ${cy+22} q4 5 8 0 q4 5 8 0 q4 5 8 0"/><path d="M${cx-6} ${cy+30} q4 5 6 0 q4 5 6 0"/></g>
+      <g fill="#FFC107" stroke="${dg}" stroke-width="1"><path d="M${cx-r+2} ${cy-8} l-8 -4 l2 8 l-8 2 l9 4Z"/><path d="M${cx+r-2} ${cy-8} l8 -4 l-2 8 l8 2 l-9 4Z"/></g>`;
+    /* râu rồng bay hai bên má + viên ngọc đỏ trên đỉnh nón */
+    top+=`<path d="M${cx-17} ${cy+6} C${cx-34} ${cy+4} ${cx-42} ${cy+16} ${cx-54} ${cy+8}" fill="none" stroke="#FFB300" stroke-width="2.6" stroke-linecap="round"><animate attributeName="d" dur="2.4s" repeatCount="indefinite" values="M${cx-17} ${cy+6} C${cx-34} ${cy+4} ${cx-42} ${cy+16} ${cx-54} ${cy+8};M${cx-17} ${cy+6} C${cx-34} ${cy+14} ${cx-44} ${cy+4} ${cx-54} ${cy+14};M${cx-17} ${cy+6} C${cx-34} ${cy+4} ${cx-42} ${cy+16} ${cx-54} ${cy+8}"/></path>
+      <path d="M${cx+17} ${cy+6} C${cx+34} ${cy+4} ${cx+42} ${cy+16} ${cx+54} ${cy+8}" fill="none" stroke="#FFB300" stroke-width="2.6" stroke-linecap="round"><animate attributeName="d" dur="2.4s" repeatCount="indefinite" values="M${cx+17} ${cy+6} C${cx+34} ${cy+4} ${cx+42} ${cy+16} ${cx+54} ${cy+8};M${cx+17} ${cy+6} C${cx+34} ${cy+14} ${cx+44} ${cy+4} ${cx+54} ${cy+14};M${cx+17} ${cy+6} C${cx+34} ${cy+4} ${cx+42} ${cy+16} ${cx+54} ${cy+8}"/></path>
+      <circle cx="${cx}" cy="${cy-r-hw*.55+2}" r="3.6" fill="#E53935" stroke="#B71C1C" stroke-width="1"><animate attributeName="r" values="3;4.4;3" dur="1.6s" repeatCount="indefinite"/></circle>`;
+  }
+  /* Cấp 4 (Đại sứ dinh dưỡng): hào quang, vòng ánh sáng và hạt bay quanh nhân vật, mỗi dòng một kiểu hạt */
+  let aura='', orbit='', defs='';
+  if(stage===3){
+    const gid='gl'+(++UID), ox=60, oy=68;
+    defs=`<defs><radialGradient id="${gid}"><stop offset="0" stop-color="${sp==='gao'?'#FFD54F':c}" stop-opacity=".6"/><stop offset=".6" stop-color="${sp==='gao'?'#FFD54F':c}" stop-opacity=".22"/><stop offset="1" stop-color="${c}" stop-opacity="0"/></radialGradient></defs>`;
+    aura=`<circle cx="${ox}" cy="${oy}" r="56" fill="url(#${gid})"><animate attributeName="r" values="50;60;50" dur="2.2s" repeatCount="indefinite"/><animate attributeName="opacity" values=".65;1;.65" dur="2.2s" repeatCount="indefinite"/></circle>
+      <circle cx="${ox}" cy="${oy}" r="54" fill="none" stroke="${sp==='gao'?'#FFC107':d}" stroke-width="1.4" stroke-dasharray="3 7" opacity=".7"><animateTransform attributeName="transform" type="rotate" from="360 ${ox} ${oy}" to="0 ${ox} ${oy}" dur="14s" repeatCount="indefinite"/></circle>`;
+    const part={
+      la:`<path d="M0 0 C4 -3 4 -8 0 -11 C-4 -8 -4 -3 0 0Z" fill="#81C784" stroke="#2E7D32" stroke-width="1"/>`,
+      song:`<circle r="3.4" fill="#E1F5FE" stroke="#0277BD" stroke-width="1"/>`,
+      nang:`<circle r="3.6" fill="#FFD54F" stroke="#E65100" stroke-width="1"/>`,
+      may:`<ellipse rx="2.6" ry="5.5" fill="#fff" stroke="#6A1B9A" stroke-width="1" transform="rotate(30)"/>`,
+      cu:star(0,0,5,2.2,'#FFD54F'),
+      dau:`<circle r="3.6" fill="#C5E1A5" stroke="#558B2F" stroke-width="1"/>`,
+      gao:`<ellipse rx="2.4" ry="5" fill="#FFF8E1" stroke="#FFB300" stroke-width="1"/>`,
+      bi:`<circle r="3.8" fill="#EF5350" stroke="#B71C1C" stroke-width="1"/>`,
+      lua:`<path d="M0 3 Q-4 -2 -1 -7 Q1 -3 3 -4 Q4 0 0 3Z" fill="#FFB74D" stroke="#BF360C" stroke-width=".9"/>`
+    }[sp]||'';
+    let ps=''; for(let i=0;i<4;i++){const a=i*Math.PI/2; ps+=`<g transform="translate(${(ox+Math.cos(a)*50).toFixed(1)} ${(oy+Math.sin(a)*44).toFixed(1)})">${part}</g>`;}
+    orbit=`<g>${ps}<animateTransform attributeName="transform" type="rotate" from="0 ${ox} ${oy}" to="360 ${ox} ${oy}" dur="7s" repeatCount="indefinite"/></g>`;
+  }
+  return `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">${defs}${aura}${back}${feet}${isDragon?bodyD:body}${f}${top}${orbit}${sparkles(stage,'#FFD54F')}</svg>`;
+}
+
+/* ---------- 1. bảng tiến hóa ---------- */
+(function(){
+  let h='<tr><th style="text-align:left">Dòng nhân vật</th>'+LEVELS.map(l=>`<th>Level ${l.n} · ${l.name}<small>${l.xp} XP</small></th>`).join('')+'</tr>';
+  SPECIES.forEach(s=>{
+    h+=`<tr><td class="sp">${s.name}<small>${s.desc}</small></td>`;
+    s.stages.forEach((n,i)=>{h+=`<td><div style="width:84px;height:84px;margin:auto">${creature(s.id,i).replace('<svg ','<svg width="84" height="84" ')}</div><div class="stage-name">${n}</div></td>`;});
+    h+='</tr>';
+  });
+  document.getElementById('evoTable').innerHTML=h;
+})();
+
+/* ---------- 2. trang chủ ---------- */
+let spIdx=0, lvIdx=1; const XPS=[[20,100],[185,300],[420,600],[760,1000]];
+function renderPet(){
+  const s=SPECIES[spIdx], l=LEVELS[lvIdx];
+  document.getElementById('petSvg').innerHTML=creature(s.id,lvIdx);
+  document.getElementById('petName').textContent=s.stages[lvIdx];
+  document.getElementById('petLv').textContent=`Dòng ${s.name} · Level ${l.n} · ${l.name}`;
+  const [x,nx]=XPS[lvIdx];
+  document.getElementById('petNxt').innerHTML= lvIdx<3 ? `Còn ${nx-x} XP để tiến hóa thành <b>${s.stages[lvIdx+1]}</b>` : 'Đã tiến hóa cao nhất! 🌟';
+  document.getElementById('hLv').textContent=l.n; document.getElementById('hLvName').textContent=l.name;
+  document.getElementById('hXp').textContent= lvIdx<3 ? `${x} / ${nx} XP` : `${x} XP (cao nhất)`;
+  document.getElementById('hBar').style.width=(lvIdx<3?Math.round(x/nx*100):100)+'%';
+  const st=document.getElementById('petStage'); st.className='stage '+['anim-bounce','anim-float','anim-sway','anim-epic'][lvIdx];
+  document.getElementById('petCard').classList.toggle('max',lvIdx===3);
+}
+function playEvolve(){
+  if(lvIdx>=3) lvIdx=0;
+  const st=document.getElementById('petStage'), up=document.getElementById('lvUp');
+  st.classList.add('evolving');
+  setTimeout(()=>{lvIdx++; renderPet(); st.classList.add('evolving');},700);
+  up.textContent=`🎉 Lên Level ${lvIdx+2}!`; up.classList.remove('show-up'); void up.offsetWidth; up.classList.add('show-up');
+  setTimeout(()=>st.classList.remove('evolving'),1900);
+}
+function nextSpecies(){spIdx=(spIdx+1)%SPECIES.length; renderPet();}
+renderPet();
+
+/* chooser */
+document.getElementById('chooser').innerHTML=SPECIES.map((s,i)=>`<div class="opt${i===0?' picked':''}">${creature(s.id,0)}<b>${s.name}</b><span>${s.desc}</span></div>`).join('');
+
+/* ---------- 4. BGH ---------- */
+document.getElementById('spList').innerHTML=SPECIES.map((s,i)=>`<div class="sp-item${i===0?' on':''}">${creature(s.id,1)}<div><b>${s.name}</b><small>${s.stages.join(' → ')}</small></div><span class="tog">Bật</span></div>`).join('');
+(function(){
+  const s=SPECIES[0];
+  document.getElementById('lvRows').innerHTML=LEVELS.map((l,i)=>`<tr><td><b>${l.n}</b></td><td>${l.name}</td><td><span class="inp" style="min-width:90px;display:inline-block">${s.stages[i]}</span></td><td style="white-space:nowrap">${creature(s.id,i)}<br><span class="imgbtn">Thư viện</span> <span class="imgbtn">Tải ảnh</span></td><td><span class="sel">${i===3?'Hào quang + hạt bay quanh':ANIMS[[0,1,2][i]]}</span></td><td><span class="sel">${i===0?'—':'Chớp sáng + pháo hoa'}</span></td></tr>`).join('');
+})();
+</script>
+</body>
+</html>

@@ -565,3 +565,22 @@ textarea.form-control { resize: vertical; min-height: 80px; }
   .main-body       { padding: 16px; }
   .week-grid       { grid-template-columns: repeat(3, 1fr); }
 }
+
+/* ── Tab Nhân vật ────────────────────────────── */
+.char-admin { display: grid; grid-template-columns: 290px 1fr; gap: 16px; align-items: start; }
+.char-item { display: flex; align-items: center; gap: 10px; padding: 8px; border: 1.5px solid var(--border-light); border-radius: 10px; margin-bottom: 8px; background: #fff; cursor: pointer; font-size: 13px; }
+.char-item.on { border-color: var(--green-primary); background: var(--green-pale); }
+.char-item .char-art { width: 44px; height: 44px; flex: none; }
+.char-item small { display: block; color: var(--text-muted); font-size: 11px; }
+.char-item .badge { margin-left: auto; flex: none; }
+.char-edit-body { padding: 14px 16px; overflow-x: auto; }
+.char-fields { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+.char-fields label { font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 3px; }
+.char-lv { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.char-lv th { background: #F5F7F8; text-align: left; font-size: 11px; color: var(--text-muted); padding: 6px 8px; border-bottom: 1px solid var(--border-light); }
+.char-lv td { padding: 7px 8px; border-bottom: 1px solid var(--border-light); vertical-align: middle; }
+.char-lv .char-art { width: 56px; height: 56px; }
+.char-lv select { max-width: 150px; }
+.char-lv select, .char-lv input[type=text] { font-family: inherit; font-size: 12px; padding: 4px 6px; border: 1px solid #CFD8DC; border-radius: 7px; background: #fff; }
+.char-lnk { font-size: 11px; color: var(--green-dark); border: 1px dashed #90C9AE; border-radius: 8px; padding: 3px 8px; background: var(--green-pale); cursor: pointer; font-family: inherit; display: inline-block; }
+@media (max-width: 900px) { .char-admin { grid-template-columns: 1fr; } }

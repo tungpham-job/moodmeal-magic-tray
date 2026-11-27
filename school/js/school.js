@@ -54,7 +54,7 @@ function switchModule(name) {
   // Cập nhật header title
   const titles = {
     accounts:  { title: '👤 Quản lý Tài khoản', sub: 'Thêm, sửa, xóa, phân quyền tài khoản học sinh và phụ huynh' },
-    settings:  { title: '⚙️ Thiết lập',          sub: 'Thực đơn · Nguyên liệu · XP & Level · Danh hiệu' },
+    settings:  { title: '⚙️ Thiết lập',          sub: 'Thực đơn · Nguyên liệu · XP & Level · Danh hiệu · Nhân vật' },
     report:    { title: '📊 Báo cáo FAS',         sub: 'Hành trình chấp nhận thực phẩm của từng học sinh' },
   };
 
@@ -371,6 +371,7 @@ function switchSettingsTab(tab) {
     ingredients: renderIngredientsTab,
     xp:       renderXPTab,
     badges:   renderBadgesTab,
+    characters: renderCharactersTab,
   };
   if (renders[tab]) renders[tab]();
 }
@@ -1026,6 +1027,142 @@ function toggleBadge(idx) {
 
 function approveBadge(idx) { showToast('Đã duyệt cấp danh hiệu! 🎉'); renderBadgePending(); }
 function rejectBadge(idx)  { showToast('Đã từ chối.'); renderBadgePending(); }
+
+/* Tab 5 — Nhân vật (bản nháp: chỉnh trong CHAR_DRAFT, bấm "Lưu nhân vật" mới ghi) */
+let CHAR_DRAFT = null, CHAR_SEL = 0;
+
+function charDraft() {
+  if (!CHAR_DRAFT) CHAR_DRAFT = JSON.parse(JSON.stringify(mmCharAll(true)));
+  const n = mmCharLevels().length;
+  CHAR_DRAFT.forEach(c => {                       // đủ một hình dạng cho mỗi Level
+    while (c.stages.length < n) {
+      const last = c.stages[c.stages.length - 1] || { anim: 'bounce', effect: 'flash' };
+      c.stages.push({ name: 'Hình dạng ' + (c.stages.length + 1), image: null, anim: last.anim, effect: 'flash' });
+    }
+  });
+  if (CHAR_SEL >= CHAR_DRAFT.length) CHAR_SEL = Math.max(0, CHAR_DRAFT.length - 1);
+  return CHAR_DRAFT;
+}
+
+function renderCharactersTab() { renderCharList(); renderCharEditor(); }
+
+function renderCharList() {
+  const list = charDraft(), use = mmCharUsage();
+  document.getElementById('charList').innerHTML = list.map((c, i) => `
+    <div class="char-item${i === CHAR_SEL ? ' on' : ''}" data-id="${escHtml(c.id)}" onclick="selectCharacter(${i})">
+      <div class="char-art">${mmCharArt(c, Math.min(1, c.stages.length - 1))}</div>
+      <div><b>${escHtml(c.name)}</b><small>${escHtml(c.stages.map(s => s.name).join(' → '))}</small>
+        ${use[c.id] ? `<small>${use[c.id]} học sinh đang dùng</small>` : ''}</div>
+      <span class="badge ${c.active !== false ? 'badge-green' : 'badge-grey'}">${c.active !== false ? 'Bật' : 'Tắt'}</span>
+    </div>`).join('') || '<div style="color:#aaa;font-size:12px">Chưa có nhân vật nào.</div>';
+}
+
+function renderCharEditor() {
+  const list = charDraft(), c = list[CHAR_SEL], box = document.getElementById('charEditor');
+  if (!c) { box.innerHTML = '<div class="char-edit-body" style="color:#aaa">Chọn hoặc thêm một nhân vật.</div>'; return; }
+  const levels = mmCharLevels(), use = mmCharUsage()[c.id] || 0, lib = !!MM_CHAR_BUILTIN.find(s => s.id === c.id);
+  const opts = (arr, v) => arr.map(a => `<option value="${a.id}"${a.id === v ? ' selected' : ''}>${escHtml(a.label)}</option>`).join('');
+  box.innerHTML = `
+    <div class="content-card-header"><span class="content-card-title">Chỉnh sửa: ${escHtml(c.name)}</span>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-sm btn-ghost" onclick="toggleCharacter(${CHAR_SEL})">${c.active !== false ? '🚫 Tắt nhân vật' : '✅ Bật nhân vật'}</button>
+        ${use || list.length < 2 ? '' : `<button class="btn btn-sm btn-danger" onclick="deleteCharacter(${CHAR_SEL})">🗑️ Xóa</button>`}
+      </div></div>
+    <div class="char-edit-body">
+      <div class="char-fields">
+        <div><label>Tên dòng nhân vật *</label><input class="form-control" id="charName" style="min-width:150px" maxlength="20" value="${escHtml(c.name)}" oninput="charSet('name', this.value)"></div>
+        <div><label>Mô tả ngắn (hiện ở màn chọn)</label><input class="form-control" id="charDesc" style="min-width:260px" maxlength="40" value="${escHtml(c.desc || '')}" oninput="charSet('desc', this.value)"></div>
+        ${lib ? '' : `<div><label>Màu (khi chưa có ảnh)</label><input type="color" id="charColor" value="${escHtml(c.color || '#90A4AE')}" oninput="charSet('color', this.value)" style="height:38px;width:60px;border:1px solid #CFD8DC;border-radius:8px;background:#fff"></div>`}
+      </div>
+      <b style="font-size:13px">Hình và hoạt ảnh theo Level</b>
+      <table class="char-lv"><thead><tr><th>Level</th><th>Tên hình dạng</th><th>Hình</th><th>Hoạt ảnh chờ</th><th>Hiệu ứng khi lên cấp</th></tr></thead><tbody>
+      ${levels.map((l, i) => { const st = c.stages[i]; return `<tr>
+        <td><b>${l.level}</b><div style="font-size:11px;color:#888">${escHtml(l.name)}</div></td>
+        <td><input type="text" id="stName-${i}" style="width:130px" maxlength="20" value="${escHtml(st.name)}" oninput="charStageSet(${i}, 'name', this.value)"></td>
+        <td style="white-space:nowrap"><div class="char-art">${mmCharArt(c, i)}</div>
+          <button type="button" class="char-lnk" onclick="charStageSet(${i}, 'image', null, true)">${lib ? 'Hình vẽ sẵn' : 'Bỏ ảnh'}</button>
+          <label class="char-lnk" style="margin:0">Tải ảnh<input type="file" accept="image/png,image/svg+xml,image/webp,image/jpeg" style="display:none" id="stFile-${i}" onchange="charUpload(${i}, this)"></label></td>
+        <td><select id="stAnim-${i}" onchange="charStageSet(${i}, 'anim', this.value)">${opts(MM_CHAR_ANIMS, st.anim)}</select></td>
+        <td><select id="stEff-${i}" onchange="charStageSet(${i}, 'effect', this.value)">${opts(MM_CHAR_EFFECTS, st.effect)}</select></td></tr>`; }).join('')}
+      </tbody></table>
+      <div style="font-size:11px;color:var(--text-muted);margin-top:8px">Ảnh tải lên: PNG, SVG, WebP hoặc JPG, nền trong suốt, tối đa 300 KB. "${lib ? 'Hình vẽ sẵn' : 'Bỏ ảnh'}" đưa hình về dạng ${lib ? 'vẽ sẵn của dòng này' : 'mặc định (tô màu bên trên)'}.</div>
+    </div>`;
+}
+
+function selectCharacter(i) { CHAR_SEL = i; renderCharactersTab(); }
+
+function charSet(field, val) {
+  const c = charDraft()[CHAR_SEL]; if (!c) return;
+  c[field] = val;
+  renderCharList();
+  if (field === 'color') renderCharEditor();
+}
+
+function charStageSet(i, field, val, rerender) {
+  const c = charDraft()[CHAR_SEL]; if (!c || !c.stages[i]) return;
+  c.stages[i][field] = val;
+  renderCharList();
+  if (rerender || field === 'image') renderCharEditor();
+}
+
+function charUpload(i, input) {
+  const f = input.files && input.files[0]; if (!f) return;
+  if (!/^image\/(png|svg\+xml|webp|jpeg)$/.test(f.type)) { showToast('Chỉ nhận ảnh PNG, SVG, WebP hoặc JPG.', 'error'); input.value = ''; return; }
+  if (f.size > MM_CHAR_MAX_IMG) { showToast('Ảnh quá lớn (tối đa 300 KB).', 'error'); input.value = ''; return; }
+  const rd = new FileReader();
+  rd.onload = () => charStageSet(i, 'image', String(rd.result), true);
+  rd.readAsDataURL(f);
+}
+
+function addCharacter() {
+  const list = charDraft(), n = mmCharLevels().length;
+  list.push({
+    id: 'c' + Date.now().toString(36), name: 'Nhân vật mới', desc: 'Bạn đồng hành mới', color: '#90A4AE', builtin: false, active: true,
+    stages: Array.from({ length: n }, (_, i) => ({ name: 'Hình dạng ' + (i + 1), image: null, anim: MM_CHAR_DEFAULT_ANIMS[Math.min(i, 3)], effect: i === 0 ? 'none' : 'flash' })),
+  });
+  CHAR_SEL = list.length - 1;
+  renderCharactersTab();
+}
+
+function toggleCharacter(i) {
+  const c = charDraft()[i]; if (!c) return;
+  c.active = c.active === false;
+  renderCharactersTab();
+}
+
+function deleteCharacter(i) {
+  const list = charDraft(), c = list[i]; if (!c) return;
+  if ((mmCharUsage()[c.id] || 0) > 0) { showToast('Đã có học sinh dùng nhân vật này, không xóa được.', 'error'); return; }
+  if (list.length < 2) { showToast('Cần giữ lại ít nhất một nhân vật.', 'error'); return; }
+  if (!confirm('Xóa nhân vật "' + c.name + '"?')) return;
+  list.splice(i, 1);
+  CHAR_SEL = Math.max(0, i - 1);
+  renderCharactersTab();
+}
+
+function saveCharacters() {
+  const list = charDraft();
+  if (list.some(c => !String(c.name || '').trim())) { showToast('Mỗi nhân vật cần có tên.', 'error'); return; }
+  if (!list.some(c => c.active !== false)) { showToast('Cần bật ít nhất một nhân vật.', 'error'); return; }
+  list.forEach(c => {
+    c.name = c.name.trim(); c.desc = String(c.desc || '').trim();
+    c.stages.forEach((s, i) => { s.name = String(s.name || '').trim() || c.name; });
+  });
+  if (!store.set(MM_KEYS.CHARACTERS, list)) { showToast('Không lưu được (bộ nhớ đầy). Thử ảnh nhỏ hơn.', 'error'); return; }
+  CHAR_DRAFT = JSON.parse(JSON.stringify(list));
+  renderCharactersTab();
+  showToast('Đã lưu nhân vật!');
+}
+
+function resetCharacters() {
+  const defIds = MM_CHAR_BUILTIN.map(s => s.id), use = mmCharUsage();
+  if (Object.keys(use).some(id => defIds.indexOf(id) < 0)) { showToast('Có học sinh đang dùng nhân vật tự thêm, chưa thể khôi phục mặc định.', 'error'); return; }
+  if (!confirm('Khôi phục 9 nhân vật mặc định? Các chỉnh sửa và nhân vật tự thêm sẽ mất.')) return;
+  store.remove(MM_KEYS.CHARACTERS);
+  CHAR_DRAFT = null; CHAR_SEL = 0;
+  renderCharactersTab();
+  showToast('Đã khôi phục nhân vật mặc định.');
+}
 
 /* ══════════════════════════════════════════════
    MODULE ③ — BÁO CÁO FAS

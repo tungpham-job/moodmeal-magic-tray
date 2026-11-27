@@ -5,8 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍱</text></svg>">
   <title>MoodMeal Magic Tray</title>
-  <link rel="stylesheet" href="../css/base.css?v=20261127f">
-  <link rel="stylesheet" href="../css/student.css?v=20261127f">
+  <link rel="stylesheet" href="../css/base.css?v=20261127h">
+  <link rel="stylesheet" href="../css/student.css?v=20261127h">
+  <link rel="stylesheet" href="../css/characters.css?v=20261127h">
 </head>
 <body class="page-student">
 <div class="phone-frame">
@@ -44,6 +45,9 @@
       <div id="dateDisplay" style="margin-top:6px;font-size:10.5px;opacity:0.85">--</div>
     </div>
 
+    <!-- Nhân vật đồng hành (js/character.js) -->
+    <div id="petHost"></div>
+
     <!-- Mission banner -->
     <div class="mission-banner" id="missionBanner">
       <div class="mission-icon">🎯</div>
@@ -59,20 +63,6 @@
       <!-- rendered by JS -->
     </div>
 
-    <!-- Điều hướng -->
-    <div class="section-label">Chọn session hôm nay</div>
-    <div class="nav-cards">
-      <a href="screen1.html" class="nav-card nav-card-green">
-        <span class="nc-icon">🌍</span>
-        <div><div class="nc-title">Bản đồ Hành tinh</div><div class="nc-sub">Xem tiến trình khám phá thực phẩm</div></div>
-        <span class="nc-arr">›</span>
-      </a>
-      <a href="screen2.html" class="nav-card nav-card-blue">
-        <span class="nc-icon">🍱</span>
-        <div><div class="nc-title">Thử món & Đánh giá</div><div class="nc-sub">Bấm emoji sau khi thử · Nhận XP ngay</div></div>
-        <span class="nc-arr">›</span>
-      </a>
-    </div>
     <div class="gap"></div>
   </div>
 
@@ -83,13 +73,14 @@
   </nav>
 </div>
 
-<script src="../js/config.js?v=20261127f"></script>
-<script src="../js/seed.js?v=20261127f"></script>
-<script src="../js/utils.js?v=20261127f"></script>
-<script src="../js/store.js?v=20261127f"></script>
-<script src="../js/auth.js?v=20261127f"></script>
-<script src="../js/xp.js?v=20261127f"></script>
-<script src="js/nav.js?v=20261127f"></script>
+<script src="../js/config.js?v=20261127h"></script>
+<script src="../js/seed.js?v=20261127h"></script>
+<script src="../js/utils.js?v=20261127h"></script>
+<script src="../js/store.js?v=20261127h"></script>
+<script src="../js/auth.js?v=20261127h"></script>
+<script src="../js/xp.js?v=20261127h"></script>
+<script src="../js/characters.js?v=20261127h"></script>
+<script src="js/nav.js?v=20261127h"></script>
 <script>
   /* Auth guard */
   const SESSION = auth.check('student');
@@ -135,5 +126,6 @@
     }
   })();
 </script>
+<script src="js/character.js?v=20261127h"></script>
 </body>
 </html>

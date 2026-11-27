@@ -1,0 +1,65 @@
+/* ═══════════════════════════════════════════════
+   characters.css — Nhân vật đồng hành (Học sinh + xem trước ở BGH)
+═══════════════════════════════════════════════ */
+.char-art { position: relative; display: block; }
+.char-art svg, .char-art .char-img { width: 100%; height: 100%; overflow: visible; object-fit: contain; }
+
+/* Hoạt ảnh chờ */
+@keyframes mmBounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-9px)} }
+@keyframes mmFloat  { 0%,100%{transform:translateY(0) rotate(-2deg)} 50%{transform:translateY(-12px) rotate(2deg)} }
+@keyframes mmSway   { 0%,100%{transform:rotate(-4deg)} 50%{transform:rotate(4deg)} }
+@keyframes mmEpic   { 0%,100%{transform:translateY(0) scale(1);filter:drop-shadow(0 0 5px rgba(255,193,7,.55))}
+                      50%{transform:translateY(-12px) scale(1.05);filter:drop-shadow(0 0 16px rgba(255,193,7,.95))} }
+@keyframes sparkle  { 0%,100%{opacity:.2;transform:scale(.6)} 50%{opacity:1;transform:scale(1.1)} }
+.anim-bounce > .char-art > svg, .anim-bounce > .char-art > .char-img { animation: mmBounce 1.1s ease-in-out infinite; }
+.anim-float  > .char-art > svg, .anim-float  > .char-art > .char-img { animation: mmFloat 2.4s ease-in-out infinite; }
+.anim-sway   > .char-art > svg, .anim-sway   > .char-art > .char-img { animation: mmSway 1.6s ease-in-out infinite; transform-origin: 50% 90%; }
+.anim-epic   > .char-art > svg, .anim-epic   > .char-art > .char-img { animation: mmEpic 2s ease-in-out infinite; }
+.sp1, .sp2, .sp3 { animation: sparkle 1.4s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+.sp2 { animation-delay: .4s; } .sp3 { animation-delay: .8s; }
+
+/* Hiệu ứng tiến hóa */
+@keyframes mmEvolve {
+  0%  { filter:brightness(1); transform:scale(1); }
+  30% { filter:brightness(6) saturate(0); transform:scale(.8); }
+  60% { filter:brightness(6) saturate(0); transform:scale(1.25); }
+  100%{ filter:brightness(1); transform:scale(1); }
+}
+.evolving > .char-art > svg, .evolving > .char-art > .char-img { animation: mmEvolve 1.8s ease-in-out 1 !important; }
+@keyframes mmPop { 0%{opacity:0;transform:scale(.5)} 20%{opacity:1;transform:scale(1.15)} 80%{opacity:1} 100%{opacity:0;transform:translateY(-16px)} }
+.levelup-text { position:absolute; left:0; right:0; top:38%; text-align:center; font-weight:800; font-size:18px;
+  color:#B35F10; text-shadow:0 2px 0 #fff; opacity:0; pointer-events:none; }
+.levelup-text.show { animation: mmPop 2.4s ease-out 1; }
+
+/* Thẻ nhân vật ở Trang chủ */
+.pet-card { margin: 12px 12px 0; border-radius: 16px; background: linear-gradient(180deg,#F3FBF6,#DDF4E6);
+  border: 1.5px solid #BFE8CF; padding: 8px 10px 10px; text-align: center; position: relative; }
+.pet-card.max { background: radial-gradient(circle at 50% 38%,#FFF8E1,#FFE9A8 60%,#FFD98A); border-color: #F6C453;
+  box-shadow: 0 0 0 2px rgba(255,193,7,.25), 0 6px 18px rgba(255,160,0,.25); }
+.pet-card.max .pet-name { color: #B35F10; }
+.pet-stage { position: relative; height: 150px; display: flex; align-items: flex-end; justify-content: center; }
+.pet-stage .char-art { width: 132px; height: 132px; position: relative; }
+.pet-ground { position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%); width: 90px; height: 12px; border-radius: 50%; background: rgba(0,0,0,.1); }
+.pet-name { font-size: 14px; font-weight: 800; color: var(--green-dark); }
+.pet-line { font-size: 11px; color: #37474F; }
+.pet-next { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+.pet-btns { display: flex; gap: 6px; justify-content: center; margin-top: 7px; }
+.pet-mini { font-size: 10.5px; border: 1px solid #BFE8CF; background: #fff; color: var(--green-dark); border-radius: 10px; padding: 3px 9px; cursor: pointer; font-family: inherit; }
+
+/* Màn chọn nhân vật lần đầu (phủ lên khung điện thoại) */
+.char-chooser { position: absolute; inset: 0; z-index: 50; background: #fff; display: flex; flex-direction: column; }
+.char-chooser-head { background: linear-gradient(160deg,#117A55,#27A862); color: #fff; padding: 36px 16px 16px; flex-shrink: 0; }
+.char-chooser-head h2 { margin: 0; font-size: 17px; }
+.char-chooser-head p { margin: 4px 0 0; font-size: 11px; opacity: .92; }
+.char-chooser-body { flex: 1; overflow-y: auto; padding: 12px 10px 4px; }
+.char-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 7px; }
+.char-opt { border: 2px solid #E3E8EC; border-radius: 12px; padding: 5px 2px; text-align: center; font-size: 11.5px; background: #fff;
+  cursor: pointer; font-family: inherit; color: inherit; }
+.char-opt.picked { border-color: var(--green-primary); background: var(--green-pale); }
+.char-opt .char-art { width: 66px; height: 66px; margin: 0 auto; }
+.char-opt b { display: block; }
+.char-opt span { font-size: 9px; color: var(--text-muted); display: block; line-height: 1.2; padding: 0 2px; }
+.char-chooser-foot { padding: 8px 12px 14px; flex-shrink: 0; }
+.char-chooser-btn { width: 100%; background: var(--green-dark); color: #fff; border: none; border-radius: 12px; padding: 11px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; }
+.char-chooser-btn:disabled { background: #B0BEC5; cursor: not-allowed; }
+.char-chooser-note { font-size: 10.5px; color: var(--text-muted); text-align: center; margin-top: 6px; }

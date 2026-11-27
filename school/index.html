@@ -5,8 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏫</text></svg>">
   <title>Ban Giám Hiệu — MOODMEAL MAGIC TRAY</title>
-  <link rel="stylesheet" href="../css/base.css?v=20261127f">
-  <link rel="stylesheet" href="../css/school.css?v=20261127f">
+  <link rel="stylesheet" href="../css/base.css?v=20261127h">
+  <link rel="stylesheet" href="../css/school.css?v=20261127h">
+  <link rel="stylesheet" href="../css/characters.css?v=20261127h">
 </head>
 <body class="page-school">
 <div class="school-layout">
@@ -103,6 +104,7 @@
           <button class="tab-btn"        data-tab="ingredients" onclick="switchSettingsTab('ingredients')">🥕 Nguyên liệu</button>
           <button class="tab-btn"        data-tab="xp"       onclick="switchSettingsTab('xp')">⭐ XP & Level</button>
           <button class="tab-btn"        data-tab="badges"   onclick="switchSettingsTab('badges')">🏅 Danh hiệu</button>
+          <button class="tab-btn"        data-tab="characters" onclick="switchSettingsTab('characters')">🐣 Nhân vật</button>
         </div>
 
         <!-- Tab: Thực đơn -->
@@ -161,6 +163,24 @@
                 <tbody id="xpActionsBody"></tbody>
               </table>
             </div>
+          </div>
+        </div>
+
+        <!-- Tab: Nhân vật -->
+        <div class="tab-panel" id="tab-characters">
+          <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+            <button class="btn btn-primary" onclick="addCharacter()">+ Thêm nhân vật</button>
+            <button class="btn btn-secondary" onclick="resetCharacters()">Khôi phục mặc định</button>
+            <button class="btn btn-primary" style="margin-left:auto" id="btnSaveChars" onclick="saveCharacters()">💾 Lưu nhân vật</button>
+          </div>
+          <div class="char-admin">
+            <div class="content-card"><div class="content-card-header"><span class="content-card-title">Danh sách nhân vật</span></div>
+              <div id="charList" style="padding:12px"></div></div>
+            <div class="content-card" id="charEditor"></div>
+          </div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:10px">
+            Học sinh chọn một nhân vật khi đăng nhập lần đầu và nhân vật tiến hóa mỗi lần lên Level. Nhân vật bị tắt không hiện ở màn chọn, học sinh đã chọn vẫn giữ.
+            Nhân vật đã có học sinh dùng thì không xóa được. Tên Level lấy từ tab "XP &amp; Level". Chỉnh xong nhớ bấm "Lưu nhân vật".
           </div>
         </div>
 
@@ -603,14 +623,15 @@
 </div>
 
 <!-- ══ SCRIPTS ══ -->
-<script src="../js/config.js?v=20261127f"></script>
-<script src="../js/seed.js?v=20261127f"></script>
-<script src="../js/utils.js?v=20261127f"></script>
-<script src="../js/store.js?v=20261127f"></script>
-<script src="../js/auth.js?v=20261127f"></script>
-<script src="../js/xp.js?v=20261127f"></script>
-<script src="../js/badges.js?v=20261127f"></script>
-<script src="js/school.js?v=20261127f"></script>
+<script src="../js/config.js?v=20261127h"></script>
+<script src="../js/seed.js?v=20261127h"></script>
+<script src="../js/utils.js?v=20261127h"></script>
+<script src="../js/store.js?v=20261127h"></script>
+<script src="../js/auth.js?v=20261127h"></script>
+<script src="../js/xp.js?v=20261127h"></script>
+<script src="../js/characters.js?v=20261127h"></script>
+<script src="../js/badges.js?v=20261127h"></script>
+<script src="js/school.js?v=20261127h"></script>
 <script>
   /* Filter accounts table by search */
   function filterAccountsTable(q) {
