@@ -59,7 +59,7 @@ def run(browser, base):
     check('Level đã thấy cập nhật (chỉ số 2)', ls(st, 'mm_char_state')['phambaotruc']['seenLevelIdx'] == 2)
     st.reload(); st.wait_for_timeout(1000)
     check('tải lại: không chiếu lại hoạt ảnh lên cấp', 'show' not in (st.locator('#petLvUp').get_attribute('class') or ''))
-    check('nút "Xem tiến hóa" chiếu lại hoạt ảnh', (st.click('#petReplay') or True) and 'show' in (st.locator('#petLvUp').get_attribute('class') or ''))
+    check('không có nút "Xem tiến hóa"; thẻ hiện đúng nhân vật đã chọn ở Level hiện tại', st.locator('#petReplay').count() == 0 and 'Xem tiến hóa' not in st.inner_text('body') and st.inner_text('#petName') == 'Cây Khỏe' and 'Dòng Lá · Level 3' in st.inner_text('.pet-line'))
     add_xp(st, 'phambaotruc', 16)                      # +320 → 625 XP → Level 4
     st.reload(); st.wait_for_timeout(2800)
     check('Level 4: Đại Thụ Xanh, thẻ vàng, hoạt ảnh hào quang', st.inner_text('#petName') == 'Đại Thụ Xanh' and 'max' in (st.locator('#petCard').get_attribute('class') or '') and 'anim-epic' in (st.locator('#petStage').get_attribute('class') or ''))

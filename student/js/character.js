@@ -38,7 +38,6 @@
         <div class="pet-name" id="petName">${escHtml(st.name || ch.name)}</div>
         <div class="pet-line">Dòng ${escHtml(ch.name)} · Level ${info.level} · ${escHtml(info.name)}</div>
         <div class="pet-next" id="petNext">${nextLine(ch, idx)}</div>
-        <div class="pet-btns"><button class="pet-mini" id="petReplay" type="button">▶ Xem tiến hóa</button></div>
         <div class="levelup-text" id="petLvUp"></div>
       </div>`;
   }
@@ -68,7 +67,6 @@
   function renderCard(ch) {
     const idx = curIdx();
     host.innerHTML = cardHtml(ch, idx);
-    document.getElementById('petReplay').onclick = () => playEvolution(ch, Math.max(0, idx - 1), idx);
     /* Level tăng từ lần mở trước → chiếu hoạt ảnh tiến hóa một lần */
     const state = mmCharState(sid);
     if (state && state.seenLevelIdx < idx) {

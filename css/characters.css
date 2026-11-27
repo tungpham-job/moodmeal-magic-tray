@@ -43,8 +43,6 @@
 .pet-name { font-size: 14px; font-weight: 800; color: var(--green-dark); }
 .pet-line { font-size: 11px; color: #37474F; }
 .pet-next { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
-.pet-btns { display: flex; gap: 6px; justify-content: center; margin-top: 7px; }
-.pet-mini { font-size: 10.5px; border: 1px solid #BFE8CF; background: #fff; color: var(--green-dark); border-radius: 10px; padding: 3px 9px; cursor: pointer; font-family: inherit; }
 
 /* Màn chọn nhân vật lần đầu (phủ lên khung điện thoại) */
 .char-chooser { position: absolute; inset: 0; z-index: 50; background: #fff; display: flex; flex-direction: column; }
