@@ -59,7 +59,9 @@ def student_part(browser, base):
     btns.nth(4).click(); page.locator('#food-0 .ta-btn').nth(0).click(); page.click('#confirmBtn-0'); page.wait_for_timeout(400)
     check('xác nhận xong: dòng đầu chuyển "✔ Đã đánh giá" kèm 🚫 Chưa thử', 'Đã đánh giá' in page.inner_text('#st-0') and 'Chưa thử' in page.inner_text('#st-0') and 'done' in (page.locator('#food-0').get_attribute('class') or ''))
     page.wait_for_timeout(3200)
-    check('sau khi xác nhận món tự đóng lại', page.locator('#body-0').is_hidden())
+    check('thông báo XP còn hiện sau 3 giây (chưa đóng)', page.locator('#body-0').is_visible())
+    page.wait_for_timeout(2000)
+    check('sau 5 giây món tự đóng lại', page.locator('#body-0').is_hidden())
     last = ls('mm_fas_log')[-1]
     check('"Chưa thử": ghi FAS 0, attempt null, notTried, place school, có groupId',
           last['score'] == 0 and last['attempt'] is None and last.get('notTried') and last['place'] == 'school' and last['groupId'] == 'g-trung', last)

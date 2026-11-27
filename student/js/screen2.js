@@ -424,7 +424,7 @@ function confirmEval(i) {
 
   markDoneUi(i);
   updateSummary();
-  setTimeout(() => setOpen(i, false), 3000);       // cho em đọc thông báo XP rồi tự đóng món
+  setTimeout(() => setOpen(i, false), 5000);       // cho em đọc thông báo XP rồi tự đóng món
 
   setTimeout(() => { if (toast.scrollIntoView) toast.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }, 300);
 }
