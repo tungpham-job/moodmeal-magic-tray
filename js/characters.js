@@ -8,7 +8,9 @@
    Nạp sau js/store.js và js/xp.js.
 ═══════════════════════════════════════════════ */
 
-/* ── Hình vẽ sẵn (SVG): 9 dòng × 4 cấp ─────────── */
+/* ── Hình vẽ sẵn (SVG): 9 dòng × 4 cấp ───────────
+   L1: thân tròn (không mũ) · L2: mũ nhỏ riêng từng dòng, chưa có tay · L3: mũ to hơn, có tay
+   L4: giữ mũ L3 + Vương miện phía trước, tay xòe, viền thân chuyển màu vàng → tông đậm, họa tiết viền trên thân (Gạo: vảy rồng), không đuôi */
 const MM_CHAR_BUILTIN = [
  {id:'la', name:'Lá', desc:'Bạn nhỏ của rau xanh', color:'#4CAF50', dark:'#2E7D32', belly:'#C8E6C9', stages:['Mầm Bé','Lá Nhí','Cây Khỏe','Mộc Vương']},
  {id:'song', name:'Sóng', desc:'Bạn nhỏ của hải sản', color:'#4FC3F7', dark:'#0277BD', belly:'#E1F5FE', stages:['Giọt Nhỏ','Cá Sóng','Rồng Biển','Hải Vương']},
@@ -38,10 +40,66 @@ function creature(sp,stage,SP){ /* stage 0..3; SP = màu riêng cho nhân vật 
   const S=SP||MM_CHAR_BUILTIN.find(x=>x.id===sp), c=S.color, d=S.dark, b=S.belly;
   const r=[24,28,32,36][stage], cy=[80,76,72,68][stage], cx=60;
   let back='', front='', top='';
-  const body=`<ellipse cx="${cx}" cy="${cy}" rx="${r}" ry="${r*.92}" fill="${c}" stroke="${d}" stroke-width="2"/><ellipse cx="${cx}" cy="${cy+r*.35}" rx="${r*.6}" ry="${r*.45}" fill="${b}" opacity=".8"/>`;
+  let bs=d, bw=2, bx='', olDefs='';
+  if(stage===3){
+    const m='grad', ACC={la:'#9E9D24',song:'#5E35B1',nang:'#D84315',may:'#AD1457',cu:'#6A1B9A',dau:'#00796B',gao:'#E65100',bi:'#B71C1C',lua:'#FF6F00'}; if(!ACC[sp]) ACC[sp]=d;
+    if(m==='gold'){bs='#E6A100';bw=2.6;}
+    if(m==='accent'){bs=ACC[sp];bw=2.6;}
+    if(m==='double'){bs=d;bw=2.4;bx=`<ellipse cx="${cx}" cy="${cy}" rx="${r-3}" ry="${r*.92-3}" fill="none" stroke="#FFD54F" stroke-width="1.6" opacity=".95"/>`;}
+    if(m==='grad'){const gid='og'+(++UID);olDefs=`<defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFD54F"/><stop offset=".55" stop-color="#F9A825"/><stop offset="1" stop-color="${d}"/></linearGradient></defs>`;bs=`url(#${gid})`;bw=3;}
+  }
+  const body=`<ellipse cx="${cx}" cy="${cy}" rx="${r}" ry="${r*.92}" fill="${c}" stroke="${bs}" stroke-width="${bw}"/><ellipse cx="${cx}" cy="${cy+r*.35}" rx="${r*.6}" ry="${r*.45}" fill="${b}" opacity=".8"/>`;
   const f=face(cx,cy-r*.1,[.8,.9,1,1.05][stage],d);
   const feet=`<ellipse cx="${cx-r*.5}" cy="${cy+r*.88}" rx="9" ry="5" fill="${d}"/><ellipse cx="${cx+r*.5}" cy="${cy+r*.88}" rx="9" ry="5" fill="${d}"/>`;
   const leaf=(x,y,rot,sz,col)=>`<path d="M0 0 C ${sz*.6} ${-sz*.5} ${sz*.6} ${-sz*1.1} 0 ${-sz*1.5} C ${-sz*.6} ${-sz*1.1} ${-sz*.6} ${-sz*.5} 0 0Z" fill="${col}" stroke="${d}" stroke-width="1.5" transform="translate(${x} ${y}) rotate(${rot})"/>`;
+
+  /* ===== Quy tắc hình theo Level (thống nhất) =====
+     L1: giữ như cũ. L2: mũ nhỏ riêng của dòng, KHÔNG có tay. L3: mũ lớn hơn, CÓ tay.
+     L4: Vương miện, tay vàng, có đuôi. */
+  const newParts=()=>{
+    const yt=cy-r*.9+3;                       // đỉnh đầu
+    const gold='#FFC107', goldS='#E6A100';
+    const gem={la:'#43A047',song:'#29B6F6',nang:'#FF7043',may:'#AB47BC',cu:'#EC407A',dau:'#9CCC65',gao:'#E53935',bi:'#E53935',lua:'#FF5722'}[sp]||'#E53935';
+    let B='', T='';
+    /* tay (từ Level 3), vàng ở Level 4; vẽ phía sau thân để khớp vai được thân che */
+    if(stage>=2){
+      const sp4=stage===3, rx=sp4?8:7, ry=sp4?12:11, ax=sp4?r+4:r-1, ay=cy+(sp4?r*.02:r*.22), ang=sp4?62:28;
+      B+=`<ellipse cx="${cx-ax}" cy="${ay}" rx="${rx}" ry="${ry}" transform="rotate(${ang} ${cx-ax} ${ay})" fill="${c}" stroke="${d}" stroke-width="1.8"/><ellipse cx="${cx+ax}" cy="${ay}" rx="${rx}" ry="${ry}" transform="rotate(${-ang} ${cx+ax} ${ay})" fill="${c}" stroke="${d}" stroke-width="1.8"/>`;
+    }
+    /* mũ riêng của từng dòng (Level 2 nhỏ, Level 3 lớn hơn) */
+    if(stage>=1){
+      const big=stage>=2; let H='';
+      const lv=(x,y,rot,sz,col)=>leaf(x,y,rot,sz,col)+`<path d="M0 -2 L0 ${-sz*1.2}" stroke="#fff" stroke-opacity=".55" stroke-width="1.3" stroke-linecap="round" transform="translate(${x} ${y}) rotate(${rot})"/>`;
+      const lf=big?lv:leaf;
+      if(sp==='la')  H+= big ? lf(cx,yt,-45,18,'#81C784')+lf(cx,yt,0,20,'#66BB6A')+lf(cx,yt,45,18,'#81C784') : lf(cx,yt,-30,12,'#81C784')+lf(cx,yt,30,12,'#66BB6A');
+      if(sp==='nang')H+=`<path d="M${cx} ${yt} q0 -8 4 -12" fill="none" stroke="#6D4C41" stroke-width="3" stroke-linecap="round"/>`+(big?lf(cx+3,yt-8,-40,16,'#66BB6A')+lf(cx+3,yt-8,40,16,'#81C784'):lf(cx+3,yt-8,35,10,'#66BB6A'));
+      if(sp==='cu')  H+= big ? lf(cx,yt,-60,13,'#66BB6A')+lf(cx,yt,-25,18,'#81C784')+lf(cx,yt,25,18,'#66BB6A')+lf(cx,yt,60,13,'#81C784') : lf(cx,yt,-30,11,'#81C784')+lf(cx,yt,0,12,'#66BB6A')+lf(cx,yt,30,11,'#81C784');
+      if(sp==='dau'){
+        const curl=(x0,y0,sz,dir)=>{const R=sz*.36, Cx=x0+dir*R, Cy=y0-sz; let q=`M${x0} ${y0} C${x0} ${y0-sz*.5} ${x0} ${y0-sz*.8} ${x0} ${Cy}`;
+          for(let k=1;k<=18;k++){const t=k/18, an=t*2.5*Math.PI, rd=R*(1-t*.72); q+=` L${(Cx-dir*Math.cos(an)*rd).toFixed(1)} ${(Cy-Math.sin(an)*rd).toFixed(1)}`;}
+          return `<path d="${q}" fill="none" stroke="#33691E" stroke-width="${big?4.4:3.8}" stroke-linecap="round" stroke-linejoin="round"/><path d="${q}" fill="none" stroke="#9CCC65" stroke-width="${big?2.2:1.8}" stroke-linecap="round" stroke-linejoin="round"/>`;};
+        H+= big ? curl(cx-6,yt+2,19,-1)+curl(cx+6,yt+2,21,1)+curl(cx,yt+3,11,1) : curl(cx,yt+2,13,1);
+      }
+      if(sp==='bi'){const cs=big?16:10; let cal=''; const nn=6; for(let i=0;i<nn;i++){cal+=`<path d="M0 0 L${cs*.45} ${-cs*1.1} L${-cs*.45} ${-cs*1.1}Z" fill="#66BB6A" stroke="#2E7D32" stroke-width="1" transform="translate(${cx} ${yt}) rotate(${(i-(nn-1)/2)*26})"/>`;} H+=cal+`<path d="M${cx} ${yt-4} q0 -${big?12:9} 3 -${big?16:12}" stroke="#2E7D32" stroke-width="3" fill="none" stroke-linecap="round"/>`;}
+      if(sp==='song')H+= big ? `<path d="M${cx-15} ${yt+4} L${cx-11} ${yt-12} L${cx-5} ${yt-2} L${cx} ${yt-24} L${cx+5} ${yt-2} L${cx+11} ${yt-12} L${cx+15} ${yt+4}Z" fill="${d}" stroke="${d}" stroke-width="1" stroke-linejoin="round"/><path d="M${cx} ${yt-18} L${cx} ${yt+2}" stroke="#B3E5FC" stroke-width="1.6"/>` : `<path d="M${cx-11} ${yt+4} Q${cx-6} ${yt-12} ${cx+1} ${yt-21} Q${cx+8} ${yt-12} ${cx+12} ${yt+4}Z" fill="${d}" stroke="${d}" stroke-width="1" stroke-linejoin="round"/><path d="M${cx+1} ${yt-14} L${cx+1} ${yt+2}" stroke="#B3E5FC" stroke-width="1.4"/>`;
+      if(sp==='gao' && !big){H+=`<path d="M${cx-12} ${yt+5} Q${cx-14} ${yt-3} ${cx-10} ${yt-12} Q${cx-6} ${yt-3} ${cx-4} ${yt+5}Z" fill="#F5DEB3" stroke="#A1887F" stroke-width="1.4" stroke-linejoin="round"/><path d="M${cx+12} ${yt+5} Q${cx+14} ${yt-3} ${cx+10} ${yt-12} Q${cx+6} ${yt-3} ${cx+4} ${yt+5}Z" fill="#F5DEB3" stroke="#A1887F" stroke-width="1.4" stroke-linejoin="round"/>`;}
+      if(sp==='gao' && big){const hh=24; H+=`<path d="M${cx-14} ${yt+5} Q${cx-25} ${yt-hh*.4} ${cx-20} ${yt-hh} Q${cx-9} ${yt-hh*.35} ${cx-5} ${yt+5}Z" fill="#F5DEB3" stroke="#A1887F" stroke-width="1.5" stroke-linejoin="round"/><path d="M${cx+14} ${yt+5} Q${cx+25} ${yt-hh*.4} ${cx+20} ${yt-hh} Q${cx+9} ${yt-hh*.35} ${cx+5} ${yt+5}Z" fill="#F5DEB3" stroke="#A1887F" stroke-width="1.5" stroke-linejoin="round"/>`+(big?`<path d="M${cx-15} ${yt-3} q4 -8 5 -14 M${cx+15} ${yt-3} q-4 -8 -5 -14" fill="none" stroke="#fff" stroke-opacity=".7" stroke-width="1.6" stroke-linecap="round"/>`:'');}
+      if(sp==='lua'){const fl=(x,y,h,w,col)=>`<path d="M${x} ${y} Q${x-w} ${y-h*.4} ${x-w*.2} ${y-h} Q${x+w*.1} ${y-h*.6} ${x+w*.9} ${y-h*.7} Q${x+w*1.1} ${y-h*.2} ${x} ${y}Z" fill="${col}" stroke="${d}" stroke-width="1.2"/>`;
+        H+= big ? fl(cx-14,yt+3,18,8,'#FFB74D')+fl(cx,yt+1,28,11,'#FF9800')+fl(cx+14,yt+3,18,8,'#FFB74D')+fl(cx,yt+1,15,5.5,'#FFF176') : fl(cx,yt+2,17,8,'#FFB74D');}
+      if(sp==='may') H+= big ? lf(cx,yt,-35,13,'#FF8A65')+lf(cx,yt,0,15,'#FFAB91')+lf(cx,yt,35,13,'#FF8A65') : leaf(cx,yt,6,12,'#FFAB91')+`<path d="M0 -2 L0 -14" stroke="#fff" stroke-opacity=".55" stroke-width="1.2" stroke-linecap="round" transform="translate(${cx} ${yt}) rotate(6)"/>`;
+      T+= stage===1 ? H : `<g transform="translate(${cx} ${yt}) scale(${stage===3?1.06:1.22}) translate(${-cx} ${-yt})">${H}</g>`;
+    }
+    /* Vương miện (Level 4) */
+    if(stage===3){
+      const yb=cy-r*.92+9, w=14, h=15;
+      T+=`<path d="M${cx-w} ${yb} L${cx-w-1} ${yb-h} L${cx-w/2} ${yb-h*.5} L${cx} ${yb-h*1.15} L${cx+w/2} ${yb-h*.5} L${cx+w+1} ${yb-h} L${cx+w} ${yb}Z" fill="#FFD54F" stroke="#F57F17" stroke-width="1.6" stroke-linejoin="round"/>
+        <rect x="${cx-w}" y="${yb-3.5}" width="${2*w}" height="5" rx="2" fill="#FFCA28" stroke="#F57F17" stroke-width="1.2"/>
+        <circle cx="${cx}" cy="${yb-h*.52}" r="3" fill="${gem}" stroke="#7B1FA2" stroke-width=".8"/>
+        <circle cx="${cx-w-1}" cy="${yb-h}" r="2" fill="#fff" stroke="#F57F17" stroke-width=".8"/><circle cx="${cx}" cy="${yb-h*1.15}" r="2" fill="#fff" stroke="#F57F17" stroke-width=".8"/><circle cx="${cx+w+1}" cy="${yb-h}" r="2" fill="#fff" stroke="#F57F17" stroke-width=".8"/>`;
+    }
+    return {back:B, top:T};
+  };
+  if(stage===0){ /* Level 1: chỉ thân tròn + mắt mũi miệng + chân */ } else if(false){
   if(sp==='la'){
     const ty=cy-r*.9;
     if(stage===0) top=leaf(cx,ty+3,0,12,'#81C784');
@@ -118,26 +176,20 @@ function creature(sp,stage,SP){ /* stage 0..3; SP = màu riêng cho nhân vật 
     if(stage===3) top=star(cx,cy-r-16,13,5.6,'#FFD54F')+star(cx-34,cy-r,7,3,'#FFE082')+star(cx+34,cy-r+2,7,3,'#FFE082')+`<ellipse cx="${cx}" cy="${cy}" rx="${r+22}" ry="${r*.42}" fill="none" stroke="#C5CAE9" stroke-width="2" stroke-dasharray="2 5" transform="rotate(-12 ${cx} ${cy})"/>`;
     if(stage>=2) back=`<path d="M${cx-r} ${cy+4} q-14 -4 -14 8 q8 4 14 -2Z M${cx+r} ${cy+4} q14 -4 14 8 q-8 4 -14 -2Z" fill="${c}" stroke="${d}" stroke-width="1.5"/>`;
   }
-  /* Gạo cấp 4: Kim Vương = Gạo Vàng nâng cấp. Giữ nguyên thân tròn, nón lá, rơm vàng và khuôn mặt; thêm sừng, râu, vảy, đuôi rồng và thân vàng óng */
+  } else { const P=newParts(); back=P.back; top=P.top; }
+  /* Gạo cấp 4: Kim Vương = Gạo Vàng nâng cấp (hình rồng). Giữ nguyên thân tròn, nón lá, rơm vàng và khuôn mặt; thêm sừng, râu, vảy, đuôi rồng và thân vàng óng */
   let isDragon=false, bodyD='';
   if(sp==='gao' && stage===3){
     isDragon=true;
-    const dg='#E65100', hw=36;
-    /* sừng nhô ra hai bên nón, đuôi rồng cuộn bên phải, mây dưới chân (vẽ phía sau) */
-    back+=`<path d="M${cx-20} 44 C${cx-30} 34 ${cx-38} 30 ${cx-46} 12 C${cx-46} 24 ${cx-40} 22 ${cx-30} 40Z" fill="#8D6E63" stroke="#4E342E" stroke-width="1.5" stroke-linejoin="round"/>
-      <path d="M${cx+20} 44 C${cx+30} 34 ${cx+38} 30 ${cx+46} 12 C${cx+46} 24 ${cx+40} 22 ${cx+30} 40Z" fill="#8D6E63" stroke="#4E342E" stroke-width="1.5" stroke-linejoin="round"/>
-      <path d="M${cx+r-6} ${cy+18} C${cx+r+22} ${cy+30} ${cx+r+34} ${cy+6} ${cx+r+20} ${cy-10} C${cx+r+16} ${cy-18} ${cx+r+22} ${cy-24} ${cx+r+30} ${cy-26} C${cx+r+18} ${cy-28} ${cx+r+8} ${cy-20} ${cx+r+10} ${cy-8} C${cx+r+16} ${cy+4} ${cx+r+8} ${cy+14} ${cx+r-6} ${cy+4}Z" fill="#FFC107" stroke="${dg}" stroke-width="1.8" stroke-linejoin="round"/>
-      <path d="M${cx+r+30} ${cy-26} q8 -2 10 -10 q-10 0 -14 8Z M${cx+r+30} ${cy-26} q10 4 16 -2 q-8 -6 -16 2Z" fill="#FF7043" stroke="${dg}" stroke-width="1.2" stroke-linejoin="round"/>
-      <g fill="#fff" stroke="#FFE082" stroke-width="1.4" opacity=".95"><ellipse cx="${cx-26}" cy="${cy+r*.9+4}" rx="16" ry="5"/><ellipse cx="${cx+24}" cy="${cy+r*.9+6}" rx="18" ry="5"/></g>`;
+    const dg=bs, hw=36;
+    /* sừng nhô ra hai bên nón, đuôi rồng cuộn bên phải,  */
     /* thân vàng óng, vảy rồng trên bụng (thay thân kem của Gạo Vàng) */
     bodyD=`<ellipse cx="${cx}" cy="${cy}" rx="${r}" ry="${r*.92}" fill="#FFE29A" stroke="${dg}" stroke-width="2"/>
       <ellipse cx="${cx}" cy="${cy+r*.35}" rx="${r*.6}" ry="${r*.45}" fill="#FFF8E1" opacity=".9"/>
-      <g fill="none" stroke="#FFB300" stroke-width="1.5" stroke-linecap="round"><path d="M${cx-14} ${cy+14} q4 5 8 0 q4 5 8 0 q4 5 8 0 q4 5 8 0"/><path d="M${cx-10} ${cy+22} q4 5 8 0 q4 5 8 0 q4 5 8 0"/><path d="M${cx-6} ${cy+30} q4 5 6 0 q4 5 6 0"/></g>
-      <g fill="#FFC107" stroke="${dg}" stroke-width="1"><path d="M${cx-r+2} ${cy-8} l-8 -4 l2 8 l-8 2 l9 4Z"/><path d="M${cx+r-2} ${cy-8} l8 -4 l-2 8 l8 2 l-9 4Z"/></g>`;
-    /* râu rồng bay hai bên má + viên ngọc đỏ trên đỉnh nón */
+      <g fill="none" stroke="#FFB300" stroke-width="1.5" stroke-linecap="round"><path d="M${cx-14} ${cy+14} q4 5 8 0 q4 5 8 0 q4 5 8 0 q4 5 8 0"/><path d="M${cx-10} ${cy+22} q4 5 8 0 q4 5 8 0 q4 5 8 0"/><path d="M${cx-6} ${cy+30} q4 5 6 0 q4 5 6 0"/></g>`;
+    /* râu rồng bay hai bên má */
     top+=`<path d="M${cx-17} ${cy+6} C${cx-34} ${cy+4} ${cx-42} ${cy+16} ${cx-54} ${cy+8}" fill="none" stroke="#FFB300" stroke-width="2.6" stroke-linecap="round"><animate attributeName="d" dur="2.4s" repeatCount="indefinite" values="M${cx-17} ${cy+6} C${cx-34} ${cy+4} ${cx-42} ${cy+16} ${cx-54} ${cy+8};M${cx-17} ${cy+6} C${cx-34} ${cy+14} ${cx-44} ${cy+4} ${cx-54} ${cy+14};M${cx-17} ${cy+6} C${cx-34} ${cy+4} ${cx-42} ${cy+16} ${cx-54} ${cy+8}"/></path>
-      <path d="M${cx+17} ${cy+6} C${cx+34} ${cy+4} ${cx+42} ${cy+16} ${cx+54} ${cy+8}" fill="none" stroke="#FFB300" stroke-width="2.6" stroke-linecap="round"><animate attributeName="d" dur="2.4s" repeatCount="indefinite" values="M${cx+17} ${cy+6} C${cx+34} ${cy+4} ${cx+42} ${cy+16} ${cx+54} ${cy+8};M${cx+17} ${cy+6} C${cx+34} ${cy+14} ${cx+44} ${cy+4} ${cx+54} ${cy+14};M${cx+17} ${cy+6} C${cx+34} ${cy+4} ${cx+42} ${cy+16} ${cx+54} ${cy+8}"/></path>
-      <circle cx="${cx}" cy="${cy-r-hw*.55+2}" r="3.6" fill="#E53935" stroke="#B71C1C" stroke-width="1"><animate attributeName="r" values="3;4.4;3" dur="1.6s" repeatCount="indefinite"/></circle>`;
+      <path d="M${cx+17} ${cy+6} C${cx+34} ${cy+4} ${cx+42} ${cy+16} ${cx+54} ${cy+8}" fill="none" stroke="#FFB300" stroke-width="2.6" stroke-linecap="round"><animate attributeName="d" dur="2.4s" repeatCount="indefinite" values="M${cx+17} ${cy+6} C${cx+34} ${cy+4} ${cx+42} ${cy+16} ${cx+54} ${cy+8};M${cx+17} ${cy+6} C${cx+34} ${cy+14} ${cx+44} ${cy+4} ${cx+54} ${cy+14};M${cx+17} ${cy+6} C${cx+34} ${cy+4} ${cx+42} ${cy+16} ${cx+54} ${cy+8}"/></path>`;
   }
   /* Cấp 4 (Đại sứ dinh dưỡng): hào quang, vòng ánh sáng và hạt bay quanh nhân vật, mỗi dòng một kiểu hạt */
   let aura='', orbit='', defs='';
@@ -160,9 +212,23 @@ function creature(sp,stage,SP){ /* stage 0..3; SP = màu riêng cho nhân vật 
     let ps=''; for(let i=0;i<4;i++){const a=i*Math.PI/2; ps+=`<g transform="translate(${(ox+Math.cos(a)*50).toFixed(1)} ${(oy+Math.sin(a)*44).toFixed(1)})">${part}</g>`;}
     orbit=`<g>${ps}<animateTransform attributeName="transform" type="rotate" from="0 ${ox} ${oy}" to="360 ${ox} ${oy}" dur="7s" repeatCount="indefinite"/></g>`;
   }
-  return `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">${defs}${aura}${back}${feet}${isDragon?bodyD:body}${f}${top}${orbit}${sparkles(stage,'#FFD54F')}</svg>`;
-}
 
+  /* Hiệu ứng thân Level 4 (đề xuất): CHỈ nét viền cùng tông màu thân, không tô màu chi tiết */
+  let fx='';
+  if(stage===3 && !isDragon){
+    const y0=cy+13, o=`fill="none" stroke="${d}" stroke-opacity=".5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"`;
+    const flame=(x,y,h,w)=>`<path d="M${x} ${y} Q${x-w} ${y-h*.4} ${x-w*.2} ${y-h} Q${x+w*.1} ${y-h*.6} ${x+w*.9} ${y-h*.7} Q${x+w*1.1} ${y-h*.2} ${x} ${y}Z" ${o}/>`;
+    if(sp==='la') fx=`<g ${o}><path d="M${cx} ${y0-2} L${cx} ${cy+r*.82}"/><path d="M${cx} ${y0+4} l-9 -6 M${cx} ${y0+4} l9 -6 M${cx} ${y0+12} l-11 -7 M${cx} ${y0+12} l11 -7 M${cx} ${y0+20} l-9 -6 M${cx} ${y0+20} l9 -6"/></g>`;
+    if(sp==='song') fx=`<g ${o}><path d="M${cx-17} ${y0+2} q4.2 -5 8.5 0 t8.5 0 t8.5 0 t8.5 0"/><path d="M${cx-13} ${y0+10} q4 -5 8 0 t8 0 t8 0 t8 0"/><path d="M${cx-9} ${y0+18} q4 -5 6 0 t6 0 t6 0"/><circle cx="${cx-r*.62}" cy="${cy+10}" r="3"/><circle cx="${cx+r*.66}" cy="${cy+2}" r="2.2"/></g>`;
+    if(sp==='nang') fx=`<g ${o}>${[[-14,15],[-4,12],[8,15],[16,13],[-9,23],[3,22],[13,24],[-1,30],[-17,28]].map(q=>`<circle cx="${cx+q[0]}" cy="${cy+q[1]}" r="1.3"/>`).join('')}</g>`;
+    if(sp==='may') fx=`<g ${o}>${[0,1,2].map(k=>{const n=4-k, x0=cx-n*5, yy=y0+k*8; return `<path d="M${x0} ${yy}`+' a5 5 0 0 0 10 0'.repeat(n)+'"/>';}).join('')}</g>`;
+    if(sp==='cu') fx=`<g ${o}><path d="M${cx-r*.55} ${y0} q${r*.55} 7 ${r*1.1} 0"/><path d="M${cx-r*.5} ${y0+9} q${r*.5} 7 ${r} 0"/><path d="M${cx-r*.4} ${y0+18} q${r*.4} 6 ${r*.8} 0"/></g>`;
+    if(sp==='dau') fx=`<g ${o}>${[[-12,y0+9,-20],[0,y0+7,10],[12,y0+9,25],[-6,y0+19,15],[7,y0+19,-15]].map(q=>`<ellipse cx="${cx+q[0]}" cy="${q[1]}" rx="4.8" ry="3.6" transform="rotate(${q[2]} ${cx+q[0]} ${q[1]})"/>`).join('')}</g>`;
+    if(sp==='bi') fx=`<g ${o}>${[[-12,16],[0,14],[12,16],[-6,25],[6,25]].map(q=>`<path d="M${cx+q[0]} ${cy+q[1]-3.5} q3.2 3.5 0 7 q-3.2 -3.5 0 -7Z"/>`).join('')}</g>`;
+    if(sp==='lua') fx=flame(cx-12,y0+16,13,5)+flame(cx,y0+19,18,7)+flame(cx+12,y0+16,13,5);
+  }
+  return `<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">${defs}${aura}${back}${feet}${olDefs}${isDragon?bodyD:body}${bx}${fx}${f}${top}${orbit}${sparkles(stage,'#FFD54F')}</svg>`;
+}
 
 /* ── Dữ liệu ─────────────────────────────────── */
 const MM_CHAR_ANIMS = [
