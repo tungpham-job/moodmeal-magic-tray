@@ -133,7 +133,7 @@ function renderAccounts() {
       <tr data-id="${escHtml(acc.id)}" data-role="${escHtml(acc.role)}" data-class="${escHtml(classOf(acc))}">
         <td><code style="font-size:12px">${escHtml(acc.id)}</code></td>
         <td><strong>${escHtml(acc.name)}</strong></td>
-        <td>${acc.role !== 'student' ? '<span style="color:#aaa">—</span>' : classOf(acc) ? `<span class="badge badge-blue">${escHtml(classOf(acc))}</span>` : '<span style="color:#aaa">Chưa có lớp</span>'}</td>
+        <td>${acc.role !== 'student' ? '<span style="color:#aaa">—</span>' : classOf(acc) ? escHtml(classOf(acc)) : '<span style="color:#aaa">Chưa có lớp</span>'}</td>
         <td><span class="badge ${roleBadge}">${roleLabel(acc.role)}</span></td>
         <td>${linked ? escHtml(linked.name) : '<span style="color:#aaa">—</span>'}</td>
         ${statCells}
