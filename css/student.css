@@ -264,6 +264,8 @@ body.page-student {
 .emoji-btn.not-tried.selected { border-style: solid; }
 
 /* ── Câu hỏi "thử lại lần sau": một hàng không khung, câu hỏi + nhãn XP và hai nút 70×36px nằm sát nhau, canh giữa ── */
+.skip-note { margin: 8px 12px 0; padding: 8px 10px; border: 1.5px solid #D32F2F; border-radius: 10px; background: #FFEBEE; color: #C62828; font-size: 12px; font-weight: 700; line-height: 1.45; text-align: center; }
+.skip-note[hidden] { display: none; }
 .ta-card { display: flex; align-items: center; justify-content: center; gap: 12px; margin: 10px 12px 6px; padding: 0; }
 .ta-head { flex: 0 1 auto; min-width: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 2px 6px; }
 .ta-q    { font-size: 11px; color: #37474F; line-height: 1.3; }

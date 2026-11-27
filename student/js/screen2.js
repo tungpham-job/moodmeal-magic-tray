@@ -131,6 +131,11 @@ function foodBlockHtml(f, i, total) {
     <div class="emoji-label" id="emojiQ-${i}">Sau khi thử, em cảm thấy thế nào?</div>
     <div class="emoji-row" role="radiogroup" aria-labelledby="emojiQ-${i}">${faces}</div>
 
+    <div class="skip-note" id="skipNote-${i}" role="alert" hidden>
+      Bạn ơi, hôm nay bạn đã bỏ qua món ${escHtml(f.item.name)}!<br>
+      Hãy chọn "Muốn" để thử lại nhóm ${escHtml(f.groupName)} vào buổi tối tại nhà để cơ thể được đủ dinh dưỡng của 1 ngày nhé.
+    </div>
+
     <div class="gap"></div>
 
     <div class="ta-card" id="taCard-${i}">
@@ -234,6 +239,7 @@ function pickEmoji(i, btn) {
   if (!f || f.done) return;
   setEmojiSelected(i, btn);
   f.selected = parseInt(btn.dataset.val);
+  document.getElementById(`skipNote-${i}`).hidden = f.selected !== 0;
   document.getElementById(`confirmBtn-${i}`).disabled = false;
 }
 

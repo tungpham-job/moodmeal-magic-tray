@@ -36,6 +36,16 @@ def student_part(browser, base):
     btns = page.locator('#food-0 .emoji-btn')
     check('5 nút emoji, nút cuối là 🚫 Chưa thử', btns.count() == 5 and '🚫' in btns.nth(4).inner_text() and 'Chưa thử' in btns.nth(4).inner_text())
     check('không còn nhãn XP ở "Thử lại lần sau?"', page.locator('.ta-xp').count() == 0)
+    check('chưa chọn gì: nhãn đỏ ẩn', not page.locator('#skipNote-0').is_visible())
+    btns.nth(2).click()
+    check('chọn emoji khác: nhãn đỏ vẫn ẩn', not page.locator('#skipNote-0').is_visible())
+    btns.nth(4).click()
+    note = page.locator('#skipNote-0')
+    nt = note.inner_text() if note.is_visible() else ''
+    check('chọn Chưa thử: hiện nhãn đỏ đúng nội dung (món + nhóm)', 'hôm nay bạn đã bỏ qua món Trứng chiên!' in nt and 'thử lại nhóm Trứng vào buổi tối tại nhà' in nt and 'đủ dinh dưỡng của 1 ngày nhé' in nt, nt)
+    check('nhãn màu đỏ và nằm dưới hàng emoji', page.evaluate("()=>{const n=document.getElementById('skipNote-0'),r=document.querySelector('#food-0 .emoji-row');return getComputedStyle(n).color==='rgb(198, 40, 40)'&&n.getBoundingClientRect().top>=r.getBoundingClientRect().bottom}"))
+    btns.nth(3).click()
+    check('đổi sang emoji khác: nhãn đỏ ẩn lại', not page.locator('#skipNote-0').is_visible())
     xp0 = len(ls('mm_xp_log') or [])
     btns.nth(4).click(); page.locator('#food-0 .ta-btn').nth(0).click(); page.click('#confirmBtn-0'); page.wait_for_timeout(400)
     last = ls('mm_fas_log')[-1]
