@@ -46,6 +46,27 @@ function initFoods() {
         history, nextAttempt, selected: null, tryAgain: false, done: false, todayEntry,
       };
     });
+  FOODS.forEach((f, k) => { f.seq = k + 1; f.schoolTotal = FOODS.length; });
+
+  /* "Bữa tối ở nhà": yêu cầu ba mẹ đã xác nhận, còn trong hạn đánh giá (hoặc vừa đánh giá hôm nay) — đứng đầu danh sách */
+  const homeFoods = session ? mmReqSweep()
+    .filter(r => r.studentId === session.userId &&
+      (r.status === 'cooked' || (r.status === 'rated' && r.ratedAt && isToday(r.ratedAt))))
+    .map(r => {
+      const item = { name: r.dishName, icon: r.icon, ingredientId: r.foodId, groupId: r.groupId };
+      const ing  = getIngredient(r.foodId);
+      const grp  = mmGroupById(r.groupId);
+      const all  = foodHistoryOf(session.userId, item);
+      const todayEntry = r.status === 'rated' ? (all.find(x => x.reqId === r.id) || null) : null;
+      const tried = mmTriedRows(all);
+      const history = todayEntry ? tried.filter(x => String(x.timestamp) < String(todayEntry.timestamp)) : tried;
+      return {
+        item, id: r.foodId, name: ing ? ing.name : r.dishName, groupId: r.groupId, groupName: grp ? grp.name : '',
+        history, nextAttempt: history.length + 1, selected: null, tryAgain: false, done: false, todayEntry,
+        home: true, reqId: r.id, deadline: mmReqRateDeadline(r),
+      };
+    }) : [];
+  FOODS = homeFoods.concat(FOODS);
 
   renderFoods();
 }
@@ -62,6 +83,7 @@ function isSchoolRow(r) { return !r.place || r.place === 'school'; }
 function findTodayEntry(f) {
   const session = auth.getSession();
   if (!session) return null;
+  if (f.home) return readJson(MM_KEYS.FAS_LOG, []).find(r => r.studentId === session.userId && r.reqId === f.reqId) || null;
   return readJson(MM_KEYS.FAS_LOG, []).find(r =>
     r.studentId === session.userId && isToday(r.timestamp) && isSchoolRow(r) &&
     (r.foodId === f.id || normFood(r.foodName) === normFood(f.name))) || null;
@@ -91,7 +113,7 @@ function restoreDone(i, entry) {
     : (f.history.length ? `Lần thử thứ ${entry.attempt} của nhóm` : 'Lần thử đầu tiên của nhóm!');
 
   const xp = document.querySelector(`#food-${i} .food-xp`);
-  if (xp) xp.textContent = '✅ Hôm nay em đã đánh giá món này rồi';
+  if (xp) xp.textContent = f.home ? '✅ Em đã đánh giá bữa tối ở nhà rồi' : '✅ Hôm nay em đã đánh giá món này rồi';
 
   const val = Number(entry.score);
   renderFasBars(i, f.history, val);
@@ -105,7 +127,7 @@ function restoreDone(i, entry) {
 /* ── Vẽ danh sách ─────────────────────────────── */
 function foodBlockHtml(f, i, total) {
   const badge = f.history.length ? `Lần thử thứ ${f.nextAttempt} của nhóm` : 'Lần thử đầu tiên của nhóm!';
-  const tag   = f.item.isNew ? 'Món mới hôm nay' : 'Hôm nay có trong thực đơn';
+  const tag   = f.home ? 'Bữa tối ở nhà 🏠' : (f.item.isNew ? 'Món mới hôm nay' : 'Hôm nay có trong thực đơn');
   const faces = [[4, '❤️', 'Rất thích'], [3, '🙂', 'Có thể ăn'], [2, '😐', 'Chưa quen'], [1, '🙁', 'Không thích'], [0, '🚫', 'Chưa thử']]
     .map(([v, e, l], k) => `<button type="button" class="emoji-btn${v === 0 ? ' not-tried' : ''}" role="radio" aria-checked="false" aria-label="${l}, ${v} điểm" tabindex="${k === 0 ? 0 : -1}" data-val="${v}" onclick="pickEmoji(${i}, this)" onkeydown="emojiKey(event, ${i})"><span class="e-tick" aria-hidden="true">✓</span><span class="e-icon" aria-hidden="true">${e}</span><span class="e-label">${l}</span></button>`)
     .join('');
@@ -113,8 +135,9 @@ function foodBlockHtml(f, i, total) {
 
   return `
   <div class="food-block" id="food-${i}" style="${divider}">
-    ${total > 1 ? `<div class="section-label">Món ${i + 1} / ${total}</div>` : ''}
-    <div class="food-card" style="margin-top:${total > 1 ? 2 : 10}px">
+    ${f.home ? `<div class="section-label home-label">🏠 Bữa tối ở nhà · ba mẹ đã nấu cho em · đánh giá trước hết ${escHtml(dayLabel(f.deadline))}</div>`
+      : (f.schoolTotal > 1 ? `<div class="section-label">Món ${f.seq} / ${f.schoolTotal}</div>` : '')}
+    <div class="food-card${f.home ? ' home-card' : ''}" style="margin-top:${f.home || f.schoolTotal > 1 ? 2 : 10}px">
       <div class="food-img">
         <span style="font-size:56px">${escHtml(foodIcon(f.item))}</span>
         <div class="food-badge">${badge}</div>
@@ -193,12 +216,19 @@ function renderFoods() {
   updateSummary();
 }
 
+/* Nhãn hạn đánh giá: "hôm nay" hoặc "ngày mai" (hết ngày) */
+function dayLabel(d) { return toLocalDateStr(d) === toLocalDateStr(new Date()) ? 'hôm nay' : 'ngày mai'; }
+
 function updateSummary() {
-  const done = FOODS.filter(f => f.done).length;
+  const school = FOODS.filter(f => !f.home);
+  const home   = FOODS.filter(f => f.home && !f.done).length;
+  const done = school.filter(f => f.done).length;
   const el = document.getElementById('evalSummary');
-  el.textContent = done === FOODS.length
-    ? `🎉 Đã đánh giá xong ${FOODS.length} món hôm nay!`
-    : `Hôm nay có ${FOODS.length} món · đã đánh giá ${done}/${FOODS.length}`;
+  let t = !school.length ? '' : done === school.length
+    ? `🎉 Đã đánh giá xong ${school.length} món hôm nay!`
+    : `Hôm nay có ${school.length} món · đã đánh giá ${done}/${school.length}`;
+  if (home) t += (t ? ' · ' : '') + `🏠 ${home} món ở nhà chờ em đánh giá`;
+  el.textContent = t;
 }
 
 /* ── Ghi 1 dòng vào mm_fas_log ─────────────────
@@ -219,13 +249,14 @@ function writeFasLog(f, rating, score) {
     foodName:  f.name,
     dishName:  f.item.name,
     groupId:   f.groupId,
-    place:     'school',
+    place:     f.home ? 'home' : 'school',
     attempt:   score >= 1 ? tried.length + 1 : null,
     score,
     rating,
     tryAgain:  f.tryAgain,
     timestamp: new Date().toISOString(),
   };
+  if (f.home) entry.reqId = f.reqId;
   if (score === 0) entry.notTried = true;
 
   log.push(entry);
@@ -345,6 +376,7 @@ function confirmEval(i) {
   const prev  = f.history;                     // các lần thử trước hôm nay
   const entry = writeFasLog(f, f.selected, data.val);
   f.done = true;
+  if (f.home && entry) mmReqMarkRated(f.reqId);
 
   /* Cộng XP theo bảng của BGH: thử lần đầu của nhóm (chỉ khi đã thử thật), đánh giá emoji (kể cả "Chưa thử").
      Bấm "Muốn" không cộng XP. */
@@ -371,7 +403,12 @@ function confirmEval(i) {
   toast.textContent = data.val === 0
     ? `⭐ +${xpRes ? xpRes.awarded : 0} XP! Em chọn Chưa thử 🌱`
     : `⭐ +${xpRes ? xpRes.awarded : 0} XP! FAS lần này: ${data.val}/4 🌱`;
-  if (f.tryAgain) toast.textContent += ' · TRY AGAIN đã đặt!';
+  if (f.tryAgain && entry) {
+    /* "Muốn": luôn ghi tryAgain vào FAS; đồng thời hẹn ba mẹ nấu ở nhà (mỗi nhóm một yêu cầu, tối đa 2 món/ngày) */
+    const rq = f.groupId ? mmReqCreate(session.userId, { groupId: f.groupId, foodId: f.id, dishName: f.item.name, icon: foodIcon(f.item) })
+                         : { ok: false, message: '' };
+    toast.textContent += rq.ok ? ' · 🏠 Đã hẹn ba mẹ nấu ở nhà tối nay!' : (rq.message ? ' · ' + rq.message : '');
+  }
   if (xpRes && xpRes.leveledUp) toast.textContent += ' ' + levelUpText(xpRes);
   toast.classList.add('show');
   const live = document.getElementById(`live-${i}`);

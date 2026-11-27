@@ -1,7 +1,7 @@
 /* ═══════════════════════════════════════════════
    parent.js — MOODMEAL MAGIC TRAY v3
    Giao diện Phụ huynh
-   ① Tiến trình con  ② Yêu cầu thử món của con
+   ① Tiến trình con  ② Yêu cầu thử món của con (hẹn từ nút "Muốn" ở trường)
 ═══════════════════════════════════════════════ */
 
 /* ── Storage helpers ─────────────────────────── */
@@ -26,6 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Render các section
   renderSection1();
+  renderRequests();
   startChildDate();
 });
 
@@ -258,11 +259,12 @@ function refreshStudentInfo() {
 
 /* XP, danh hiệu hoặc thông tin của con đổi ở tab khác (học sinh, BGH) → cập nhật ngay */
 window.addEventListener('storage', e => {
-  const keys = [MM_KEYS.XP_LOG, MM_KEYS.XP_CONFIG, MM_KEYS.BADGES_LOG, MM_KEYS.BADGES, MM_KEYS.FAS_LOG, MM_KEYS.ACCOUNTS];
+  const keys = [MM_KEYS.XP_LOG, MM_KEYS.XP_CONFIG, MM_KEYS.BADGES_LOG, MM_KEYS.BADGES, MM_KEYS.FAS_LOG, MM_KEYS.ACCOUNTS, MM_KEYS.HOME_REQUESTS];
   if (e.key !== null && keys.indexOf(e.key) === -1) return;
   if (!STUDENT) return;
   if (e.key === null || e.key === MM_KEYS.ACCOUNTS) refreshStudentInfo();
   renderChildCard();
+  renderRequests();
 });
 
 /* key: nhóm thực phẩm (mã nhóm; dòng cũ chưa có nhóm thì mã nguyên liệu); uptoTs: chỉ tính các lượt đến mốc thời gian này */
@@ -304,6 +306,74 @@ function renderFasChart(key, uptoTs) {
     fagNote.textContent = entries.length === 1 ? '🌱 Mới thử lần đầu! Tiếp tục khám phá nhé!'
                                                : '🌱 Con chưa thử nhóm này. Khi sẵn sàng con sẽ thử nhé!';
   }
+}
+
+/* ══════════════════════════════════════════════
+   SECTION ② — Yêu cầu thử món của con
+   Danh sách tích lũy các món con hẹn; ba mẹ bấm "Con đã ăn ở nhà tối nay" (con +20 XP,
+   được đánh giá đến hết ngày hôm sau) hoặc "Chưa nấu được". Quá 7 ngày tự hết hạn.
+══════════════════════════════════════════════ */
+function renderRequests() {
+  const box  = document.getElementById('requestsBox');
+  const hist = document.getElementById('requestsHistory');
+  if (!box || !hist) return;
+  if (!STUDENT) { box.innerHTML = ''; hist.innerHTML = ''; return; }
+
+  const mine = mmReqSweep().filter(r => r.studentId === STUDENT.id)
+    .sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
+  const pending = mine.filter(r => r.status === 'pending');
+  const past    = mine.filter(r => r.status !== 'pending');
+  const gname = r => { const g = mmGroupById(r.groupId); return g ? g.name : ''; };
+  const dayDiff = r => Math.max(0, Math.floor((new Date(r.expiresAt) - new Date()) / 86400000));
+
+  box.innerHTML = pending.length ? pending.map(r => `
+    <div class="req-card" id="req-${escHtml(r.id)}">
+      <div class="req-top">
+        <div class="req-icon">${escHtml(r.icon)}</div>
+        <div>
+          <div class="req-name">${escHtml(r.dishName)}</div>
+          <div class="req-meta">Nhóm ${escHtml(gname(r))} · con hẹn ${escHtml(formatTime(r.createdAt))} · ${dayDiff(r) > 0 ? 'còn ' + dayDiff(r) + ' ngày' : 'hết hạn hôm nay'}</div>
+        </div>
+      </div>
+      <div class="req-actions">
+        <button class="btn-confirm-yes" onclick="answerRequest('${escHtml(r.id)}','cooked')">🍳 Con đã ăn ở nhà tối nay</button>
+        <button class="btn-confirm-no"  onclick="answerRequest('${escHtml(r.id)}','declined')">Chưa nấu được</button>
+      </div>
+    </div>`).join('')
+    : `<div class="no-tray-placeholder">
+         🌱 Chưa có yêu cầu thử món nào đang chờ.<br>
+         <span style="font-size:12px;color:#aaa">Khi con bấm "Muốn" thử lại ở trường, yêu cầu sẽ hiện ở đây để ba mẹ nấu cho con vào bữa tối.</span>
+       </div>`;
+
+  const chip = r => ({
+    cooked:   ['cooked',   'Chờ con đánh giá'],
+    rated:    ['rated',    'Con đã đánh giá ✓'],
+    declined: ['declined', 'Chưa nấu được'],
+    expired:  ['expired',  r.respondedAt ? 'Quá hạn đánh giá' : 'Hết hạn'],
+  }[r.status] || ['expired', r.status]);
+  hist.innerHTML = past.length ? past.map(r => {
+    const [cls, txt] = chip(r);
+    return `<div class="req-row">
+      <div class="req-icon" style="font-size:22px">${escHtml(r.icon)}</div>
+      <div><div class="req-name">${escHtml(r.dishName)}</div>
+        <div class="req-meta">Nhóm ${escHtml(gname(r))} · ${escHtml(formatTime(r.respondedAt || r.createdAt))}</div></div>
+      <span class="req-chip ${cls}">${escHtml(txt)}</span>
+    </div>`;
+  }).join('') : '<div class="no-tray-placeholder">Chưa có lịch sử.</div>';
+}
+
+/* status: 'cooked' | 'declined' */
+function answerRequest(id, status) {
+  const r = mmReqRespond(id, status);
+  if (!r) { showToast('Yêu cầu này đã được xử lý hoặc hết hạn.'); renderRequests(); return; }
+  if (status === 'cooked') {
+    const res = awardXp(STUDENT.id, 'parent_confirm', r.id);   // +20 XP cho con, mỗi yêu cầu một lần
+    showToast(`Đã ghi nhận! Con nhận +${res.awarded} XP 🌱`);
+    renderChildCard();
+  } else {
+    showToast('Đã ghi nhận: chưa nấu được.');
+  }
+  renderRequests();
 }
 
 /* ══════════════════════════════════════════════

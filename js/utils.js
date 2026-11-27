@@ -79,3 +79,79 @@ function mmRenumberFasLog(log) {
   });
   return log;
 }
+
+/* ═══════════════════════════════════════════════
+   Yêu cầu thử lại ở nhà  (mm_home_requests)
+   {id, studentId, groupId, foodId, dishName, icon, createdAt, expiresAt,
+    status: pending | cooked | declined | expired | rated, respondedAt, ratedAt}
+   - pending : học sinh bấm "Muốn" ở trường, chờ ba mẹ
+   - cooked  : ba mẹ xác nhận con đã ăn ở nhà tối nay (con +20 XP), con được đánh giá đến hết ngày hôm sau
+   - declined: ba mẹ bấm "Chưa nấu được"
+   - expired : quá 7 ngày chưa trả lời, hoặc đã xác nhận nhưng con không đánh giá kịp (không XP đánh giá)
+   - rated   : con đã đánh giá ở nhà
+   Quy tắc tạo: mỗi nhóm chỉ một yêu cầu đang mở (pending/cooked); tối đa 2 yêu cầu mỗi học sinh mỗi ngày.
+═══════════════════════════════════════════════ */
+const MM_REQ_EXPIRE_DAYS = 7;
+const MM_REQ_MAX_PER_DAY = 2;
+
+function mmReqAll() { return store.get(MM_KEYS.HOME_REQUESTS, []); }
+
+/* Hạn đánh giá ở nhà: hết ngày hôm sau ngày ba mẹ xác nhận (23:59:59.999 giờ local) */
+function mmReqRateDeadline(req) {
+  const d = new Date(req.respondedAt);
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1, 23, 59, 59, 999);
+}
+
+/* Chuyển yêu cầu quá hạn sang expired; trả về danh sách mới nhất */
+function mmReqSweep() {
+  const list = mmReqAll();
+  const now = new Date();
+  let changed = false;
+  list.forEach(r => {
+    if (r.status === 'pending' && new Date(r.expiresAt) < now) { r.status = 'expired'; changed = true; }
+    else if (r.status === 'cooked' && r.respondedAt && mmReqRateDeadline(r) < now) { r.status = 'expired'; changed = true; }
+  });
+  if (changed) store.set(MM_KEYS.HOME_REQUESTS, list);
+  return list;
+}
+
+/* Tạo yêu cầu. Trả về {ok:true, req} hoặc {ok:false, reason:'dup'|'limit'|'error', message} */
+function mmReqCreate(studentId, o) {
+  const list = mmReqSweep();
+  const open = list.some(r => r.studentId === studentId && r.groupId === o.groupId && (r.status === 'pending' || r.status === 'cooked'));
+  if (open) return { ok: false, reason: 'dup', message: 'Em đã hẹn nhóm này rồi' };
+  const today = toLocalDateStr(new Date());
+  const n = list.filter(r => r.studentId === studentId && toLocalDateStr(new Date(r.createdAt)) === today).length;
+  if (n >= MM_REQ_MAX_PER_DAY) return { ok: false, reason: 'limit', message: 'Hôm nay em đã hẹn đủ ' + MM_REQ_MAX_PER_DAY + ' món' };
+  const now = new Date();
+  const req = {
+    id: 'rq' + now.getTime().toString(36) + Math.random().toString(36).slice(2, 6),
+    studentId, groupId: o.groupId, foodId: o.foodId, dishName: o.dishName, icon: o.icon || '🍽️',
+    createdAt: now.toISOString(),
+    expiresAt: new Date(now.getFullYear(), now.getMonth(), now.getDate() + MM_REQ_EXPIRE_DAYS, 23, 59, 59, 999).toISOString(),
+    status: 'pending', respondedAt: null, ratedAt: null,
+  };
+  list.push(req);
+  if (!store.set(MM_KEYS.HOME_REQUESTS, list)) return { ok: false, reason: 'error', message: 'Chưa lưu được yêu cầu' };
+  return { ok: true, req };
+}
+
+/* Ba mẹ trả lời: 'cooked' (con đã ăn ở nhà tối nay) hoặc 'declined' (chưa nấu được). Trả về yêu cầu đã cập nhật hoặc null */
+function mmReqRespond(id, status) {
+  const list = mmReqSweep();
+  const r = list.find(x => x.id === id);
+  if (!r || r.status !== 'pending' || (status !== 'cooked' && status !== 'declined')) return null;
+  r.status = status;
+  r.respondedAt = new Date().toISOString();
+  return store.set(MM_KEYS.HOME_REQUESTS, list) ? r : null;
+}
+
+/* Con đánh giá xong ở nhà */
+function mmReqMarkRated(id) {
+  const list = mmReqAll();
+  const r = list.find(x => x.id === id);
+  if (!r) return null;
+  r.status = 'rated';
+  r.ratedAt = new Date().toISOString();
+  return store.set(MM_KEYS.HOME_REQUESTS, list) ? r : null;
+}

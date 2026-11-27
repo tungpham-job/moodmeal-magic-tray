@@ -330,3 +330,20 @@ body.page-parent {
   transform: translateX(-50%) translateY(0);
   opacity: 1;
 }
+
+/* ── 13. Yêu cầu thử món của con ─────────────── */
+.req-card { padding: 12px 14px; border-bottom: 1px solid var(--border-light); }
+.req-card:last-child { border-bottom: none; }
+.req-top { display: flex; align-items: center; gap: 10px; }
+.req-icon { font-size: 28px; line-height: 1; }
+.req-name { font-size: 13px; font-weight: 700; color: var(--text-main); }
+.req-meta { font-size: 10.5px; color: var(--text-muted); margin-top: 2px; line-height: 1.4; }
+.req-actions { display: flex; flex-direction: column; gap: 7px; margin-top: 10px; }
+.req-history-title { margin: 14px 14px 6px; font-size: 12px; font-weight: 700; color: var(--text-muted); }
+.req-row { display: flex; align-items: center; gap: 10px; padding: 9px 14px; border-bottom: 1px solid var(--border-light); }
+.req-row:last-child { border-bottom: none; }
+.req-chip { margin-left: auto; flex: none; font-size: 10px; font-weight: 700; border-radius: 10px; padding: 2px 8px; white-space: nowrap; }
+.req-chip.cooked   { background: #FFF1C2; color: #5C4400; }
+.req-chip.rated    { background: #E3F6E8; color: #1E6B3A; }
+.req-chip.declined { background: #ECEFF1; color: #546E7A; }
+.req-chip.expired  { background: #ECEFF1; color: #78909C; }

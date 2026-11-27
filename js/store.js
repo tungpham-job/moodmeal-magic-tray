@@ -20,6 +20,7 @@ const MM_KEYS = {
   XP_CONFIG:   'mm_xp_config',
   BADGES:      'mm_badges',
   FAS_LOG:     'mm_fas_log',
+  HOME_REQUESTS: 'mm_home_requests',  // yêu cầu thử lại ở nhà (học sinh bấm "Muốn" → ba mẹ nấu)
   XP_LOG:      'mm_xp_log',
   BADGES_LOG:  'mm_badges_log',
   DEMO_DATE:   'mm_demo_date',        // chuỗi YYYY-MM-DD (không phải JSON)
