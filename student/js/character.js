@@ -1,7 +1,7 @@
 /* ═══════════════════════════════════════════
    character.js — Nhân vật đồng hành ở Trang chủ học sinh
    - Nhân vật do BGH gán ở Danh sách tài khoản; chưa gán thì học sinh tự chọn một lần (màn chọn + popup Xác nhận),
-     chọn xong lưu vào account.characterId; sau đó học sinh có thể bấm "🔄 Đổi nhân vật" (hiện 9 bạn theo Level hiện tại) hoặc BGH đổi
+     chọn xong lưu vào account.characterId; sau đó học sinh có thể bấm "Đổi nhân vật" (hiện 9 bạn theo Level hiện tại) hoặc BGH đổi
    - Thẻ nhân vật dưới thông tin học sinh: hoạt ảnh theo Level, XP còn thiếu để tiến hóa
    - Lên Level (hiện ra khi mở Trang chủ): chiếu hoạt ảnh tiến hóa từ hình cũ sang hình mới
    Cần: js/characters.js, js/xp.js, js/auth.js
@@ -40,7 +40,7 @@
         <div class="pet-line">Dòng ${escHtml(ch.name)} · Level ${info.level} · ${escHtml(info.name)}</div>
         <div class="pet-next" id="petNext">${nextLine(ch, idx)}</div>
         <div class="levelup-text" id="petLvUp"></div>
-        ${mmCharAll(false).some(c => c.id !== ch.id) ? '<button type="button" class="pet-chg" id="petChg">🔄 Đổi nhân vật</button>' : ''}
+        ${mmCharAll(false).some(c => c.id !== ch.id) ? '<button type="button" class="pet-chg" id="petChg">Đổi nhân vật</button>' : ''}
       </div>`;
   }
 
