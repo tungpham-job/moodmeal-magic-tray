@@ -1,7 +1,7 @@
 /* ═══════════════════════════════════════════
    character.js — Nhân vật đồng hành ở Trang chủ học sinh
    - Nhân vật do BGH gán ở Danh sách tài khoản; chưa gán thì học sinh tự chọn một lần (màn chọn + popup Xác nhận),
-     chọn xong lưu vào account.characterId và chỉ BGH mới đổi được
+     chọn xong lưu vào account.characterId; sau đó học sinh có thể bấm "🔄 Đổi nhân vật" (hiện 9 bạn theo Level hiện tại) hoặc BGH đổi
    - Thẻ nhân vật dưới thông tin học sinh: hoạt ảnh theo Level, XP còn thiếu để tiến hóa
    - Lên Level (hiện ra khi mở Trang chủ): chiếu hoạt ảnh tiến hóa từ hình cũ sang hình mới
    Cần: js/characters.js, js/xp.js, js/auth.js
@@ -40,6 +40,7 @@
         <div class="pet-line">Dòng ${escHtml(ch.name)} · Level ${info.level} · ${escHtml(info.name)}</div>
         <div class="pet-next" id="petNext">${nextLine(ch, idx)}</div>
         <div class="levelup-text" id="petLvUp"></div>
+        ${mmCharAll(false).some(c => c.id !== ch.id) ? '<button type="button" class="pet-chg" id="petChg">🔄 Đổi nhân vật</button>' : ''}
       </div>`;
   }
 
@@ -68,6 +69,12 @@
   function renderCard(ch) {
     const idx = curIdx();
     host.innerHTML = cardHtml(ch, idx);
+    const chg = document.getElementById('petChg');
+    if (chg) chg.addEventListener('click', () => {
+      const list = mmCharAll(false);
+      if (!list.some(c => c.id === ch.id)) list.push(ch);     /* nhân vật hiện tại bị BGH tắt vẫn hiện (đang đồng hành) */
+      showChooser(list, ch);
+    });
     /* Level tăng từ lần mở trước → chiếu hoạt ảnh tiến hóa một lần. Chưa có ghi nhận (BGH vừa gán) → hiện thẳng, không chiếu. */
     const state = mmCharState(sid);
     if (!state || state.seenLevelIdx > idx) { mmCharSaveState(sid, { seenLevelIdx: idx }); return; }
@@ -89,44 +96,50 @@
   }
 
   /* Chưa có nhân vật: màn chọn bạn đồng hành (hiện phủ Trang chủ). Chọn xong → popup Xác nhận → lưu account.characterId */
-  function showChooser(list) {
+  /* cur = nhân vật đang dùng → chế độ ĐỔI: hiện hình theo Level hiện tại, có nhãn "Đang đồng hành", nút quay lại */
+  function showChooser(list, cur) {
     const frame = document.querySelector('.phone-frame');
     if (!frame) { renderEmpty(); return; }
     let picked = null;
+    const change = !!cur, aIdx = change ? curIdx() : 0, info = getLevelInfo(getStudentXp(sid));
+    const nm = c => change ? (mmCharStage(c, aIdx).name || c.name) : c.name;
     const ov = document.createElement('div');
     ov.className = 'char-pick'; ov.id = 'charPick';
     ov.innerHTML = `
-      <div class="cp-hero"><div class="cp-t">🥚 Chọn bạn đồng hành!</div>
-        <div class="cp-s">Bạn này sẽ cùng em khám phá thực phẩm và lớn lên mỗi lần em lên cấp</div></div>
+      <div class="cp-hero"><div class="cp-t">${change ? '🥚 Đổi bạn đồng hành' : '🥚 Chọn bạn đồng hành!'}</div>
+        <div class="cp-s">${change ? 'Đây là các bạn ở cấp của em. Chọn một bạn để cùng em khám phá nhé!' : 'Bạn này sẽ cùng em khám phá thực phẩm và lớn lên mỗi lần em lên cấp'}</div>
+        ${change ? `<span class="cp-lv">Level ${info.level} · ${escHtml(info.name)}</span>` : ''}</div>
       <div class="cp-body">
         <div class="cp-grid">${list.map(c => `
-          <div class="cp-opt" data-id="${escHtml(c.id)}"><div class="char-art">${mmCharArt(c, 0)}</div>
-            <b>${escHtml(c.name)}</b><span>${escHtml(c.desc || '')}</span></div>`).join('')}</div>
+          <div class="cp-opt${change && c.id === cur.id ? ' cur' : ''}" data-id="${escHtml(c.id)}"><div class="char-art">${mmCharArt(c, aIdx)}</div>
+            <b>${escHtml(nm(c))}</b>${change ? `<small>Dòng ${escHtml(c.name)}</small>` : ''}${change && c.id === cur.id ? '<em>Đang đồng hành</em>' : `<span>${escHtml(c.desc || '')}</span>`}</div>`).join('')}</div>
         <button class="cp-go" id="cpGo" disabled>✓ Chọn bạn này</button>
-        <div class="cp-note">Có ${list.length} bạn đồng hành để chọn. Em chọn một bạn nhé!</div>
+        ${change ? '<button type="button" class="cp-cancel" id="cpCancel">← Quay lại Trang chủ</button>' : `<div class="cp-note">Có ${list.length} bạn đồng hành để chọn. Em chọn một bạn nhé!</div>`}
       </div>
       <div class="cp-dim" id="cpDim"></div>
       <div class="cp-sheet" id="cpSheet">
         <div class="cp-sheet-av char-art" id="cpAv"></div>
         <div class="cp-sheet-t" id="cpSheetT"></div>
-        <div class="cp-sheet-d">Chọn xong, chỉ thầy cô mới đổi được bạn khác.</div>
+        <div class="cp-sheet-d">${change ? 'Bạn mới giữ nguyên Level của em.<br>Em vẫn đổi lại được sau này.' : 'Chọn xong, em vẫn đổi lại được bằng nút "Đổi nhân vật" ở Trang chủ.'}</div>
         <div class="cp-sheet-btns"><button class="cp-back" id="cpBack">Chọn lại</button><button class="cp-ok" id="cpOk">✓ Xác nhận</button></div>
       </div>`;
     frame.appendChild(ov);
     const go = ov.querySelector('#cpGo'), dim = ov.querySelector('#cpDim'), sheet = ov.querySelector('#cpSheet');
     const openSheet = on => { dim.classList.toggle('show', on); sheet.classList.toggle('show', on); };
     ov.querySelectorAll('.cp-opt').forEach(o => o.addEventListener('click', () => {
+      if (change && o.dataset.id === cur.id) return;           /* bạn đang đồng hành: không có gì để đổi */
       picked = o.dataset.id;
       ov.querySelectorAll('.cp-opt').forEach(x => x.classList.toggle('picked', x === o));
       go.disabled = false;
     }));
     go.addEventListener('click', () => {
       const c = list.find(x => x.id === picked); if (!c) return;
-      ov.querySelector('#cpAv').innerHTML = mmCharArt(c, 0);
-      ov.querySelector('#cpSheetT').textContent = `Chọn bạn ${c.name} nhé?`;
+      ov.querySelector('#cpAv').innerHTML = mmCharArt(c, aIdx);
+      ov.querySelector('#cpSheetT').textContent = change ? `Đổi sang ${nm(c)} nhé?` : `Chọn bạn ${c.name} nhé?`;
       openSheet(true);
     });
     ov.querySelector('#cpBack').addEventListener('click', () => openSheet(false));
+    const cancel = ov.querySelector('#cpCancel'); if (cancel) cancel.addEventListener('click', () => ov.remove());
     dim.addEventListener('click', () => openSheet(false));
     ov.querySelector('#cpOk').addEventListener('click', () => {
       const c = list.find(x => x.id === picked); if (!c) return;
