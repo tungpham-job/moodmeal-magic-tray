@@ -183,10 +183,7 @@ function foodBlockHtml(f, i) {
     <div class="emoji-label" id="emojiQ-${i}">Sau khi thử, em cảm thấy thế nào?</div>
     <div class="emoji-row" role="radiogroup" aria-labelledby="emojiQ-${i}">${faces}</div>
 
-    <div class="skip-note" id="skipNote-${i}" role="alert" hidden>
-      Bạn ơi, hôm nay bạn đã bỏ qua món ${escHtml(f.item.name)}!<br>
-      Hãy chọn "Muốn" để thử lại nhóm ${escHtml(f.groupName)} vào buổi tối tại nhà để cơ thể được đủ dinh dưỡng của 1 ngày nhé.
-    </div>
+    <div class="skip-note" id="skipNote-${i}" role="status" aria-live="polite" hidden></div>
 
     <div class="gap"></div>
 
@@ -294,12 +291,31 @@ function writeFasLog(f, rating, score) {
 }
 
 /* ── Tương tác theo từng món (i = vị trí trong FOODS) ── */
+/* Lời nhắc dưới hàng emoji theo mức chọn: 4-3 xanh lá đậm, 2-1 vàng nghệ đậm, 0 (Chưa thử) đỏ */
+function emojiNoteOf(v, f) {
+  switch (v) {
+    case 4: return ['good', 'Wow! Bạn tìm được món ăn yêu thích rồi! Tuyệt vời quá! 🌟'];
+    case 3: return ['good', 'Giỏi quá! Bạn đã cho món ăn này một cơ hội rồi đấy. Nhóm chất này rất cần thiết cho cơ thể mỗi ngày. Hãy thử thêm nữa nhé! 🌟'];
+    case 2: return ['warn', 'Biết đâu lần tới bạn sẽ thích món này hơn thì sao nhỉ. Hãy tiếp tục thử để cơ thể đầy đủ dưỡng chất hằng ngày bạn nhé! 🌟'];
+    case 1: return ['warn', 'Không sao đâu! Mỗi người có một khẩu vị riêng mà. Nhưng đừng bỏ cuộc, bạn hãy thử lại lần tới nhé! 🌟'];
+    default: return ['bad', `Bạn ơi, hôm nay bạn đã bỏ qua món ${escHtml(f.item.name)}!<br>Hãy chọn "Muốn" để thử lại nhóm ${escHtml(f.groupName)} vào buổi tối tại nhà, cho cơ thể có đủ dinh dưỡng nhé! 🌟`];
+  }
+}
+function showEmojiNote(i, f) {
+  const box = document.getElementById(`skipNote-${i}`);
+  if (!box) return;
+  const [tone, html] = emojiNoteOf(f.selected, f);
+  box.className = 'skip-note tone-' + tone;
+  box.innerHTML = html;
+  box.hidden = false;
+}
+
 function pickEmoji(i, btn) {
   const f = FOODS[i];
   if (!f || f.done) return;
   setEmojiSelected(i, btn);
   f.selected = parseInt(btn.dataset.val);
-  document.getElementById(`skipNote-${i}`).hidden = f.selected !== 0;
+  showEmojiNote(i, f);
   document.getElementById(`confirmBtn-${i}`).disabled = false;
 }
 

@@ -307,6 +307,9 @@ body.page-student {
 .home-card { border: 2px solid #F5B041; background: #FFF9EC; }
 .skip-note { margin: 8px 12px 0; padding: 8px 10px; border: 1.5px solid #D32F2F; border-radius: 10px; background: #FFEBEE; color: #C62828; font-size: 12px; font-weight: 700; line-height: 1.45; text-align: center; }
 .skip-note[hidden] { display: none; }
+.skip-note.tone-good { border-color: #2E7D32; background: #E8F5E9; color: #1B5E20; }
+.skip-note.tone-warn { border-color: #D99A00; background: #FFF6DD; color: #A35F00; }
+.skip-note.tone-bad  { border-color: #D32F2F; background: #FFEBEE; color: #C62828; }
 .ta-card { display: flex; align-items: center; justify-content: center; gap: 12px; margin: 10px 12px 6px; padding: 0; }
 .ta-head { flex: 0 1 auto; min-width: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 2px 6px; }
 .ta-q    { font-size: 11px; color: #37474F; line-height: 1.3; }

@@ -46,16 +46,25 @@ def student_part(browser, base):
     btns = page.locator('#food-0 .emoji-btn')
     check('5 nút emoji, nút cuối là 🚫 Chưa thử', btns.count() == 5 and '🚫' in btns.nth(4).inner_text() and 'Chưa thử' in btns.nth(4).inner_text())
     check('không còn nhãn XP ở "Thử lại lần sau?"', page.locator('.ta-xp').count() == 0)
-    check('chưa chọn gì: nhãn đỏ ẩn', not page.locator('#skipNote-0').is_visible())
-    btns.nth(2).click()
-    check('chọn emoji khác: nhãn đỏ vẫn ẩn', not page.locator('#skipNote-0').is_visible())
+    check('chưa chọn gì: lời nhắc ẩn', not page.locator('#skipNote-0').is_visible())
+    COL = "()=>getComputedStyle(document.getElementById('skipNote-0')).color"
+    exp = [
+        (0, 'Wow! Bạn tìm được món ăn yêu thích rồi! Tuyệt vời quá! 🌟', 'rgb(27, 94, 32)', 'Rất thích → xanh lá đậm'),
+        (1, 'Giỏi quá! Bạn đã cho món ăn này một cơ hội rồi đấy. Nhóm chất này rất cần thiết cho cơ thể mỗi ngày. Hãy thử thêm nữa nhé! 🌟', 'rgb(27, 94, 32)', 'Có thể ăn → xanh lá đậm'),
+        (2, 'Biết đâu lần tới bạn sẽ thích món này hơn thì sao nhỉ. Hãy tiếp tục thử để cơ thể đầy đủ dưỡng chất hằng ngày bạn nhé! 🌟', 'rgb(163, 95, 0)', 'Chưa quen → vàng nghệ đậm'),
+        (3, 'Không sao đâu! Mỗi người có một khẩu vị riêng mà. Nhưng đừng bỏ cuộc, bạn hãy thử lại lần tới nhé! 🌟', 'rgb(163, 95, 0)', 'Không thích → vàng nghệ đậm'),
+    ]
+    for k, txt, col, name in exp:
+        btns.nth(k).click()
+        n = page.locator('#skipNote-0')
+        check('lời nhắc ' + name, n.is_visible() and n.inner_text().strip() == txt and page.evaluate(COL) == col and page.evaluate("()=>getComputedStyle(document.getElementById('skipNote-0')).fontWeight") in ('700', 'bold'), n.inner_text() if n.is_visible() else '')
     btns.nth(4).click()
     note = page.locator('#skipNote-0')
     nt = note.inner_text() if note.is_visible() else ''
-    check('chọn Chưa thử: hiện nhãn đỏ đúng nội dung (món + nhóm)', 'hôm nay bạn đã bỏ qua món Trứng chiên!' in nt and 'thử lại nhóm Trứng vào buổi tối tại nhà' in nt and 'đủ dinh dưỡng của 1 ngày nhé' in nt, nt)
-    check('nhãn màu đỏ và nằm dưới hàng emoji', page.evaluate("()=>{const n=document.getElementById('skipNote-0'),r=document.querySelector('#food-0 .emoji-row');return getComputedStyle(n).color==='rgb(198, 40, 40)'&&n.getBoundingClientRect().top>=r.getBoundingClientRect().bottom}"))
+    check('chọn Chưa thử: lời nhắc đỏ đúng nội dung (món + nhóm)', 'hôm nay bạn đã bỏ qua món Trứng chiên!' in nt and 'thử lại nhóm Trứng vào buổi tối tại nhà, cho cơ thể có đủ dinh dưỡng nhé! 🌟' in nt, nt)
+    check('lời nhắc đỏ nằm dưới hàng emoji', page.evaluate("()=>{const n=document.getElementById('skipNote-0'),r=document.querySelector('#food-0 .emoji-row');return getComputedStyle(n).color==='rgb(198, 40, 40)'&&n.getBoundingClientRect().top>=r.getBoundingClientRect().bottom}"))
     btns.nth(3).click()
-    check('đổi sang emoji khác: nhãn đỏ ẩn lại', not page.locator('#skipNote-0').is_visible())
+    check('đổi sang emoji khác: lời nhắc đổi theo (không còn chữ đỏ)', page.evaluate(COL) == 'rgb(163, 95, 0)' and 'bỏ qua món' not in page.locator('#skipNote-0').inner_text())
     xp0 = len(ls('mm_xp_log') or [])
     btns.nth(4).click(); page.locator('#food-0 .ta-btn').nth(0).click(); page.click('#confirmBtn-0'); page.wait_for_timeout(400)
     check('xác nhận xong: dòng đầu chuyển "✔ Đã đánh giá" kèm 🚫 Chưa thử', 'Đã đánh giá' in page.inner_text('#st-0') and 'Chưa thử' in page.inner_text('#st-0') and 'done' in (page.locator('#food-0').get_attribute('class') or ''))
