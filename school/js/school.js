@@ -1263,6 +1263,24 @@ function applyReportFilter() {
 
 /* Một dòng bảng = một học sinh × một nhóm: chuỗi FAS các lượt (0 = Chưa thử), FAG, số lượt thử ở trường / ở nhà.
    Bộ lọc "Nơi thử" lọc các lượt trước khi tính chuỗi và FAG. */
+/* Chuỗi FAS dạng khối: số điểm to, ngày (dd/mm) và giờ (hh:mm) nhỏ ngay dưới; rê chuột hiện đủ ngày giờ + nơi thử.
+   Giờ hiển thị theo giờ của máy đang mở (giờ Việt Nam). */
+function fasStampParts(ts) {
+  const d = new Date(ts);
+  if (!ts || isNaN(d)) return { d: '--/--', t: '--:--', full: '' };
+  const z = n => String(n).padStart(2, '0');
+  return { d: `${z(d.getDate())}/${z(d.getMonth() + 1)}`, t: `${z(d.getHours())}:${z(d.getMinutes())}`,
+           full: `${z(d.getDate())}/${z(d.getMonth() + 1)}/${d.getFullYear()} ${z(d.getHours())}:${z(d.getMinutes())}` };
+}
+function fasChainHtml(rows) {
+  return '<div class="fas-chain">' + rows.map((r, k) => {
+    const st = fasStampParts(r.timestamp);
+    const place = r.place === 'home' ? 'Nhà' : 'Trường';
+    return (k ? '<span class="fas-arr" aria-hidden="true">→</span>' : '') +
+      `<div class="fas-step" title="${escHtml(st.full + ' · ' + place)}"><b>${escHtml(r.score)}</b><small>${st.d}<br>${st.t}</small></div>`;
+  }).join('') + '</div>';
+}
+
 function renderFasTable(fasLog, accounts, stuFilter, groupFilter, placeFilter) {
   const placeOf = r => (r.place === 'home' ? 'home' : 'school');
   const rows = fasChainsOf(fasLog.filter(r => (!stuFilter || r.studentId === stuFilter) && (!placeFilter || placeOf(r) === placeFilter)))
@@ -1282,7 +1300,7 @@ function renderFasTable(fasLog, accounts, stuFilter, groupFilter, placeFilter) {
       <tr>
         <td><strong>${escHtml(acc?.name || c.studentId)}</strong></td>
         <td>${label}</td>
-        <td><strong>${escHtml(mmFasChainText(c.rows))}</strong></td>
+        <td>${fasChainHtml(c.rows)}</td>
         <td style="text-align:center;font-weight:700;${fagColor}">${fagN !== null ? (fagN > 0 ? '+' : '') + fagN : '—'}</td>
         <td style="text-align:center">${school}</td>
         <td style="text-align:center">${home}</td>

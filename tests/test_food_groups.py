@@ -136,14 +136,20 @@ def admin_part(browser, base):
     check('món mới có groupId nhóm Hải sản, không còn planet', m['groupId'] == 'g-hai-san' and 'planet' not in m, m)
     page.click('[data-module=report]'); page.wait_for_timeout(500)
     t = page.inner_text('#fasTableBody')
-    check('báo cáo: chuỗi 1 → 2 → 2 → 3 và FAG +2', '1 → 2 → 2 → 3' in t and '+2' in t, t)
+    row = page.locator('#fasTableBody tr:has-text("Phạm Bảo Trúc")').first
+    scores = row.locator('.fas-step b').all_inner_texts()
+    dates = [x.replace('\n', ' ') for x in row.locator('.fas-step small').all_inner_texts()]
+    check('báo cáo: chuỗi 1 → 2 → 2 → 3 và FAG +2, mỗi điểm có ngày giờ nhỏ bên dưới', scores == ['1', '2', '2', '3'] and dates[0] == '07/10 12:00' and dates[3] == '21/10 12:00' and '+2' in t, (scores, dates))
+    check('rê chuột vào điểm: hiện đủ ngày giờ + nơi thử', row.locator('.fas-step').first.get_attribute('title') == '07/10/2026 12:00 · Trường', row.locator('.fas-step').first.get_attribute('title'))
+    ws = page.evaluate("()=>[...document.querySelectorAll('.fas-table th')].map(t=>t.getBoundingClientRect().width)")
+    check('cột Chuỗi lượt thử rộng nhất; Nhóm/FAG/Trường/Nhà/TRY AGAIN hẹp', ws[2] == max(ws) and all(w <= 90 for w in ws[1:2] + ws[3:]), ws)
     page.evaluate("""()=>{const L=JSON.parse(localStorage.getItem('mm_fas_log'));
       L.push({studentId:'tranthanhkhoa',foodId:'cua',foodName:'Cua',groupId:'g-hai-san',place:'school',attempt:null,score:0,rating:0,tryAgain:true,notTried:true,timestamp:'2026-11-01T12:00:00'});
       L.push({studentId:'tranthanhkhoa',foodId:'ca',foodName:'Cá',groupId:'g-hai-san',place:'home',attempt:1,score:2,rating:2,tryAgain:false,timestamp:'2026-11-02T12:00:00'});
       L.push({studentId:'tranthanhkhoa',foodId:'tom',foodName:'Tôm',groupId:'g-hai-san',place:'school',attempt:2,score:3,rating:3,tryAgain:false,timestamp:'2026-11-03T12:00:00'});
       localStorage.setItem('mm_fas_log',JSON.stringify(L))}""")
     page.click('[onclick="refreshTab(\'report\')"]'); page.wait_for_timeout(400)
-    check('chuỗi có "Chưa thử": 0 → 2 → 3, FAG +1 (không tính lượt 0)', '0 → 2 → 3' in page.inner_text('#fasTableBody'))
+    check('chuỗi có "Chưa thử": 0 → 2 → 3, FAG +1 (không tính lượt 0)', page.locator('#fasTableBody tr:has-text("Hải sản") .fas-chain').first.locator('.fas-step b').all_inner_texts() == ['0', '2', '3'])
     page.select_option('#filterPlace', 'home'); page.wait_for_timeout(200)
     check('lọc Nơi thử = Nhà: còn 1 dòng', page.locator('#fasTableBody tr').count() == 1)
     page.select_option('#filterPlace', ''); page.select_option('#filterFood', 'g-cu'); page.wait_for_timeout(200)

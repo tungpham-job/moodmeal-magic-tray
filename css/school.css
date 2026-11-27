@@ -584,3 +584,17 @@ textarea.form-control { resize: vertical; min-height: 80px; }
 .char-lv select, .char-lv input[type=text] { font-family: inherit; font-size: 12px; padding: 4px 6px; border: 1px solid #CFD8DC; border-radius: 7px; background: #fff; }
 .char-lnk { font-size: 11px; color: var(--green-dark); border: 1px dashed #90C9AE; border-radius: 8px; padding: 3px 8px; background: var(--green-pale); cursor: pointer; font-family: inherit; display: inline-block; }
 @media (max-width: 900px) { .char-admin { grid-template-columns: 1fr; } }
+
+/* Báo cáo FAS: cột Chuỗi lượt thử rộng, các cột phụ hẹp; mỗi điểm FAS kèm ngày giờ nhỏ bên dưới */
+.fas-table th.fas-c-grp { width: 84px; }
+.fas-table th.fas-c-n   { width: 54px; }
+.fas-table th.fas-c-ta  { width: 86px; }
+.fas-table th.fas-c-stu { width: 21%; }
+.fas-table th, .fas-table td { padding-left: 8px; padding-right: 8px; }
+.fas-table th.fas-c-stu, .fas-table td:first-child { padding-left: 14px; }
+.fas-table td:nth-child(2) { white-space: nowrap; }
+.fas-chain { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 4px 6px; }
+.fas-step { text-align: center; min-width: 44px; cursor: default; }
+.fas-step b { display: block; font-size: 15px; }
+.fas-step small { display: block; font-size: 10.5px; color: var(--text-muted); line-height: 1.3; margin-top: 1px; }
+.fas-arr { color: #9AA8B2; margin-top: 2px; }
