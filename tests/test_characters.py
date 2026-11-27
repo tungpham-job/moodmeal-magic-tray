@@ -37,10 +37,19 @@ def run(browser, base):
     ctx = browser.new_context(viewport={'width': 430, 'height': 900})
     ad, errs_a = login(ctx, base, 'admin', 'admin2026')
 
+    print('0. Dữ liệu mẫu: Phạm Bảo Trúc 605 XP, Gạo → Kim Long (Level 4)')
+    s0, errs0 = login(ctx, base, 'phambaotruc', 'hs001')
+    s0.goto(base + '/student/index.html'); s0.wait_for_timeout(800)
+    check('605 XP, Level 4, nhân vật Gạo ở hình Kim Long, thẻ vàng', s0.inner_text('#petName') == 'Kim Long' and 'Dòng Gạo · Level 4' in s0.inner_text('.pet-line') and 'max' in (s0.locator('#petCard').get_attribute('class') or '') and ls(s0, 'mm_accounts') is not None and {a['id']: a for a in ls(s0, 'mm_accounts')}['phambaotruc']['xp'] == 605)
+    check('không lỗi JS (dữ liệu mẫu)', not errs0, errs0)
+    # các phần sau thử tiến hóa từ Level 2: đặt lại XP nền = 185
+    ad.evaluate("()=>{const a=JSON.parse(localStorage.getItem('mm_accounts'));a.find(x=>x.id==='phambaotruc').xp=185;localStorage.setItem('mm_accounts',JSON.stringify(a));localStorage.removeItem('mm_char_state')}")
+    ad.reload(); ad.wait_for_timeout(500)
+
     print('A. BGH gán nhân vật trong Danh sách tài khoản')
     ad.click('[data-module=accounts]'); ad.wait_for_timeout(300)
     check('bảng tài khoản có cột "Nhân vật"', any(h.strip().lower() == 'nhân vật' for h in ad.locator('th').all_inner_texts()))
-    check('học sinh chưa được gán: ghi "Chưa chọn"', 'Chưa chọn' in ad.inner_text('#accountsTbody tr:has-text("phambaotruc")'))
+    check('mặc định: Phạm Bảo Trúc có Gạo; học sinh khác chưa gán ghi "Chưa chọn"', {a['id']: a for a in ls(ad, 'mm_accounts')}['phambaotruc'].get('characterId') == 'gao' and 'Gạo' in ad.inner_text('#accountsTbody tr:has-text("phambaotruc")') and 'Chưa chọn' in ad.inner_text('#accountsTbody tr:has-text("tranthanhkhoa")'))
     ad.click('#accountsTbody tr:has-text("phambaotruc") button[title="Sửa"]'); ad.wait_for_timeout(300)
     opts = ad.locator('#accFormChar option').all_inner_texts()
     check('form có ô chọn nhân vật: "— Chưa chọn —" + 9 nhân vật', len(opts) == 10 and opts[0].startswith('—'), opts)

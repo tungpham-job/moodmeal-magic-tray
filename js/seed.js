@@ -134,7 +134,9 @@ const SEED_ACCOUNTS = [
     role: 'student',
     name: 'Phạm Bảo Trúc',
     linkedId: 'phbaotruc',
-    avatar: '🧒'
+    avatar: '🧒',
+    characterId: 'gao',
+    xp: 605
   },
   {
     id: 'nguyenminhan',
