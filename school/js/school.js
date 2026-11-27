@@ -453,11 +453,11 @@ function renderMenuTab() {
 
   function chipsOf(date) {
     return menu.filter(m => m.date === date).map(m => `
-        <div class="menu-chip" title="Nhóm: ${escHtml(menuGroupName(m))}">
+        <div class="menu-chip" title="Nhóm: ${escHtml(menuGroupName(m))} — bấm để sửa" onclick="openEditMenu('${m.id}')">
           <span class="menu-chip-icon">${escHtml(m.icon || groupIcon(m.groupId || m.group))}</span>
           <span class="menu-chip-name">${escHtml(m.name)}</span>
           ${m.isNew ? '<span class="menu-chip-new">MỚI</span>' : ''}
-          <button class="btn btn-ghost btn-icon" style="padding:0;font-size:11px" onclick="deleteMenuItem('${m.id}')">✕</button>
+          <button class="btn btn-ghost btn-icon" style="padding:0;font-size:11px" onclick="event.stopPropagation();deleteMenuItem('${m.id}')">✕</button>
         </div>`).join('');
   }
 
@@ -566,6 +566,12 @@ function getMenuDays(view, anchor) {
 }
 
 
+/* Ngữ cảnh form món: editId = đang sửa món có id này; week = đang thao tác trên bản nháp của cửa sổ "Thêm thực đơn tuần" */
+let menuCtx = { editId: null, week: false };
+
+function menuDataGet()  { return menuCtx.week ? wmDraft : loadKey(KEY.MENU, []); }
+function menuDataSave(arr) { if (menuCtx.week) wmDraft = arr; else saveKey(KEY.MENU, arr); }
+
 function saveMenuItem() {
   const date   = document.getElementById('menuDate').value;
   const name   = document.getElementById('menuName').value.trim();
@@ -574,15 +580,19 @@ function saveMenuItem() {
 
   const ingId = document.getElementById('menuIngredient').value;
   const ing   = loadKey(KEY.INGREDIENTS, DEFAULT_INGREDIENTS).find(g => g.id === ingId);
+  if (!date) { showToast('Vui lòng chọn ngày!', 'error'); return; }
   if (!ing)  { showToast('Vui lòng chọn nguyên liệu chính!', 'error'); return; }
   if (!name) { showToast('Vui lòng nhập tên món!', 'error'); return; }
 
-  const menu = loadKey(KEY.MENU, []);
-  menu.push({ id: 'm' + Date.now(), date, name, ingredientId: ing.id, groupId: ing.groupId || null, icon: icon || ing.icon || groupIcon(ing.groupId), isNew });
-  saveKey(KEY.MENU, menu);
+  const menu = menuDataGet();
+  const fields = { date, name, ingredientId: ing.id, groupId: ing.groupId || null, icon: icon || ing.icon || groupIcon(ing.groupId), isNew };
+  const editing = menuCtx.editId && menu.find(m => m.id === menuCtx.editId);
+  if (editing) { Object.assign(editing, fields); delete editing.auto; }
+  else menu.push({ id: 'm' + Date.now() + Math.floor(Math.random() * 1000), ...fields });
+  menuDataSave(menu);
   closeModal('modalMenu');
-  renderMenuTab();
-  showToast('Đã thêm món vào thực đơn!');
+  if (menuCtx.week) renderWeekMenuModal(); else renderMenuTab();
+  showToast(editing ? 'Đã lưu thay đổi!' : 'Đã thêm món vào thực đơn!');
 }
 
 /* Danh sách icon gợi ý cho picker */
@@ -605,14 +615,43 @@ function pickIcon(icon) {
   document.getElementById('iconPickerPanel').style.display = 'none';
 }
 
-function openAddMenu(date) {
+function setMenuModalMode(editing) {
+  document.querySelector('#modalMenu .modal-title').textContent = editing ? '✏️ Sửa món trong thực đơn' : '+ Thêm món vào thực đơn';
+  document.querySelector('#modalMenu .modal-footer .btn-primary').textContent = editing ? 'Lưu thay đổi' : 'Thêm vào thực đơn';
+}
+
+function openAddMenu(date, fromWeek) {
+  menuCtx = { editId: null, week: !!fromWeek };
+  setMenuModalMode(false);
   document.getElementById('menuDate').value = date;
   document.getElementById('menuName').value = '';
   document.getElementById('menuIcon').value = '';
   document.getElementById('menuIngredient').value = '';
+  document.getElementById('menuIsNew').checked = false;
   document.getElementById('menuIconDisplay').textContent = '🍽️';
   document.getElementById('iconPickerPanel').style.display = 'none';
   fillGroupSelect('menuGroup');
+  renderMenuIngredientPick();
+  openModal('modalMenu');
+}
+
+/* Sửa một món đã có: cùng form với thêm món, chỉ khác tiêu đề/nút */
+function openEditMenu(id, fromWeek) {
+  const m = (fromWeek ? wmDraft : loadKey(KEY.MENU, [])).find(x => x.id === id);
+  if (!m) return;
+  menuCtx = { editId: id, week: !!fromWeek };
+  setMenuModalMode(true);
+  const ing = loadKey(KEY.INGREDIENTS, DEFAULT_INGREDIENTS).find(g => g.id === m.ingredientId);
+  const gid = m.groupId || (ing && ing.groupId) || '';
+  document.getElementById('menuDate').value = m.date;
+  document.getElementById('menuName').value = m.name;
+  document.getElementById('menuIcon').value = m.icon || '';
+  document.getElementById('menuIsNew').checked = !!m.isNew;
+  document.getElementById('menuIconDisplay').textContent = m.icon || (ing && ing.icon) || '🍽️';
+  document.getElementById('iconPickerPanel').style.display = 'none';
+  fillGroupSelect('menuGroup', gid);
+  if (gid) document.getElementById('menuGroup').value = gid;
+  document.getElementById('menuIngredient').value = ing ? ing.id : '';
   renderMenuIngredientPick();
   openModal('modalMenu');
 }
@@ -643,6 +682,153 @@ function pickMenuIngredient(id) {
   document.getElementById('menuIcon').value = g.icon;
   document.getElementById('menuIconDisplay').textContent = g.icon;
   renderMenuIngredientPick();
+}
+
+/* ── Thêm thực đơn tuần ──
+   Làm việc trên bản nháp (wmDraft = bản sao toàn bộ thực đơn); chỉ ghi khi bấm "Lưu thực đơn tuần".
+   Xếp tự động: chỉ T2–T6, chỉ lấp chỗ trống, mỗi ngày N nhóm khác nhau, một nhóm chỉ xuất hiện lại sau ≥ `gap` ngày. */
+let wmDraft = [], wmAnchor = new Date(), wmPerDay = 3, wmGap = 2;
+const WM_DAYNAMES = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+
+function wmDayNum(dateStr) { const [y, m, d] = dateStr.split('-').map(Number); return Math.round(Date.UTC(y, m - 1, d) / 86400000); }
+function wmGroupOf(m) {
+  if (m.groupId) return m.groupId;
+  const ing = loadKey(KEY.INGREDIENTS, DEFAULT_INGREDIENTS).find(x => x.id === m.ingredientId);
+  return ing ? ing.groupId : null;
+}
+
+function openWeekMenu() {
+  wmDraft = JSON.parse(JSON.stringify(loadKey(KEY.MENU, [])));
+  wmAnchor = new Date(menuAnchor);
+  openModal('modalWeekMenu');
+  renderWeekMenuModal();
+}
+
+function wmShiftWeek(dir) {
+  wmAnchor = new Date(wmAnchor.getFullYear(), wmAnchor.getMonth(), wmAnchor.getDate() + 7 * dir);
+  renderWeekMenuModal();
+}
+
+function wmSetOpts() {
+  wmPerDay = +document.getElementById('wmPerDay').value;
+  wmGap    = +document.getElementById('wmGap').value;
+  renderWeekMenuModal();
+}
+
+/* Xếp thử/thật. Trả về {filled, need}. dry = true thì không ghi vào wmDraft. */
+function wmArrange(dry) {
+  const days = getMenuDays('week', wmAnchor).slice(0, 5);           // T2–T6
+  const groups = mmFoodGroups().filter(g => g.active !== false);
+  const ings = loadKey(KEY.INGREDIENTS, DEFAULT_INGREDIENTS).filter(g => g.active !== false);
+  const work = dry ? wmDraft.map(m => ({ ...m })) : wmDraft;
+  const lastUse = g => {                                           // ngày gần nhất nhóm g được dùng (trước ngày đang xếp)
+    return work.filter(m => wmGroupOf(m) === g).map(m => wmDayNum(m.date));
+  };
+  let filled = 0, need = 0;
+  days.forEach(({ date }) => {
+    const todays = work.filter(m => m.date === date);
+    const usedToday = new Set(todays.map(wmGroupOf));
+    const slots = Math.max(0, wmPerDay - todays.length);
+    need += slots;
+    const dn = wmDayNum(date);
+    for (let k = 0; k < slots; k++) {
+      const cands = groups.filter(g => !usedToday.has(g.id) && g.id !== undefined &&
+        ings.some(i => i.groupId === g.id) &&
+        lastUse(g.id).every(u => Math.abs(dn - u) >= wmGap));
+      if (!cands.length) break;
+      // ưu tiên nhóm lâu chưa xuất hiện nhất (gần đây nhất cách xa nhất), hòa thì ngẫu nhiên
+      const score = g => { const u = lastUse(g.id).filter(x => x < dn); return u.length ? dn - Math.max(...u) : 999; };
+      cands.sort((a, b) => score(b) - score(a) || Math.random() - 0.5);
+      const g = cands[0];
+      const pool = ings.filter(i => i.groupId === g.id);
+      const usedIng = new Set(work.map(m => m.ingredientId));
+      const fresh = pool.filter(i => !usedIng.has(i.id));
+      const list = fresh.length ? fresh : pool;
+      const ing = list[Math.floor(Math.random() * list.length)];
+      work.push({ id: 'm' + Date.now() + '-' + work.length + Math.floor(Math.random() * 1000), date, name: ing.name,
+        ingredientId: ing.id, groupId: g.id, icon: ing.icon || g.icon, isNew: false, auto: true });
+      usedToday.add(g.id);
+      filled++;
+    }
+  });
+  return { filled, need };
+}
+
+function wmAutoArrange() {
+  const r = wmArrange(false);
+  renderWeekMenuModal();
+  showToast(r.need === 0 ? 'T2–T6 đã đủ món, không có chỗ trống để xếp.'
+    : r.filled === r.need ? `Đã xếp ${r.filled} món vào các chỗ trống!`
+    : `Chỉ xếp được ${r.filled}/${r.need} chỗ — hãy giảm số món hoặc số ngày cách.`, r.filled === r.need ? undefined : 'error');
+}
+
+function wmDeleteItem(id) {
+  wmDraft = wmDraft.filter(m => m.id !== id);
+  renderWeekMenuModal();
+}
+
+function renderWeekMenuModal() {
+  const days = getMenuDays('week', wmAnchor);
+  const dm = d => `${d.getDate()}/${d.getMonth() + 1}`;
+  const first = days[0].d, last = days[6].d;
+  const dates = days.map(x => x.date);
+  const sel = (id, from, to, cur, fmt) => `<select class="form-control" id="${id}" onchange="wmSetOpts()" style="width:auto">` +
+    Array.from({ length: to - from + 1 }, (_, i) => from + i).map(n => `<option value="${n}" ${n === cur ? 'selected' : ''}>${fmt(n)}</option>`).join('') + '</select>';
+
+  // dòng nào vi phạm quy tắc cách ngày (trong tuần đang xem)
+  const inWeek = wmDraft.filter(m => dates.includes(m.date));
+  const bad = new Set();
+  inWeek.forEach(a => inWeek.forEach(b => {
+    if (a === b) return;
+    const ga = wmGroupOf(a); if (!ga || ga !== wmGroupOf(b)) return;
+    if (Math.abs(wmDayNum(a.date) - wmDayNum(b.date)) < wmGap) bad.add(a.id);
+  }));
+
+  const sim = wmArrange(true);
+  const slots5 = 5 * wmPerDay;
+  let feas;
+  if (sim.need === 0) feas = `<span style="color:var(--green-dark)">✓ T2–T6 đã đủ ${wmPerDay} món/ngày.</span>`;
+  else if (sim.filled === sim.need) feas = `<span style="color:var(--green-dark)">✓ Xếp được ${sim.need} chỗ trống (T2–T6: ${slots5} chỗ · ${mmFoodGroups().filter(g => g.active !== false).length} nhóm · cách ${wmGap} ngày).</span>`;
+  else feas = `<span style="color:#A35F00">⚠ Với quy tắc này chỉ xếp được ${sim.filled}/${sim.need} chỗ trống. Hãy giảm số món mỗi ngày hoặc giảm số ngày cách.</span>`;
+
+  const rows = days.map(({ d, date }) => {
+    const items = wmDraft.filter(m => m.date === date);
+    const wk = d.getDay() === 0 || d.getDay() === 6;
+    const chips = items.map(m => `<span class="wm-chip ${m.auto ? 'auto' : ''} ${bad.has(m.id) ? 'warn' : ''}" onclick="openEditMenu('${m.id}', true)"
+        title="${bad.has(m.id) ? 'Nhóm này xuất hiện lại sớm hơn quy tắc — vẫn được lưu. ' : ''}Bấm để sửa">
+        ${escHtml(m.icon || groupIcon(m.groupId))} ${escHtml(m.name)}${m.isNew ? ' <em>MỚI</em>' : ''}${m.auto ? ' ✨' : ''}
+        <b onclick="event.stopPropagation();wmDeleteItem('${m.id}')">✕</b></span>`).join('');
+    const cnt = wk ? `${items.length} món` : `${items.length}/${wmPerDay}`;
+    return `<div class="wm-row ${wk ? 'weekend' : ''}">
+      <div class="wm-day">${WM_DAYNAMES[d.getDay()]}<small>${dm(d)}</small></div>
+      <div class="wm-chips">${chips || '<span class="wm-empty">' + (wk ? 'Không xếp tự động' : 'Chưa có món') + '</span>'}</div>
+      <span class="wm-cnt ${!wk && items.length >= wmPerDay ? 'full' : ''}">${cnt}</span>
+      <button class="btn btn-secondary btn-sm" onclick="openAddMenu('${date}', true)">+ Chọn món</button>
+    </div>`;
+  }).join('');
+
+  document.getElementById('wmBody').innerHTML = `
+    <div class="wm-weeknav">
+      <button class="btn btn-secondary btn-sm" onclick="wmShiftWeek(-1)">◀</button>
+      <b>Tuần ${dm(first)} – ${dm(last)}/${last.getFullYear()}</b>
+      <button class="btn btn-secondary btn-sm" onclick="wmShiftWeek(1)">▶</button>
+    </div>
+    <div class="wm-opts">
+      <label>Số món mỗi ngày ${sel('wmPerDay', 1, 6, wmPerDay, n => n + ' món')}</label>
+      <label>Cách ít nhất ${sel('wmGap', 1, 4, wmGap, n => n + ' ngày')} mới lặp lại một nhóm</label>
+      <button class="btn btn-primary btn-sm" onclick="wmAutoArrange()">✨ Xếp thực đơn tự động</button>
+    </div>
+    <div class="wm-feas">${feas}<br><span style="color:var(--text-muted)">Chỉ xếp T2–T6, chỉ lấp chỗ trống (món đã có được giữ nguyên). Tên món = tên nguyên liệu — bấm vào món để sửa. Món MỚI do BGH tự đánh dấu.</span></div>
+    <div class="wm-list">${rows}</div>`;
+}
+
+function saveWeekMenu() {
+  wmDraft.forEach(m => { delete m.auto; });
+  saveKey(KEY.MENU, wmDraft);
+  closeModal('modalWeekMenu');
+  menuAnchor = new Date(wmAnchor);
+  renderMenuTab();
+  showToast('Đã lưu thực đơn tuần!');
 }
 
 function deleteMenuItem(id) {

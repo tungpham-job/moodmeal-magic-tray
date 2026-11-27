@@ -604,3 +604,26 @@ textarea.form-control { resize: vertical; min-height: 80px; }
 
 /* Cửa sổ Sửa/Thêm tài khoản rộng hơn (650px) để Phụ huynh liên kết và Lớp nằm chung một hàng */
 #modalAccount .modal-box { max-width: 650px; }
+
+/* Cửa sổ Thêm thực đơn tuần (modalMenu nằm sau trong DOM nên luôn nổi lên trên) */
+#modalWeekMenu .modal-box { max-width: 760px; }
+.wm-weeknav { display:flex; align-items:center; justify-content:center; gap:12px; margin-bottom:12px; }
+.wm-opts { display:flex; flex-wrap:wrap; align-items:center; gap:12px; font-size:13px; margin-bottom:8px; }
+.wm-opts label { display:flex; align-items:center; gap:6px; }
+.wm-feas { font-size:12px; margin-bottom:10px; line-height:1.5; }
+.wm-list { border:1.5px solid var(--border-light); border-radius:var(--radius-md); overflow:hidden; }
+.wm-row { display:flex; align-items:center; gap:10px; padding:8px 10px; border-bottom:1px solid var(--border-light); background:var(--white); }
+.wm-row:last-child { border-bottom:none; }
+.wm-row.weekend { background:#F8FAFB; }
+.wm-day { width:44px; flex-shrink:0; font-weight:700; font-size:13px; text-align:center; }
+.wm-day small { display:block; font-weight:400; font-size:10px; color:var(--text-muted); }
+.wm-chips { flex:1; display:flex; flex-wrap:wrap; gap:5px; min-width:0; }
+.wm-empty { font-size:12px; color:var(--text-muted); }
+.wm-chip { display:inline-flex; align-items:center; gap:4px; padding:3px 8px; font-size:12px; border:1px solid var(--border-light); border-radius:14px; background:var(--white); cursor:pointer; }
+.wm-chip:hover { border-color:var(--green-accent); }
+.wm-chip.auto { background:var(--green-light); }
+.wm-chip.warn { border-color:#E0A030; background:#FFF6E0; }
+.wm-chip em { font-style:normal; font-size:9px; font-weight:700; background:var(--green-light); color:var(--green-dark); padding:1px 5px; border-radius:4px; }
+.wm-chip b { font-size:10px; color:var(--text-muted); cursor:pointer; padding-left:2px; }
+.wm-cnt { font-size:12px; color:var(--text-muted); width:46px; text-align:right; flex-shrink:0; }
+.wm-cnt.full { color:var(--green-dark); font-weight:700; }

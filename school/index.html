@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏫</text></svg>">
   <title>Ban Giám Hiệu — MOODMEAL MAGIC TRAY</title>
-  <link rel="stylesheet" href="../css/base.css?v=20261127zi">
-  <link rel="stylesheet" href="../css/school.css?v=20261127zi">
-  <link rel="stylesheet" href="../css/characters.css?v=20261127zi">
+  <link rel="stylesheet" href="../css/base.css?v=20261128a">
+  <link rel="stylesheet" href="../css/school.css?v=20261128a">
+  <link rel="stylesheet" href="../css/characters.css?v=20261128a">
 </head>
 <body class="page-school">
 <div class="school-layout">
@@ -117,7 +117,7 @@
         <!-- Tab: Thực đơn -->
         <div class="tab-panel active" id="tab-menu">
           <div style="display:flex;gap:8px;margin-bottom:16px">
-            <button class="btn btn-primary" onclick="openAddMenu(toLocalDateStr(new Date()))">+ Thêm món hôm nay</button>
+            <button class="btn btn-primary" onclick="openWeekMenu()">+ Thêm thực đơn tuần này</button>
             <button class="btn btn-secondary" style="margin-left:auto" onclick="refreshTab('menu')">↻ Làm mới</button>
           </div>
           <div id="weekGrid"></div>
@@ -406,6 +406,20 @@
 </div>
 
 <!-- Modal: Thêm món vào thực đơn -->
+<div class="modal-overlay" id="modalWeekMenu">
+  <div class="modal-box">
+    <div class="modal-header">
+      <span class="modal-title">📅 Thêm thực đơn tuần</span>
+      <button class="modal-close" onclick="closeModal('modalWeekMenu')">×</button>
+    </div>
+    <div class="modal-body" id="wmBody"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modalWeekMenu')">Hủy</button>
+      <button class="btn btn-primary" onclick="saveWeekMenu()">Lưu thực đơn tuần</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modalMenu">
   <div class="modal-box">
     <div class="modal-header">
@@ -646,15 +660,15 @@
 </div>
 
 <!-- ══ SCRIPTS ══ -->
-<script src="../js/config.js?v=20261127zi"></script>
-<script src="../js/seed.js?v=20261127zi"></script>
-<script src="../js/utils.js?v=20261127zi"></script>
-<script src="../js/store.js?v=20261127zi"></script>
-<script src="../js/auth.js?v=20261127zi"></script>
-<script src="../js/xp.js?v=20261127zi"></script>
-<script src="../js/characters.js?v=20261127zi"></script>
-<script src="../js/badges.js?v=20261127zi"></script>
-<script src="js/school.js?v=20261127zi"></script>
+<script src="../js/config.js?v=20261128a"></script>
+<script src="../js/seed.js?v=20261128a"></script>
+<script src="../js/utils.js?v=20261128a"></script>
+<script src="../js/store.js?v=20261128a"></script>
+<script src="../js/auth.js?v=20261128a"></script>
+<script src="../js/xp.js?v=20261128a"></script>
+<script src="../js/characters.js?v=20261128a"></script>
+<script src="../js/badges.js?v=20261128a"></script>
+<script src="js/school.js?v=20261128a"></script>
 <script>
   /* Filter accounts table by search */
   function filterAccountsTable() {
