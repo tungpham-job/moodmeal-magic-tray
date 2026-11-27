@@ -22,7 +22,7 @@ const MM_KEYS = {
   FAS_LOG:     'mm_fas_log',
   HOME_REQUESTS: 'mm_home_requests',  // yêu cầu thử lại ở nhà (học sinh bấm "Muốn" → ba mẹ nấu)
   CHARACTERS:  'mm_characters',       // nhân vật đồng hành do BGH thiết lập (chưa lưu → dùng mặc định)
-  CHAR_STATE:  'mm_char_state',       // { studentId: { charId, seenLevelIdx } }
+  CHAR_STATE:  'mm_char_state',       // { studentId: { seenLevelIdx } }
   XP_LOG:      'mm_xp_log',
   BADGES_LOG:  'mm_badges_log',
   DEMO_DATE:   'mm_demo_date',        // chuỗi YYYY-MM-DD (không phải JSON)

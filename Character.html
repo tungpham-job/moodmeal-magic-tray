@@ -25,7 +25,7 @@ table.evo td.sp small{display:block;font-weight:400;color:var(--muted);font-size
 .arrow{color:#B0BEC5;font-size:18px}
 /* ---- phones ---- */
 .row{display:flex;gap:28px;flex-wrap:wrap;align-items:flex-start}
-.phone{width:340px;background:#1b1b1b;border-radius:36px;padding:10px;box-shadow:0 8px 24px rgba(0,0,0,.2);flex:none}
+.phone{width:400px;background:#1b1b1b;border-radius:36px;padding:10px;box-shadow:0 8px 24px rgba(0,0,0,.2);flex:none}
 .screen{background:#fff;border-radius:28px;overflow:hidden;height:760px;display:flex;flex-direction:column;position:relative}
 .notch{height:22px;background:#111;display:flex;justify-content:center;align-items:center}
 .notch i{width:90px;height:8px;border-radius:6px;background:#2a2a2a}
@@ -34,8 +34,8 @@ table.evo td.sp small{display:block;font-weight:400;color:var(--muted);font-size
 .hero .s{font-size:11px;opacity:.9;margin-bottom:10px}
 .who{display:flex;align-items:center;gap:10px;border-top:1px solid rgba(255,255,255,.25);padding-top:10px}
 .av{width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:22px}
-.who b{font-size:14px}.who span{font-size:11px;display:block;opacity:.9}
-.logout{margin-left:auto;font-size:11px;border:1px solid rgba(255,255,255,.4);border-radius:8px;padding:4px 8px}
+.who b{font-size:14px}.who span{font-size:11px;display:block;opacity:.9;white-space:nowrap}
+.logout{margin-left:auto;white-space:nowrap;font-size:11px;border:1px solid rgba(255,255,255,.4);border-radius:8px;padding:4px 8px}
 .xp{margin-top:8px;font-size:10.5px}.xp .bar{height:7px;background:rgba(255,255,255,.3);border-radius:5px;margin-top:3px;overflow:hidden}.xp .bar i{display:block;height:100%;width:62%;background:#6DEBB0}
 .body{flex:1;overflow:hidden;padding:0 0 8px}
 .pet{margin:12px 12px 0;border-radius:16px;background:linear-gradient(180deg,#F3FBF6,#DDF4E6);border:1.5px solid #BFE8CF;padding:8px 10px 10px;text-align:center;position:relative}
@@ -56,7 +56,7 @@ table.evo td.sp small{display:block;font-weight:400;color:var(--muted);font-size
 .big small{display:block;font-weight:400;font-size:11px;opacity:.9}
 .nav{display:flex;border-top:1px solid var(--line);font-size:10px;text-align:center;padding:7px 0 9px;margin-top:auto}
 .nav div{flex:1}.nav b{color:var(--green-dark)}
-.cap{font-size:12px;color:var(--muted);text-align:center;margin-top:8px;width:340px}
+.cap{font-size:12px;color:var(--muted);text-align:center;margin-top:8px;width:400px}
 /* animations */
 @keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
 @keyframes float{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-12px) rotate(2deg)}}
@@ -118,7 +118,9 @@ table.lv svg{width:52px;height:52px}
 <body>
 <div class="wrap">
 <h1>Nhân vật đồng hành MoodMeal — sơ đồ tiến hóa và mockup</h1>
-<p class="sub">Bản thiết kế các nhân vật theo chủ đề thực phẩm</p>
+<p class="sub">Bản thiết kế để duyệt (chưa lập trình). Các nhân vật bên dưới là nhân vật <b>gốc do mình thiết kế</b> theo chủ đề thực phẩm, vẽ bằng hình học SVG.</p>
+<div class="note"><b>Về việc dùng Pokémon:</b> Pokémon là nhân vật có bản quyền của Nintendo/Game Freak/The Pokémon Company. Tôi không vẽ hay tái tạo các nhân vật đó, và nếu đưa vào sản phẩm dự thi STEMPETITION thì cũng có rủi ro về bản quyền. Vì vậy tôi thiết kế 9 dòng nhân vật gốc với cùng cơ chế "chọn nhân vật đầu game, lên cấp thì tiến hóa". Cơ chế chọn nhân vật và tiến hóa đều giữ nguyên, nên sau này bạn có thể đổi hình bằng tranh các em tự vẽ qua trang BGH.</div>
+
 <h2>1. Sơ đồ tiến hóa</h2>
 <p class="sub">9 dòng nhân vật × 4 cấp, khớp bảng Level hiện tại (Người mới 0–99 XP · Người khám phá 100–299 · Nhà thám hiểm 300–599 · Đại sứ dinh dưỡng 600+). Mỗi lần lên level là một lần tiến hóa.</p>
 <div class="card"><div style="overflow-x:auto"><table class="evo" id="evoTable"></table></div></div>

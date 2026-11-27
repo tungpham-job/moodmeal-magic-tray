@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════
    character.js — Nhân vật đồng hành ở Trang chủ học sinh
-   - Lần đầu đăng nhập: màn chọn nhân vật (chỉ các nhân vật BGH đang bật)
+   - Nhân vật do BGH gán ở Danh sách tài khoản (học sinh không tự chọn); chưa gán thì hiện lời nhắn
    - Thẻ nhân vật dưới thông tin học sinh: hoạt ảnh theo Level, XP còn thiếu để tiến hóa
    - Lên Level (hiện ra khi mở Trang chủ): chiếu hoạt ảnh tiến hóa từ hình cũ sang hình mới
    Cần: js/characters.js, js/xp.js, js/auth.js
@@ -67,47 +67,26 @@
   function renderCard(ch) {
     const idx = curIdx();
     host.innerHTML = cardHtml(ch, idx);
-    /* Level tăng từ lần mở trước → chiếu hoạt ảnh tiến hóa một lần */
+    /* Level tăng từ lần mở trước → chiếu hoạt ảnh tiến hóa một lần. Chưa có ghi nhận (BGH vừa gán) → hiện thẳng, không chiếu. */
     const state = mmCharState(sid);
-    if (state && state.seenLevelIdx < idx) {
+    if (!state || state.seenLevelIdx > idx) { mmCharSaveState(sid, { seenLevelIdx: idx }); return; }
+    if (state.seenLevelIdx < idx) {
       const from = state.seenLevelIdx;
-      mmCharSaveState(sid, { charId: ch.id, seenLevelIdx: idx });
+      mmCharSaveState(sid, { seenLevelIdx: idx });
       setTimeout(() => playEvolution(ch, from, idx), 500);
     }
   }
 
-  /* Màn chọn nhân vật lần đầu */
-  function showChooser() {
-    const list = mmCharAll(false);
-    if (!list.length) return;                           // BGH chưa bật nhân vật nào → không hiện
-    let picked = null;
-    const ov = document.createElement('div');
-    ov.className = 'char-chooser';
-    ov.innerHTML = `
-      <div class="char-chooser-head"><h2>🥚 Chọn bạn đồng hành!</h2>
-        <p>Bạn này sẽ cùng em khám phá thực phẩm và lớn lên mỗi lần em lên cấp</p></div>
-      <div class="char-chooser-body"><div class="char-grid">${list.map(c => `
-        <button type="button" class="char-opt" data-id="${escHtml(c.id)}">
-          <div class="char-art">${mmCharArt(c, 0)}</div><b>${escHtml(c.name)}</b><span>${escHtml(c.desc || '')}</span>
-        </button>`).join('')}</div></div>
-      <div class="char-chooser-foot">
-        <button type="button" class="char-chooser-btn" id="charOk" disabled>✓ Chọn bạn này</button>
-        <div class="char-chooser-note">Em chỉ chọn một lần. Bạn đồng hành sẽ lớn lên khi em lên Level.</div>
+  /* BGH chưa gán nhân vật cho học sinh này */
+  function renderEmpty() {
+    host.innerHTML = `
+      <div class="pet-card pet-empty" id="petCard">
+        <div style="font-size:44px;line-height:1.3">🥚</div>
+        <div class="pet-name">Chưa có bạn đồng hành</div>
+        <div class="pet-next">Nhờ thầy cô chọn bạn đồng hành cho em nhé!</div>
       </div>`;
-    document.querySelector('.phone-frame').appendChild(ov);
-    ov.querySelectorAll('.char-opt').forEach(b => b.onclick = () => {
-      picked = b.dataset.id;
-      ov.querySelectorAll('.char-opt').forEach(x => x.classList.toggle('picked', x === b));
-      ov.querySelector('#charOk').disabled = false;
-    });
-    ov.querySelector('#charOk').onclick = () => {
-      if (!picked || !mmCharChoose(sid, picked, curIdx())) return;
-      ov.remove();
-      renderCard(mmCharById(picked));
-    };
   }
 
-  const state = mmCharState(sid);
-  const ch = state ? mmCharById(state.charId) : null;
-  if (ch) renderCard(ch); else showChooser();
+  const ch = mmCharOf(sid);
+  if (ch) renderCard(ch); else renderEmpty();
 })();

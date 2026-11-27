@@ -3,8 +3,8 @@
 
    - 9 nhân vật gốc có hình vẽ sẵn (SVG), mỗi bạn 4 cấp khớp 4 Level.
    - BGH thêm/sửa/bật tắt nhân vật, đặt tên hình dạng, hình (vẽ sẵn hoặc tải ảnh), hoạt ảnh theo từng Level.
-   - Dữ liệu: mm_characters (danh sách nhân vật; chưa lưu thì dùng mặc định) và
-     mm_char_state ({ [studentId]: { charId, seenLevelIdx } }) lưu nhân vật con đã chọn và Level con đã thấy.
+   - Dữ liệu: mm_characters (danh sách nhân vật; chưa lưu thì dùng mặc định); account.characterId (BGH gán
+     ở Danh sách tài khoản); mm_char_state ({ [studentId]: { seenLevelIdx } }) nhớ Level con đã thấy.
    Nạp sau js/store.js và js/xp.js.
 ═══════════════════════════════════════════════ */
 
@@ -238,22 +238,29 @@ function mmCharArt(ch, idx) {
   return creature('custom', drawn, { color: col, dark: mmDarken(col), belly: mmLighten(col) });
 }
 
-/* ── Nhân vật đã chọn của học sinh ───────────── */
+/* ── Nhân vật của học sinh ───────────────────────
+   BGH gán nhân vật ở Danh sách tài khoản: account.characterId.
+   mm_char_state chỉ nhớ Level con đã thấy ({ studentId: { seenLevelIdx } }) để chiếu hoạt ảnh tiến hóa một lần. */
 function mmCharStateAll() { return store.get(MM_KEYS.CHAR_STATE, {}); }
 function mmCharState(studentId) { return mmCharStateAll()[studentId] || null; }
 function mmCharSaveState(studentId, st) {
   const all = mmCharStateAll(); all[studentId] = st; return store.set(MM_KEYS.CHAR_STATE, all);
 }
 
-/* Học sinh chọn nhân vật lần đầu: ghi nhân vật và Level đã thấy (để không chiếu hoạt ảnh lên cấp cũ) */
-function mmCharChoose(studentId, charId, curIdx) {
-  if (!mmCharById(charId)) return false;
-  return mmCharSaveState(studentId, { charId, seenLevelIdx: curIdx });
+/* Nhân vật BGH đã gán cho học sinh (null nếu chưa gán hoặc nhân vật đã bị xóa) */
+function mmCharOf(studentId) {
+  const acc = store.get(MM_KEYS.ACCOUNTS, []).find(a => a.id === studentId);
+  return acc && acc.characterId ? mmCharById(acc.characterId) : null;
+}
+
+/* Coi Level hiện tại là đã thấy (khi BGH gán/đổi nhân vật thì hiện thẳng hình của Level hiện tại, không chiếu hoạt ảnh) */
+function mmCharMarkSeen(studentId) {
+  return mmCharSaveState(studentId, { seenLevelIdx: mmCharLevelIdx(getLevelInfo(getStudentXp(studentId)).level) });
 }
 
 /* Số học sinh đang dùng từng nhân vật: { charId: n } */
 function mmCharUsage() {
   const u = {};
-  Object.values(mmCharStateAll()).forEach(s => { if (s && s.charId) u[s.charId] = (u[s.charId] || 0) + 1; });
+  store.get(MM_KEYS.ACCOUNTS, []).forEach(a => { if (a.role === 'student' && a.characterId) u[a.characterId] = (u[a.characterId] || 0) + 1; });
   return u;
 }

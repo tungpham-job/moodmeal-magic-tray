@@ -23,7 +23,7 @@ def student_part(browser, base):
     ls = lambda k: json.loads(page.evaluate(f"localStorage.getItem('{k}')") or 'null')
     print('A. Học sinh')
     page.goto(base + '/student/index.html'); page.wait_for_timeout(500)
-    check('schema = 5, có 9 nhóm', ls('mm_schema_version') == 5 and len(ls('mm_food_groups') or []) == 9)
+    check('schema = 6, có 9 nhóm', ls('mm_schema_version') == 6 and len(ls('mm_food_groups') or []) == 9)
     page.goto(base + '/index.html'); page.fill('#username', 'phambaotruc'); page.fill('#password', 'hs001'); page.click('#btnSubmit'); page.wait_for_timeout(700)
     page.goto(base + '/student/screen1.html'); page.wait_for_timeout(500)
     check('9 hành tinh (mỗi nhóm một hành tinh)', page.locator('.planet-card').count() == 9)

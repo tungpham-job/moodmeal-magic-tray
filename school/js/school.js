@@ -90,16 +90,18 @@ function renderAccounts() {
     const statusText  = acc.locked ? '🔒 Tạm khóa' : '✅ Hoạt động';
 
     // XP / Level / Danh hiệu: chỉ có với học sinh, tính trực tiếp từ dữ liệu hiện tại
-    let statCells = '<td style="color:#aaa">—</td><td style="color:#aaa">—</td><td style="color:#aaa">—</td>';
+    let statCells = '<td style="color:#aaa">—</td><td style="color:#aaa">—</td><td style="color:#aaa">—</td><td style="color:#aaa">—</td>';
     if (acc.role === 'student') {
       const info   = getLevelInfo(getStudentXp(acc.id));
       const earned = getEarnedBadges(acc.id);
       const icons  = earned.length
         ? earned.map(b => `<span title="${escHtml(b.def.name)}${b.awardedDate ? ' · ' + b.awardedDate : ''}" style="font-size:18px;margin-right:2px">${b.def.icon}</span>`).join('')
         : '<span style="color:#aaa">—</span>';
+      const ch = acc.characterId ? mmCharById(acc.characterId) : null;
       statCells = `
         <td><strong>${info.xp}</strong> <span style="color:#888;font-size:11px">XP</span></td>
         <td><span class="badge badge-blue">Level ${info.level} · ${escHtml(info.name)}</span></td>
+        <td>${ch ? escHtml(ch.name) : '<span style="color:#aaa">Chưa chọn</span>'}</td>
         <td>${icons}</td>`;
     }
 
@@ -162,6 +164,15 @@ function renderBadgeChecks(studentId) {
     </label>`).join('');
 }
 
+/* Ô chọn nhân vật: nhân vật đang bật + nhân vật đã gán (kể cả khi đang tắt) */
+function renderCharSelect(studentId) {
+  const acc = studentId ? auth.getAccounts().find(a => a.id === studentId) : null;
+  const cur = acc && acc.characterId ? acc.characterId : '';
+  const list = mmCharAll(true).filter(c => c.active !== false || c.id === cur);
+  document.getElementById('accFormChar').innerHTML = '<option value="">— Chưa chọn —</option>' +
+    list.map(c => `<option value="${escHtml(c.id)}"${c.id === cur ? ' selected' : ''}>${escHtml(c.name)}${c.active === false ? ' (đang tắt)' : ''}</option>`).join('');
+}
+
 function toggleStudentStats(role, studentId) {
   const wrap = document.getElementById('studentStatsWrap');
   wrap.style.display = role === 'student' ? 'block' : 'none';
@@ -170,6 +181,7 @@ function toggleStudentStats(role, studentId) {
   const xpEl = document.getElementById('accFormXp');
   if (xpEl.value === '') xpEl.value = studentId ? getStudentXp(studentId) : 0;
   syncLevelFromXp();
+  renderCharSelect(studentId);
   renderBadgeChecks(studentId);
 }
 
@@ -255,6 +267,8 @@ function saveAccount() {
 
   const accounts = auth.getAccounts();
   let nameChanged = false;
+  const charVal = isStudent ? (document.getElementById('accFormChar').value || null) : null;
+  let charChanged = false;
 
   if (editId) {
     // Sửa
@@ -276,7 +290,17 @@ function saveAccount() {
     updateLinkedId(accounts, id, linked);
   }
 
+  /* Nhân vật đồng hành lưu cùng tài khoản; đổi/gán mới thì hiện thẳng hình của Level hiện tại (không chiếu hoạt ảnh lên cấp) */
+  const savedAcc = accounts.find(a => a.id === (editId || id));
+  if (savedAcc) {
+    const prevChar = savedAcc.characterId || null;
+    if (isStudent) { if (charVal) savedAcc.characterId = charVal; else delete savedAcc.characterId; }
+    else delete savedAcc.characterId;
+    charChanged = isStudent && prevChar !== charVal;
+  }
+
   auth.saveAccounts(accounts);
+  if (charChanged) mmCharMarkSeen(editId || id);
 
   if (isStudent) {
     const wanted = [...document.querySelectorAll('.accBadgeChk:checked')].map(c => c.value);

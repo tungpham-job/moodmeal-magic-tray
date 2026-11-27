@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Kiểm thử nhân vật đồng hành: chọn lần đầu, tiến hóa khi lên Level, BGH thiết lập nhân vật.
+"""Kiểm thử nhân vật đồng hành: BGH gán nhân vật ở Danh sách tài khoản, tiến hóa khi lên Level, BGH thiết lập nhân vật.
 
 Chạy:  python tests/test_characters.py     (cần: pip install playwright && playwright install chromium)
 Thoát mã 0 nếu mọi bước đạt, mã 1 nếu có bước lỗi. Dùng trình duyệt mới, không đụng dữ liệu trình duyệt thật.
@@ -27,30 +27,50 @@ def ls(pg, k): return json.loads(pg.evaluate(f"localStorage.getItem('{k}')") or 
 def add_xp(pg, sid, n):
     pg.evaluate("([sid,n])=>{for(let i=0;i<n;i++) awardXp(sid,'parent_confirm','t'+Date.now()+'-'+i+'-'+Math.random())}", [sid, n])
 
+def assign(ad, sid, char_id):
+    """BGH: mở form sửa tài khoản học sinh, chọn nhân vật, lưu."""
+    ad.click('[data-module=accounts]'); ad.wait_for_timeout(300)
+    ad.click(f'#accountsTbody tr:has-text("{sid}") button[title="Sửa"]'); ad.wait_for_timeout(300)
+    ad.select_option('#accFormChar', char_id); ad.click('button:has-text("Lưu tài khoản")'); ad.wait_for_timeout(400)
+
 def run(browser, base):
     ctx = browser.new_context(viewport={'width': 430, 'height': 900})
+    ad, errs_a = login(ctx, base, 'admin', 'admin2026')
+
+    print('A. BGH gán nhân vật trong Danh sách tài khoản')
+    ad.click('[data-module=accounts]'); ad.wait_for_timeout(300)
+    check('bảng tài khoản có cột "Nhân vật"', any(h.strip().lower() == 'nhân vật' for h in ad.locator('th').all_inner_texts()))
+    check('học sinh chưa được gán: ghi "Chưa chọn"', 'Chưa chọn' in ad.inner_text('#accountsTbody tr:has-text("phambaotruc")'))
+    ad.click('#accountsTbody tr:has-text("phambaotruc") button[title="Sửa"]'); ad.wait_for_timeout(300)
+    opts = ad.locator('#accFormChar option').all_inner_texts()
+    check('form có ô chọn nhân vật: "— Chưa chọn —" + 9 nhân vật', len(opts) == 10 and opts[0].startswith('—'), opts)
+    ad.click('button:has-text("Hủy")') if ad.locator('button:has-text("Hủy")').count() else None
+    ad.wait_for_timeout(200)
+    assign(ad, 'phambaotruc', 'la')
+    acc = {a['id']: a for a in ls(ad, 'mm_accounts')}
+    check('nhân vật lưu trên tài khoản (characterId = la)', acc['phambaotruc'].get('characterId') == 'la', acc['phambaotruc'])
+    check('bảng hiện tên nhân vật Lá', 'Lá' in ad.inner_text('#accountsTbody tr:has-text("phambaotruc")'))
+    check('lưu ghi nhận Level đã thấy (chỉ số 1) để không chiếu tiến hóa', ls(ad, 'mm_char_state')['phambaotruc'] == {'seenLevelIdx': 1}, ls(ad, 'mm_char_state'))
+    check('tài khoản phụ huynh/BGH không có nhân vật', not acc['phbaotruc'].get('characterId') if 'phbaotruc' in acc else True)
+
+    print('B. Học sinh: chỉ xem nhân vật đã được gán')
     st, errs = login(ctx, base, 'phambaotruc', 'hs001')
     st.goto(base + '/student/index.html'); st.wait_for_timeout(700)
-
-    print('A. Học sinh: Trang chủ và chọn nhân vật lần đầu')
     check('mục "Chọn session hôm nay" đã bỏ', st.locator('.nav-cards').count() == 0 and 'Chọn session' not in st.inner_text('body'))
-    check('lần đầu: hiện màn chọn nhân vật với 9 bạn', st.locator('.char-chooser').count() == 1 and st.locator('.char-opt').count() == 9)
-    check('nút chọn bị khóa khi chưa chọn', st.locator('#charOk').is_disabled())
-    st.locator('.char-opt[data-id="la"]').click()
-    check('chọn xong: nút mở, ô được đánh dấu', not st.locator('#charOk').is_disabled() and st.locator('.char-opt.picked').count() == 1)
-    st.click('#charOk'); st.wait_for_timeout(300)
-    state = ls(st, 'mm_char_state')['phambaotruc']
-    check('lưu nhân vật đã chọn + Level đã thấy (Level 2 → chỉ số 1)', state == {'charId': 'la', 'seenLevelIdx': 1}, state)
-    check('màn chọn biến mất, hiện thẻ nhân vật đúng tên hình dạng Lá Nhí', st.locator('.char-chooser').count() == 0 and st.inner_text('#petName') == 'Lá Nhí')
+    check('không có màn chọn nhân vật; thẻ hiện Lá Nhí', st.locator('.char-chooser').count() == 0 and st.locator('.char-opt').count() == 0 and st.inner_text('#petName') == 'Lá Nhí')
     check('thẻ ghi dòng nhân vật, Level và XP còn thiếu', 'Dòng Lá · Level 2 · Người khám phá' in st.inner_text('.pet-line') and 'Còn 115 XP để tiến hóa thành' in st.inner_text('#petNext') and 'Cây Khỏe' in st.inner_text('#petNext'), st.inner_text('#petNext'))
-    check('không còn nút "Đổi nhân vật"', 'Đổi nhân vật' not in st.inner_text('body'))
+    check('không có nút Đổi nhân vật / Xem tiến hóa', 'Đổi nhân vật' not in st.inner_text('body') and st.locator('#petReplay').count() == 0)
     order = st.evaluate("()=>{const t=s=>document.querySelector(s).getBoundingClientRect().top;return t('.home-hero')<t('#petCard')&&t('#petCard')<t('#missionBanner')}")
     check('thẻ nhân vật nằm dưới thông tin học sinh, trên "Mục tiêu hôm nay"', order)
-    st.reload(); st.wait_for_timeout(600)
-    check('tải lại: không hỏi chọn lại, vẫn có thẻ', st.locator('.char-chooser').count() == 0 and st.locator('#petCard').count() == 1)
     check('hoạt ảnh chờ theo cấu hình Level 2 (Lơ lửng)', 'anim-float' in (st.locator('#petStage').get_attribute('class') or ''))
+    check('lần đầu mở: không chiếu hoạt ảnh lên cấp', 'show' not in (st.locator('#petLvUp').get_attribute('class') or ''))
 
-    print('B. Lên Level → tiến hóa')
+    s2, errs2 = login(ctx, base, 'nguyenminhan', 'hs002')
+    s2.goto(base + '/student/index.html'); s2.wait_for_timeout(700)
+    check('học sinh chưa được gán: hiện lời nhắn nhờ thầy cô', 'Chưa có bạn đồng hành' in s2.inner_text('#petHost') and 'Nhờ thầy cô' in s2.inner_text('#petHost') and s2.locator('.char-opt').count() == 0)
+    check('không lỗi JS (học sinh chưa gán)', not errs2, errs2)
+
+    print('C. Lên Level → tiến hóa')
     add_xp(st, 'phambaotruc', 6)                       # 185 + 120 = 305 XP → Level 3
     st.reload(); st.wait_for_timeout(900)
     check('lên Level 3: hiện chữ "Lên Level 3" và hiệu ứng chớp sáng', 'Lên Level 3' in st.inner_text('#petLvUp') and 'show' in (st.locator('#petLvUp').get_attribute('class') or ''))
@@ -59,7 +79,6 @@ def run(browser, base):
     check('Level đã thấy cập nhật (chỉ số 2)', ls(st, 'mm_char_state')['phambaotruc']['seenLevelIdx'] == 2)
     st.reload(); st.wait_for_timeout(1000)
     check('tải lại: không chiếu lại hoạt ảnh lên cấp', 'show' not in (st.locator('#petLvUp').get_attribute('class') or ''))
-    check('không có nút "Xem tiến hóa"; thẻ hiện đúng nhân vật đã chọn ở Level hiện tại', st.locator('#petReplay').count() == 0 and 'Xem tiến hóa' not in st.inner_text('body') and st.inner_text('#petName') == 'Cây Khỏe' and 'Dòng Lá · Level 3' in st.inner_text('.pet-line'))
     add_xp(st, 'phambaotruc', 16)                      # +320 → 625 XP → Level 4
     st.reload(); st.wait_for_timeout(2800)
     check('Level 4: Đại Thụ Xanh, thẻ vàng, hoạt ảnh hào quang', st.inner_text('#petName') == 'Đại Thụ Xanh' and 'max' in (st.locator('#petCard').get_attribute('class') or '') and 'anim-epic' in (st.locator('#petStage').get_attribute('class') or ''))
@@ -67,12 +86,11 @@ def run(browser, base):
     check('Level cao nhất: ghi "Đã tiến hóa cao nhất"', 'cao nhất' in st.inner_text('#petNext'))
     check('không lỗi JS (Học sinh)', not errs, errs)
 
-    print('C. BGH: thiết lập nhân vật')
-    ad, errs_a = login(ctx, base, 'admin', 'admin2026')
+    print('D. BGH: thiết lập danh sách nhân vật')
     ad.click('[data-module=settings]'); ad.wait_for_timeout(300)
     ad.click('[data-tab=characters]'); ad.wait_for_timeout(400)
     check('danh sách có 9 nhân vật, bảng có 4 Level', ad.locator('#charList .char-item').count() == 9 and ad.locator('#charEditor .char-lv tbody tr').count() == 4)
-    check('nhân vật Lá đã có học sinh dùng: không có nút Xóa', ad.locator('#charEditor button:has-text("Xóa")').count() == 0 and 'đang dùng' in ad.inner_text('#charList .char-item[data-id="la"]'))
+    check('nhân vật Lá đã gán cho học sinh: không có nút Xóa', ad.locator('#charEditor button:has-text("Xóa")').count() == 0 and 'đang dùng' in ad.inner_text('#charList .char-item[data-id="la"]'))
     ad.fill('#stName-3', 'Đại Thụ Vàng'); ad.select_option('#stAnim-0', 'sway'); ad.select_option('#stEff-1', 'none')
     ad.locator('#charList .char-item[data-id="may"]').click(); ad.wait_for_timeout(200)
     ad.click('#charEditor button:has-text("Tắt nhân vật")'); ad.wait_for_timeout(200)
@@ -96,31 +114,32 @@ def run(browser, base):
     st.reload(); st.wait_for_timeout(2800)
     check('học sinh thấy tên hình dạng mới sau khi BGH sửa', st.inner_text('#petName') == 'Đại Thụ Vàng', st.inner_text('#petName'))
 
-    ctx2 = browser.new_context(viewport={'width': 430, 'height': 900})
-    s2, errs2 = login(ctx2, base, 'nguyenminhan', 'hs002')
-    # localStorage khác ngữ cảnh: nạp dữ liệu BGH đã lưu sang ngữ cảnh mới
-    s2.evaluate("d=>localStorage.setItem('mm_characters', d)", json.dumps(saved))
-    s2.goto(base + '/student/index.html'); s2.wait_for_timeout(700)
-    names = s2.locator('.char-opt b').all_inner_texts()
-    check('học sinh khác thấy 9 nhân vật đang bật (không có Mây, có Rồng Đỏ)', len(names) == 9 and 'Mây' not in names and 'Rồng Đỏ' in names, names)
-    check('nhân vật tự thêm có ảnh hiện ở màn chọn', s2.locator('.char-opt[data-id="%s"] img.char-img' % cu[0]['id']).count() == 1)
-    s2.locator('.char-opt[data-id="%s"]' % cu[0]['id']).click(); s2.click('#charOk'); s2.wait_for_timeout(300)
-    check('chọn nhân vật tự thêm: thẻ hiện tên hình dạng', s2.locator('#petCard').count() == 1 and s2.inner_text('#petName'))
-    check('không lỗi JS (học sinh 2)', not errs2, errs2)
+    print('E. Ô chọn nhân vật trong form tài khoản theo danh sách đã lưu')
+    ad.click('[data-module=accounts]'); ad.wait_for_timeout(300)
+    ad.click('#accountsTbody tr:has-text("nguyenminhan") button[title="Sửa"]'); ad.wait_for_timeout(300)
+    names = ad.locator('#accFormChar option').all_inner_texts()
+    check('chỉ liệt kê nhân vật đang bật (không có Mây, có Rồng Đỏ)', len(names) == 10 and names[0].startswith('—') and not any('Mây' in n for n in names) and any('Rồng Đỏ' in n for n in names), names)
+    ad.select_option('#accFormChar', cu[0]['id']); ad.click('button:has-text("Lưu tài khoản")'); ad.wait_for_timeout(400)
+    s2.reload(); s2.wait_for_timeout(700)
+    check('học sinh vừa được gán thấy thẻ nhân vật tự thêm', s2.locator('#petCard').count() == 1 and s2.locator('.pet-empty').count() == 0 and s2.inner_text('#petName'))
+    ad.click('[data-module=accounts]'); ad.click('#accountsTbody tr:has-text("nguyenminhan") button[title="Sửa"]'); ad.wait_for_timeout(300)
+    ad.select_option('#accFormChar', ''); ad.click('button:has-text("Lưu tài khoản")'); ad.wait_for_timeout(400)
+    check('bỏ chọn: xóa characterId khỏi tài khoản', not {a['id']: a for a in ls(ad, 'mm_accounts')}['nguyenminhan'].get('characterId'))
+    ad.click('#accountsTbody tr:has-text("nguyenminhan") button[title="Sửa"]'); ad.wait_for_timeout(300)
+    ad.select_option('#accFormChar', cu[0]['id']); ad.click('button:has-text("Lưu tài khoản")'); ad.wait_for_timeout(400)
 
-    ad.reload(); ad.wait_for_timeout(400)
+    print('F. BGH: xóa / khôi phục mặc định khi có tài khoản đang dùng')
     ad.click('[data-module=settings]'); ad.click('[data-tab=characters]'); ad.wait_for_timeout(300)
-    check('BGH mở lại: dữ liệu đã lưu còn nguyên (10 nhân vật)', ad.locator('#charList .char-item').count() == 10)
-    ad.locator('#charList .char-item', has_text='Rồng Đỏ').click(); ad.wait_for_timeout(200)
-    check('nhân vật tự thêm chưa có học sinh dùng: có nút Xóa', ad.locator('#charEditor button:has-text("Xóa")').count() == 1)
     ad.on('dialog', lambda d: d.accept())
-    cid = cu[0]['id']
-    st_all = ls(ad, 'mm_char_state'); st_all['nguyenminhan'] = {'charId': cid, 'seenLevelIdx': 1}
-    ad.evaluate("d=>localStorage.setItem('mm_char_state', d)", json.dumps(st_all))
-    ad.click('button:has-text("Khôi phục mặc định")'); ad.wait_for_timeout(300)
-    check('khôi phục mặc định bị chặn khi học sinh đang dùng nhân vật tự thêm', ls(ad, 'mm_characters') is not None and 'chưa thể khôi phục' in ad.inner_text('#toastContainer'))
-    st_all.pop('nguyenminhan'); ad.evaluate("d=>localStorage.setItem('mm_char_state', d)", json.dumps(st_all))
     ad.locator('#charList .char-item', has_text='Rồng Đỏ').click(); ad.wait_for_timeout(200)
+    check('nhân vật tự thêm đang được gán: không có nút Xóa', ad.locator('#charEditor button:has-text("Xóa")').count() == 0)
+    ad.click('button:has-text("Khôi phục mặc định")'); ad.wait_for_timeout(300)
+    check('khôi phục mặc định bị chặn khi tài khoản đang dùng nhân vật tự thêm', ls(ad, 'mm_characters') is not None and 'chưa thể khôi phục' in ad.inner_text('#toastContainer'))
+    ad.click('[data-module=accounts]'); ad.click('#accountsTbody tr:has-text("nguyenminhan") button[title="Sửa"]'); ad.wait_for_timeout(300)
+    ad.select_option('#accFormChar', ''); ad.click('button:has-text("Lưu tài khoản")'); ad.wait_for_timeout(400)
+    ad.click('[data-module=settings]'); ad.click('[data-tab=characters]'); ad.wait_for_timeout(300)
+    ad.locator('#charList .char-item', has_text='Rồng Đỏ').click(); ad.wait_for_timeout(200)
+    check('bỏ gán xong: có nút Xóa', ad.locator('#charEditor button:has-text("Xóa")').count() == 1)
     ad.click('#charEditor button:has-text("Xóa")'); ad.wait_for_timeout(300)
     check('xóa nhân vật chưa ai dùng: còn 9 mục trong bản nháp', ad.locator('#charList .char-item').count() == 9)
     ad.click('button:has-text("Khôi phục mặc định")'); ad.wait_for_timeout(300)

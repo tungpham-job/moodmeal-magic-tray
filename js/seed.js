@@ -231,7 +231,7 @@ const DEFAULT_FAS_LOG = [
    Dữ liệu cũ chưa có số phiên bản được coi là v0; các hàm nâng cấp chạy lần lượt tới bản hiện tại.
    Muốn đổi cấu trúc: tăng số này và thêm MM_MIGRATIONS[n] = function () {…}
    — hàm nâng dữ liệu từ bản n-1 lên bản n. */
-const MM_SCHEMA_VERSION = 5;
+const MM_SCHEMA_VERSION = 6;
 const MM_MIGRATIONS = {
   /* v2 và v3 (nhóm dinh dưỡng cũ, khay đã gửi) đã bỏ cùng chức năng khay cơm: dữ liệu cũ đi thẳng qua v4 và v5. */
   2: function () {},
@@ -319,6 +319,19 @@ const MM_MIGRATIONS = {
     // Huy hiệu b04 (Đại bếp nhí) gắn với khay cơm → bỏ
     const bd = store.get(K.BADGES, null);
     if (Array.isArray(bd)) store.set(K.BADGES, bd.filter(x => x.id !== 'b04'));
+  },
+  /* v6 = nhân vật đồng hành do BGH gán ở Danh sách tài khoản (account.characterId); nhân vật học sinh đã tự chọn trước đó được chuyển sang tài khoản */
+  6: function () {
+    const K = MM_KEYS;
+    const state = store.get(K.CHAR_STATE, null);
+    if (!state || typeof state !== 'object') return;
+    const accs = store.get(K.ACCOUNTS, null);
+    if (Array.isArray(accs)) {
+      accs.forEach(a => { if (a.role === 'student' && !a.characterId && state[a.id] && state[a.id].charId) a.characterId = state[a.id].charId; });
+      store.set(K.ACCOUNTS, accs);
+    }
+    Object.keys(state).forEach(id => { if (state[id]) delete state[id].charId; });
+    store.set(K.CHAR_STATE, state);
   },
 };
 
