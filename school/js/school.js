@@ -762,6 +762,17 @@ function wmAutoArrange() {
     : `Chỉ xếp được ${r.filled}/${r.need} chỗ — hãy giảm số món hoặc số ngày cách.`, r.filled === r.need ? undefined : 'error');
 }
 
+/* Xóa tất cả món của tuần đang xem (T2–CN) trong bản nháp; có hỏi xác nhận */
+function wmClearWeek() {
+  const dates = getMenuDays('week', wmAnchor).map(x => x.date);
+  const n = wmDraft.filter(m => dates.includes(m.date)).length;
+  if (!n) { showToast('Tuần này chưa có món nào để xóa.', 'error'); return; }
+  if (!confirm(`Xóa tất cả ${n} món đã xếp trong tuần này?\nThay đổi chỉ có hiệu lực khi bấm "Lưu thực đơn tuần".`)) return;
+  wmDraft = wmDraft.filter(m => !dates.includes(m.date));
+  renderWeekMenuModal();
+  showToast(`Đã xóa ${n} món khỏi tuần này (chưa lưu).`);
+}
+
 function wmDeleteItem(id) {
   wmDraft = wmDraft.filter(m => m.id !== id);
   renderWeekMenuModal();
@@ -817,6 +828,7 @@ function renderWeekMenuModal() {
       <label>Số món mỗi ngày ${sel('wmPerDay', 1, 6, wmPerDay, n => n + ' món')}</label>
       <label>Cách ít nhất ${sel('wmGap', 1, 4, wmGap, n => n + ' ngày')} mới lặp lại một nhóm</label>
       <button class="btn btn-primary btn-sm" onclick="wmAutoArrange()">✨ Xếp thực đơn tự động</button>
+      <button class="btn btn-secondary btn-sm" id="wmClear" style="color:#C62828;margin-left:auto" onclick="wmClearWeek()">🗑 Xóa tất cả</button>
     </div>
     <div class="wm-feas">${feas}<br><span style="color:var(--text-muted)">Chỉ xếp T2–T6, chỉ lấp chỗ trống (món đã có được giữ nguyên). Tên món = tên nguyên liệu — bấm vào món để sửa. Món MỚI do BGH tự đánh dấu.</span></div>
     <div class="wm-list">${rows}</div>`;

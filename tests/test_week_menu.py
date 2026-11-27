@@ -71,6 +71,17 @@ def run(browser, base):
     pg.fill('#menuName', 'Món đã sửa'); pg.check('#menuIsNew'); pg.click('#modalMenu .modal-footer .btn-primary'); pg.wait_for_timeout(250)
     check('sửa tên + MỚI hiện đúng, không nhân đôi món', 'Món đã sửa' in pg.inner_text('.wm-row >> nth=0') and pg.locator('.wm-row').nth(0).locator('.wm-chip em').count() == 1 and len(pg.evaluate("wmDraft")) == 16)
 
+    print('E2. Xóa tất cả trong tuần')
+    msgs = []
+    def h(d): msgs.append(d.message); d.dismiss()
+    pg.once('dialog', h); pg.click('#wmClear'); pg.wait_for_timeout(200)
+    check('hiện popup xác nhận, bấm Hủy thì không xóa', len(msgs) == 1 and 'tất cả' in msgs[0] and len(pg.evaluate("wmDraft")) == 16, msgs)
+    pg.once('dialog', lambda d: d.accept()); pg.click('#wmClear'); pg.wait_for_timeout(250)
+    check('đồng ý: xóa hết món của tuần (T2–CN), bản nháp tuần khác không đổi', pg.locator('.wm-chip').count() == 0 and len(pg.evaluate("wmDraft")) == 0 and ls(pg, 'mm_daily_menu') == [])
+    pg.click('button:has-text("Xếp thực đơn tự động")'); pg.wait_for_timeout(250)
+    check('xếp lại được sau khi xóa (15 món)', len(pg.evaluate("wmDraft")) == 15)
+    pg.locator('.wm-row').nth(5).locator('button:has-text("Chọn món")').click(); pg.click('#menuIngredientPick button >> nth=0'); pg.fill('#menuName', 'Cơm chiên'); pg.click('#modalMenu .modal-footer .btn-primary'); pg.wait_for_timeout(250)
+
     print('F. Đổi tuần và lưu')
     pg.locator('.wm-weeknav button').nth(1).click(); pg.wait_for_timeout(200)
     check('tuần sau trống, bản nháp giữ nguyên', pg.locator('.wm-chip').count() == 0 and len(pg.evaluate("wmDraft")) == 16)
