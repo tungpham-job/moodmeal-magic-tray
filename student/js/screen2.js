@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════
    screen2.js — Thử món & Đánh giá
-   Hiện MỌI món trong thực đơn hôm nay (BGH thiết lập) để bé cuộn xuống
+   Hiện MỌI món trong thực đơn hôm nay (BGH thiết lập); món đã đánh giá thu gọn 1 dòng, món chưa đánh giá hiện đầy đủ
    và đánh giá từng món. Mỗi món có phần đánh giá, TRY AGAIN, nút xác nhận
    và biểu đồ riêng.  (cần js/today.js load trước file này)
 ═══════════════════════════════════════════ */
@@ -118,17 +118,17 @@ function restoreDone(i, entry) {
 }
 
 /* ── Vẽ danh sách ─────────────────────────────── */
-function foodBlockHtml(f, i, total) {
+function foodBlockHtml(f, i, pos) {
   const badge = f.history.length ? `Lần thử thứ ${f.nextAttempt} của nhóm` : 'Lần thử đầu tiên của nhóm!';
   const tag   = f.home ? 'Bữa tối ở nhà 🏠' : (f.item.isNew ? 'Món mới hôm nay' : 'Hôm nay có trong thực đơn');
   const faces = [[4, '❤️', 'Rất thích'], [3, '🙂', 'Có thể ăn'], [2, '😐', 'Chưa quen'], [1, '🙁', 'Không thích'], [0, '🚫', 'Chưa thử']]
     .map(([v, e, l], k) => `<button type="button" class="emoji-btn${v === 0 ? ' not-tried' : ''}" role="radio" aria-checked="false" aria-label="${l}, ${v} điểm" tabindex="${k === 0 ? 0 : -1}" data-val="${v}" onclick="pickEmoji(${i}, this)" onkeydown="emojiKey(event, ${i})"><span class="e-tick" aria-hidden="true">✓</span><span class="e-icon" aria-hidden="true">${e}</span><span class="e-label">${l}</span></button>`)
     .join('');
-  const divider = i > 0 ? 'border-top:6px solid #F0F2F5;margin-top:10px;padding-top:2px;' : '';
+  const divider = !pos.first ? 'border-top:6px solid #F0F2F5;margin-top:10px;padding-top:2px;' : '';
 
   return `
   <div class="food-block" id="food-${i}" style="${divider}">
-    ${!f.home && f.seq === 1 ? '<div class="section-label school-label" id="schoolLabel">🏫 Bữa trưa ở trường</div>' : ''}
+    ${pos.schoolFirst ? '<div class="section-label school-label" id="schoolLabel">🏫 Bữa trưa ở trường</div>' : ''}
     ${f.home ? `<div class="section-label home-label" id="homeLabel-${i}">🏠 Bữa tối ở nhà</div>
       <div class="home-note">Bạn đã thử món chưa? Đánh giá trước cuối ${escHtml(dayLabel(f.deadline))} nhé!</div>`
       : (f.schoolTotal > 1 ? `<div class="section-label">Món ${f.seq} / ${f.schoolTotal}</div>` : '')}
@@ -177,11 +177,27 @@ function foodBlockHtml(f, i, total) {
   </div>`;
 }
 
+/* Dòng thu gọn của món đã đánh giá hôm nay */
+function doneRowHtml(f) {
+  const e = f.todayEntry;
+  const lv = e.rating != null ? e.rating : e.score;
+  const face = { 4: ['❤️', 'Rất thích'], 3: ['🙂', 'Có thể ăn'], 2: ['😐', 'Chưa quen'], 1: ['🙁', 'Không thích'], 0: ['🚫', 'Chưa thử'] }[lv] || ['', ''];
+  return `
+  <div class="done-row">
+    <span class="d-icon">${escHtml(foodIcon(f.item))}</span>
+    <div class="d-main">
+      <div class="d-name">${escHtml(f.item.name)}</div>
+      <div class="d-group">Nhóm ${escHtml(f.groupName)}${f.home ? ' · Bữa tối ở nhà 🏠' : ''}</div>
+    </div>
+    <div class="d-res"><b>✔ Đã đánh giá</b><span>${face[0]} ${face[1]}</span></div>
+  </div>`;
+}
+
 function renderFoods() {
   const list = document.getElementById('foodList');
 
   if (!FOODS.length) {                         // hôm nay BGH chưa lập thực đơn
-    document.getElementById('evalSummary').textContent = '';
+    document.getElementById('evalSummary').innerHTML = '';
     list.innerHTML = `
       <div class="food-card">
         <div class="food-img"><span style="font-size:56px">🍽️</span></div>
@@ -193,8 +209,17 @@ function renderFoods() {
     return;
   }
 
-  list.innerHTML = FOODS.map((f, i) => foodBlockHtml(f, i, FOODS.length)).join('');
-  FOODS.forEach((f, i) => { if (f.todayEntry) restoreDone(i, f.todayEntry); });
+  /* Món đã đánh giá thu gọn thành 1 dòng (kèm cảm xúc đã chọn) và xếp lên trên;
+     món chưa đánh giá hiện đầy đủ ngay bên dưới. Chỉ thu gọn khi tải màn hình: món vừa xác nhận
+     trong lần mở này vẫn giữ nguyên thẻ để bé thấy kết quả. */
+  const doneIdx = [], pendIdx = [];
+  FOODS.forEach((f, i) => (f.todayEntry ? doneIdx : pendIdx).push(i));
+  doneIdx.forEach(i => { const f = FOODS[i]; f.done = true; f.selected = f.todayEntry.rating != null ? f.todayEntry.rating : f.todayEntry.score; f.tryAgain = !!f.todayEntry.tryAgain; });
+  const firstSchool = pendIdx.find(i => !FOODS[i].home);
+  let html = doneIdx.map(i => doneRowHtml(FOODS[i])).join('');
+  if (doneIdx.length && pendIdx.length) html += '<div class="pending-label">MÓN CHƯA ĐÁNH GIÁ</div>';
+  html += pendIdx.map((i, k) => foodBlockHtml(FOODS[i], i, { first: k === 0, schoolFirst: i === firstSchool && !doneIdx.length })).join('');
+  list.innerHTML = html;
   updateSummary();
 }
 
@@ -210,7 +235,7 @@ function updateSummary() {
     ? `🎉 Đã đánh giá xong ${school.length} món hôm nay!`
     : `Hôm nay có ${school.length} món · đã đánh giá ${done}/${school.length}`;
   if (home) t += (t ? ' · ' : '') + `🏠 ${home} món ở nhà chờ em đánh giá`;
-  el.textContent = t;
+  el.innerHTML = t ? `<div class="es-label">${escHtml(t)}</div>` : '';
 }
 
 /* ── Ghi 1 dòng vào mm_fas_log ─────────────────

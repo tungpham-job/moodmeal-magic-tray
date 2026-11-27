@@ -55,7 +55,7 @@ def student_part(browser, base):
     acts = [x['actionId'] for x in (ls('mm_xp_log') or [])[xp0:]]
     check('"Chưa thử" chỉ nhận emoji_rate (không first_try, không try_again)', acts == ['emoji_rate'], acts)
     page.reload(); page.wait_for_timeout(600)
-    check('tải lại: vẫn khóa, vẫn chọn Chưa thử', page.locator('#food-0 .emoji-btn.selected').count() == 1 and 'Chưa thử' in page.locator('#food-0 .emoji-btn.selected').inner_text())
+    check('tải lại: món thu gọn 1 dòng "Đã đánh giá", kèm Chưa thử', page.locator('.done-row').count() >= 1 and 'Đã đánh giá' in page.inner_text('.done-row >> nth=0') and 'Chưa thử' in page.inner_text('.done-row >> nth=0'))
     page.goto(base + '/student/screen1.html'); page.wait_for_timeout(400)
     check('"Chưa thử" không mở khóa hành tinh Trứng', 'unlocked' not in (page.locator('.planet-card').nth(3).get_attribute('class') or ''))
     r = page.evaluate("""()=>{const L=JSON.parse(localStorage.getItem('mm_fas_log')),w=mmGroupRows(L,'phambaotruc','g-rau');return [mmFasChainText(w),mmGroupFag(w),mmGroupFas(w)]}""")

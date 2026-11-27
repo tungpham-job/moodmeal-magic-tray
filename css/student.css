@@ -102,15 +102,33 @@ body.page-student {
   color: var(--text-muted); letter-spacing: 0.5px; text-transform: uppercase;
 }
 
-/* ── Nhãn tóm tắt màn Thử món: cố định ở đầu khi cuộn ── */
+/* ── Nhãn tóm tắt màn Thử món: thanh ghim liền dưới tiêu đề, nền trắng đặc ── */
 .eval-summary {
-  position: sticky; top: 8px; z-index: 5;
-  margin: 10px 12px 4px; padding: 10px 14px;
-  background: #FFF8E1; border: 1px solid #FFE082; border-radius: 10px;
-  color: #C62828; font-size: 14px; font-weight: 700; text-align: center;
-  box-shadow: 0 3px 8px rgba(0,0,0,0.10);
+  position: sticky; top: 0; z-index: 5;
+  background: #fff; padding: 8px 12px;
+  border-bottom: 1px solid #E3E8EC; box-shadow: 0 2px 6px rgba(0,0,0,0.06);
 }
 .eval-summary:empty { display: none; }
+.es-label {
+  background: #FFF8E1; border: 1px solid #FFE082; border-radius: 10px;
+  color: #C62828; font-size: 14px; font-weight: 700; text-align: center; padding: 8px 12px;
+}
+
+/* ── Món đã đánh giá: thu gọn thành 1 dòng ── */
+.done-row {
+  margin: 8px 12px 0; padding: 9px 12px; display: flex; align-items: center; gap: 10px;
+  border: 1px solid #CDEED9; background: #F1FAF4; border-radius: 12px;
+}
+.done-row .d-icon  { font-size: 22px; }
+.done-row .d-main  { min-width: 0; }
+.done-row .d-name  { font-size: 13px; font-weight: 700; color: var(--text-main); }
+.done-row .d-group { font-size: 11px; color: var(--text-muted); }
+.done-row .d-res   { margin-left: auto; text-align: right; white-space: nowrap; }
+.done-row .d-res b    { display: block; font-size: 12px; font-weight: 800; color: #2E9E4F; }
+.done-row .d-res span { display: block; font-size: 11px; color: #607D8B; }
+.pending-label {
+  margin: 14px 14px 0; font-size: 11px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.4px;
+}
 
 /* ── Home hero ───────────────────────────────── */
 .home-hero {
