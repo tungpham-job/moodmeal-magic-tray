@@ -37,10 +37,10 @@ def run(browser, base):
     ctx = browser.new_context(viewport={'width': 430, 'height': 900})
     ad, errs_a = login(ctx, base, 'admin', 'admin2026')
 
-    print('0. Dữ liệu mẫu: Phạm Bảo Trúc 605 XP, Gạo → Kim Long (Level 4)')
+    print('0. Dữ liệu mẫu: Phạm Bảo Trúc 605 XP, Gạo → Kim Vương (Level 4)')
     s0, errs0 = login(ctx, base, 'phambaotruc', 'hs001')
     s0.goto(base + '/student/index.html'); s0.wait_for_timeout(800)
-    check('605 XP, Level 4, nhân vật Gạo ở hình Kim Long, thẻ vàng', s0.inner_text('#petName') == 'Kim Long' and 'Dòng Gạo · Level 4' in s0.inner_text('.pet-line') and 'max' in (s0.locator('#petCard').get_attribute('class') or '') and ls(s0, 'mm_accounts') is not None and {a['id']: a for a in ls(s0, 'mm_accounts')}['phambaotruc']['xp'] == 605)
+    check('605 XP, Level 4, nhân vật Gạo ở hình Kim Vương, thẻ vàng', s0.inner_text('#petName') == 'Kim Vương' and 'Dòng Gạo · Level 4' in s0.inner_text('.pet-line') and 'max' in (s0.locator('#petCard').get_attribute('class') or '') and ls(s0, 'mm_accounts') is not None and {a['id']: a for a in ls(s0, 'mm_accounts')}['phambaotruc']['xp'] == 605)
     check('không lỗi JS (dữ liệu mẫu)', not errs0, errs0)
     # các phần sau thử tiến hóa từ Level 2: đặt lại XP nền = 185
     ad.evaluate("()=>{const a=JSON.parse(localStorage.getItem('mm_accounts'));a.find(x=>x.id==='phambaotruc').xp=185;localStorage.setItem('mm_accounts',JSON.stringify(a));localStorage.removeItem('mm_char_state')}")
@@ -90,7 +90,7 @@ def run(browser, base):
     check('tải lại: không chiếu lại hoạt ảnh lên cấp', 'show' not in (st.locator('#petLvUp').get_attribute('class') or ''))
     add_xp(st, 'phambaotruc', 16)                      # +320 → 625 XP → Level 4
     st.reload(); st.wait_for_timeout(2800)
-    check('Level 4: Đại Thụ Xanh, thẻ vàng, hoạt ảnh hào quang', st.inner_text('#petName') == 'Đại Thụ Xanh' and 'max' in (st.locator('#petCard').get_attribute('class') or '') and 'anim-epic' in (st.locator('#petStage').get_attribute('class') or ''))
+    check('Level 4: Mộc Vương, thẻ vàng, hoạt ảnh hào quang', st.inner_text('#petName') == 'Mộc Vương' and 'max' in (st.locator('#petCard').get_attribute('class') or '') and 'anim-epic' in (st.locator('#petStage').get_attribute('class') or ''))
     check('Level 4 có hào quang và hạt bay quanh (SVG)', st.locator('#petArt svg animateTransform').count() >= 2)
     check('Level cao nhất: ghi "Đã tiến hóa cao nhất"', 'cao nhất' in st.inner_text('#petNext'))
     check('không lỗi JS (Học sinh)', not errs, errs)

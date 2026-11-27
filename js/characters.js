@@ -10,16 +10,16 @@
 
 /* ── Hình vẽ sẵn (SVG): 9 dòng × 4 cấp ─────────── */
 const MM_CHAR_BUILTIN = [
- {id:'la', name:'Lá', desc:'Bạn nhỏ của rau xanh', color:'#4CAF50', dark:'#2E7D32', belly:'#C8E6C9', stages:['Mầm Bé','Lá Nhí','Cây Khỏe','Đại Thụ Xanh']},
- {id:'song', name:'Sóng', desc:'Bạn nhỏ của hải sản', color:'#4FC3F7', dark:'#0277BD', belly:'#E1F5FE', stages:['Giọt Nhỏ','Cá Sóng','Rồng Biển','Thủy Long']},
- {id:'nang', name:'Nắng', desc:'Bạn nhỏ của trái cây', color:'#FFB74D', dark:'#E65100', belly:'#FFF3E0', stages:['Hạt Nắng','Quả Nắng','Cam Lửa','Mặt Trời Vàng']},
- {id:'may', name:'Mây', desc:'Bạn nhỏ của trứng', color:'#CE93D8', dark:'#6A1B9A', belly:'#F3E5F5', stages:['Trứng Mây','Gà Mây','Chim Mây','Phượng Mây']},
+ {id:'la', name:'Lá', desc:'Bạn nhỏ của rau xanh', color:'#4CAF50', dark:'#2E7D32', belly:'#C8E6C9', stages:['Mầm Bé','Lá Nhí','Cây Khỏe','Mộc Vương']},
+ {id:'song', name:'Sóng', desc:'Bạn nhỏ của hải sản', color:'#4FC3F7', dark:'#0277BD', belly:'#E1F5FE', stages:['Giọt Nhỏ','Cá Sóng','Rồng Biển','Hải Vương']},
+ {id:'nang', name:'Nắng', desc:'Bạn nhỏ của trái cây', color:'#FFB74D', dark:'#E65100', belly:'#FFF3E0', stages:['Hạt Nắng','Quả Nắng','Cam Lửa','Nhật Vương']},
+ {id:'may', name:'Mây', desc:'Bạn nhỏ của trứng', color:'#CE93D8', dark:'#6A1B9A', belly:'#F3E5F5', stages:['Trứng Mây','Gà Mây','Chim Mây','Phụng Vương']},
 
- {id:'cu', name:'Củ', desc:'Bạn nhỏ của các loại củ', color:'#F06292', dark:'#AD1457', belly:'#FCE4EC', stages:['Củ Con','Củ Dền','Củ Lực Sĩ','Vua Củ']},
- {id:'dau', name:'Đậu', desc:'Bạn nhỏ của các loại đậu', color:'#AED581', dark:'#558B2F', belly:'#F1F8E9', stages:['Hạt Đậu','Đậu Nhí','Đậu Cuộn','Đậu Thần']},
- {id:'gao', name:'Gạo', desc:'Bạn nhỏ của tinh bột', color:'#FFF3C4', dark:'#A1887F', belly:'#FFFDE7', stages:['Hạt Gạo','Gạo Nón','Gạo Vàng','Kim Long']},
- {id:'bi', name:'Bí', desc:'Bạn nhỏ của rau quả', color:'#EF5350', dark:'#B71C1C', belly:'#FFEBEE', stages:['Cà Con','Cà Chua','Cà Dây','Cà Vương']},
- {id:'lua', name:'Lửa', desc:'Bạn nhỏ của thịt', color:'#FF8A65', dark:'#BF360C', belly:'#FBE9E7', stages:['Tia Lửa','Bếp Nhí','Bếp Hồng','Bếp Trưởng']},
+ {id:'cu', name:'Củ', desc:'Bạn nhỏ của các loại củ', color:'#F06292', dark:'#AD1457', belly:'#FCE4EC', stages:['Củ Con','Củ Dền','Củ Lực Sĩ','Địa Vương']},
+ {id:'dau', name:'Đậu', desc:'Bạn nhỏ của các loại đậu', color:'#AED581', dark:'#558B2F', belly:'#F1F8E9', stages:['Hạt Đậu','Đậu Nhí','Đậu Cuộn','Linh Vương']},
+ {id:'gao', name:'Gạo', desc:'Bạn nhỏ của tinh bột', color:'#FFF3C4', dark:'#A1887F', belly:'#FFFDE7', stages:['Hạt Gạo','Gạo Nón','Gạo Vàng','Kim Vương']},
+ {id:'bi', name:'Bí', desc:'Bạn nhỏ của rau quả', color:'#EF5350', dark:'#B71C1C', belly:'#FFEBEE', stages:['Cà Con','Cà Chua','Cà Dây','Hồng Vương']},
+ {id:'lua', name:'Lửa', desc:'Bạn nhỏ của thịt', color:'#FF8A65', dark:'#BF360C', belly:'#FBE9E7', stages:['Tia Lửa','Bếp Nhí','Bếp Hồng','Hỏa Vương']},
 ];
 function face(cx,cy,s,dark){
   const e=5*s;
@@ -118,7 +118,7 @@ function creature(sp,stage,SP){ /* stage 0..3; SP = màu riêng cho nhân vật 
     if(stage===3) top=star(cx,cy-r-16,13,5.6,'#FFD54F')+star(cx-34,cy-r,7,3,'#FFE082')+star(cx+34,cy-r+2,7,3,'#FFE082')+`<ellipse cx="${cx}" cy="${cy}" rx="${r+22}" ry="${r*.42}" fill="none" stroke="#C5CAE9" stroke-width="2" stroke-dasharray="2 5" transform="rotate(-12 ${cx} ${cy})"/>`;
     if(stage>=2) back=`<path d="M${cx-r} ${cy+4} q-14 -4 -14 8 q8 4 14 -2Z M${cx+r} ${cy+4} q14 -4 14 8 q-8 4 -14 -2Z" fill="${c}" stroke="${d}" stroke-width="1.5"/>`;
   }
-  /* Gạo cấp 4: Kim Long = Gạo Vàng nâng cấp. Giữ nguyên thân tròn, nón lá, rơm vàng và khuôn mặt; thêm sừng, râu, vảy, đuôi rồng và thân vàng óng */
+  /* Gạo cấp 4: Kim Vương = Gạo Vàng nâng cấp. Giữ nguyên thân tròn, nón lá, rơm vàng và khuôn mặt; thêm sừng, râu, vảy, đuôi rồng và thân vàng óng */
   let isDragon=false, bodyD='';
   if(sp==='gao' && stage===3){
     isDragon=true;
