@@ -264,6 +264,7 @@ body.page-student {
 .emoji-btn.not-tried.selected { border-style: solid; }
 
 /* ── Câu hỏi "thử lại lần sau": một hàng không khung, câu hỏi + nhãn XP và hai nút 70×36px nằm sát nhau, canh giữa ── */
+.school-label { color: #0E6655; font-size: 12px; }
 .home-label { color: #B35F10; }
 .home-card { border: 2px solid #F5B041; background: #FFF9EC; }
 .skip-note { margin: 8px 12px 0; padding: 8px 10px; border: 1.5px solid #D32F2F; border-radius: 10px; background: #FFEBEE; color: #C62828; font-size: 12px; font-weight: 700; line-height: 1.45; text-align: center; }

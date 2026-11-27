@@ -135,6 +135,7 @@ function foodBlockHtml(f, i, total) {
 
   return `
   <div class="food-block" id="food-${i}" style="${divider}">
+    ${!f.home && f.seq === 1 ? '<div class="section-label school-label" id="schoolLabel">🏫 Bữa trưa ở trường</div>' : ''}
     ${f.home ? `<div class="section-label home-label">🏠 Bữa tối ở nhà · ba mẹ đã nấu cho em · đánh giá trước hết ${escHtml(dayLabel(f.deadline))}</div>`
       : (f.schoolTotal > 1 ? `<div class="section-label">Món ${f.seq} / ${f.schoolTotal}</div>` : '')}
     <div class="food-card${f.home ? ' home-card' : ''}" style="margin-top:${f.home || f.schoolTotal > 1 ? 2 : 10}px">
