@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👨‍👩‍👧</text></svg>">
   <title>MoodMeal — Phụ huynh</title>
-  <link rel="stylesheet" href="../css/base.css?v=20261127a">
-  <link rel="stylesheet" href="../css/parent.css?v=20261127a">
+  <link rel="stylesheet" href="../css/base.css?v=20261127b">
+  <link rel="stylesheet" href="../css/parent.css?v=20261127b">
 </head>
 <body class="page-parent">
 <div class="parent-layout">
@@ -82,49 +82,14 @@
     </div>
 
     <!-- ══════════════════════════════════
-         SECTION ② — Gợi ý nấu ăn hôm nay
+         SECTION ② — Yêu cầu thử món của con
     ══════════════════════════════════ -->
     <div>
-      <div class="section-heading">🍳 Gợi ý nấu ăn hôm nay <span id="cookDate"></span></div>
-      <div class="p-card">
-        <div class="suggest-card-header">
-          <div class="suggest-card-title">🎨 Khay cơm con gửi cho ba mẹ</div>
-          <div class="suggest-card-sub">Con thiết kế sau bữa trưa — ba mẹ thử nấu tối nay nhé!</div>
-        </div>
-
-        <!-- Tray preview (dynamic) -->
-        <div class="tray-preview" id="trayPreviewWrap">
-          <div class="no-tray-placeholder">
-            🌱 Đang tải dữ liệu...
-          </div>
-        </div>
-
-        <!-- Confirm buttons -->
-        <div class="confirm-actions" id="confirmActions" style="display:none">
-          <button class="btn-confirm-yes" id="btnConfirmYes" onclick="confirmCooked()">
-            ✅ Con đã ăn ở nhà tối nay!
-          </button>
-          <button class="btn-confirm-no" id="btnConfirmNo" onclick="notCooked()">
-            Tối nay chưa nấu được
-          </button>
-        </div>
-
-        <!-- Result message -->
-        <div class="confirm-result" id="confirmResult"></div>
-
-        <!-- Padding bottom -->
-        <div style="height:6px"></div>
-      </div>
-    </div>
-
-    <!-- ══════════════════════════════════
-         SECTION ③ — Lịch sử xác nhận
-    ══════════════════════════════════ -->
-    <div>
-      <div class="section-heading">📅 Lịch sử 2 tuần gần nhất</div>
-      <div class="p-card">
-        <div class="timeline" id="historyTimeline">
-          <!-- rendered by JS -->
+      <div class="section-heading">🍳 Yêu cầu thử món của con</div>
+      <div class="p-card" id="requestsBox">
+        <div class="no-tray-placeholder">
+          🌱 Chưa có yêu cầu thử món nào.<br>
+          <span style="font-size:12px;color:#aaa">Khi con bấm "Muốn" thử lại ở trường, yêu cầu sẽ hiện ở đây để ba mẹ nấu cho con vào bữa tối.</span>
         </div>
       </div>
     </div>
@@ -136,13 +101,13 @@
 <div class="p-toast" id="pToast"></div>
 
 <!-- Scripts -->
-<script src="../js/config.js?v=20261127a"></script>
-<script src="../js/seed.js?v=20261127a"></script>
-<script src="../js/utils.js?v=20261127a"></script>
-<script src="../js/store.js?v=20261127a"></script>
-<script src="../js/auth.js?v=20261127a"></script>
-<script src="../js/xp.js?v=20261127a"></script>
-<script src="../js/badges.js?v=20261127a"></script>
-<script src="js/parent.js?v=20261127a"></script>
+<script src="../js/config.js?v=20261127b"></script>
+<script src="../js/seed.js?v=20261127b"></script>
+<script src="../js/utils.js?v=20261127b"></script>
+<script src="../js/store.js?v=20261127b"></script>
+<script src="../js/auth.js?v=20261127b"></script>
+<script src="../js/xp.js?v=20261127b"></script>
+<script src="../js/badges.js?v=20261127b"></script>
+<script src="js/parent.js?v=20261127b"></script>
 </body>
 </html>

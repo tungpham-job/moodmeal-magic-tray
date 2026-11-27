@@ -17,13 +17,9 @@ const MM_KEYS = {
   MENU:        'mm_daily_menu',
   INGREDIENTS: 'mm_ingredients',
   FOOD_GROUPS: 'mm_food_groups',      // nhóm thực phẩm (mỗi nhóm = 1 hành tinh)
-  NUTRITION:   'mm_nutrition_table',  // bảng dinh dưỡng chuẩn để BGH chọn nguyên liệu
-  SCORE_FORMULA: 'mm_score_formula',  // công thức tính điểm cân bằng năng lượng của khay
   XP_CONFIG:   'mm_xp_config',
   BADGES:      'mm_badges',
-  CRITERIA:    'mm_grading_criteria',
   FAS_LOG:     'mm_fas_log',
-  TRAY_LOG:    'mm_tray_log',
   XP_LOG:      'mm_xp_log',
   BADGES_LOG:  'mm_badges_log',
   DEMO_DATE:   'mm_demo_date',        // chuỗi YYYY-MM-DD (không phải JSON)

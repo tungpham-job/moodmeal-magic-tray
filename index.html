@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍱</text></svg>">
   <title>MOODMEAL MAGIC TRAY — Đăng nhập</title>
-  <link rel="stylesheet" href="css/base.css?v=20261127a">
+  <link rel="stylesheet" href="css/base.css?v=20261127b">
 </head>
 <body class="page-login">
 
@@ -98,11 +98,11 @@
   </div>
 
   <!-- Thứ tự bắt buộc: config → seed → utils → store → auth (auth.js phải load TRƯỚC script bên dưới) -->
-  <script src="js/config.js?v=20261127a"></script>
-  <script src="js/seed.js?v=20261127a"></script>
-  <script src="js/utils.js?v=20261127a"></script>
-  <script src="js/store.js?v=20261127a"></script>
-  <script src="js/auth.js?v=20261127a"></script>
+  <script src="js/config.js?v=20261127b"></script>
+  <script src="js/seed.js?v=20261127b"></script>
+  <script src="js/utils.js?v=20261127b"></script>
+  <script src="js/store.js?v=20261127b"></script>
+  <script src="js/auth.js?v=20261127b"></script>
   <script>
 
     /* Hiện lý do nếu vừa bị đăng xuất (tài khoản bị khóa, bị xóa, đổi vai trò) */
@@ -178,7 +178,7 @@
     }
 
     /* Đặt lại dữ liệu demo: chỉ xóa các khóa mm_* của MoodMeal (không đụng dữ liệu trang khác
-       cùng tên miền), rồi tải lại. Tài khoản mẫu tự tạo lại ở auth.js; thực đơn, FAS, khay mẫu
+       cùng tên miền), rồi tải lại. Tài khoản mẫu tự tạo lại ở auth.js; thực đơn, FAS mẫu
        tự tạo khi mở trang BGH → mở tab BGH trước khi demo. */
     function resetDemoData() {
       if (!confirm('Xóa toàn bộ dữ liệu demo trên trình duyệt này và tạo lại dữ liệu mẫu?')) return;

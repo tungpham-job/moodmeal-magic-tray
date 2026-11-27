@@ -1,7 +1,7 @@
 /* ═══════════════════════════════════════════════
    school.js — MOODMEAL MAGIC TRAY v3
-   Giao diện BGH: 4 module
-   ① Tài khoản  ② Thiết lập  ③ Báo cáo FAS  ④ Đề xuất
+   Giao diện BGH: 3 module
+   ① Tài khoản  ② Thiết lập  ③ Báo cáo FAS
 ═══════════════════════════════════════════════ */
 
 /* ── Storage keys ───────────────────────────── */
@@ -10,13 +10,9 @@ const KEY = {
   MENU:      MM_KEYS.MENU,
   INGREDIENTS: MM_KEYS.INGREDIENTS,
   FOOD_GROUPS: MM_KEYS.FOOD_GROUPS,
-  NUTRITION: MM_KEYS.NUTRITION,
-  SCORE_FORMULA: MM_KEYS.SCORE_FORMULA,
   XP_CONFIG: MM_KEYS.XP_CONFIG,
   BADGES:    MM_KEYS.BADGES,
-  CRITERIA:  MM_KEYS.CRITERIA,
   FAS_LOG:   MM_KEYS.FAS_LOG,
-  TRAY_LOG:  MM_KEYS.TRAY_LOG,
 };
 
 /* ── Seed data helpers ───────────────────────── */
@@ -58,9 +54,8 @@ function switchModule(name) {
   // Cập nhật header title
   const titles = {
     accounts:  { title: '👤 Quản lý Tài khoản', sub: 'Thêm, sửa, xóa, phân quyền tài khoản học sinh và phụ huynh' },
-    settings:  { title: '⚙️ Thiết lập',          sub: 'Thực đơn · Nguyên liệu · XP & Level · Danh hiệu · Tiêu chí chấm đề xuất' },
+    settings:  { title: '⚙️ Thiết lập',          sub: 'Thực đơn · Nguyên liệu · XP & Level · Danh hiệu' },
     report:    { title: '📊 Báo cáo FAS',         sub: 'Hành trình chấp nhận thực phẩm của từng học sinh' },
-    proposals: { title: '🍱 Đề xuất Thực đơn',    sub: 'Khay cơm học sinh gửi ba mẹ — chấm điểm cuối tuần' },
   };
 
   const t = titles[name];
@@ -74,7 +69,6 @@ function switchModule(name) {
     accounts:  renderAccounts,
     settings:  renderSettings,
     report:    renderReport,
-    proposals: renderProposals,
   };
   if (renderers[name]) renderers[name]();
 }
@@ -288,20 +282,10 @@ function saveAccount() {
     const wanted = [...document.querySelectorAll('.accBadgeChk:checked')].map(c => c.value);
     setStudentBadges(id, wanted);
   }
-  if (editId && nameChanged) syncTrayNames(editId, name);
 
   closeModal('modalAccount');
   renderAccounts();
   showToast(editId ? 'Đã cập nhật tài khoản!' : 'Đã thêm tài khoản mới!');
-}
-
-/* Đổi tên học sinh → cập nhật tên trong các khay đã gửi */
-function syncTrayNames(studentId, name) {
-  const log = loadKey(KEY.TRAY_LOG, null);
-  if (!Array.isArray(log)) return;
-  let changed = false;
-  log.forEach(t => { if (t.studentId === studentId && t.studentName !== name) { t.studentName = name; changed = true; } });
-  if (changed) saveKey(KEY.TRAY_LOG, log);
 }
 
 /* Liên kết phụ huynh ↔ học sinh hai chiều: gỡ liên kết cũ, đặt liên kết mới */
@@ -387,7 +371,6 @@ function switchSettingsTab(tab) {
     ingredients: renderIngredientsTab,
     xp:       renderXPTab,
     badges:   renderBadgesTab,
-    criteria: renderCriteriaTab,
   };
   if (renders[tab]) renders[tab]();
 }
@@ -972,7 +955,6 @@ function renderBadgesTab() {
 
 function renderBadgePending() {
   const pending = [
-    { student: 'Phạm Bảo Trúc', badge: '👨‍🍳 Đại bếp nhí', reason: 'Khay cơm được PH xác nhận 5 lần' },
     { student: 'Nguyễn Minh An', badge: '⭐ Sao dinh dưỡng', reason: 'FAG tổng đạt 5.2' },
   ];
 
@@ -1044,115 +1026,6 @@ function toggleBadge(idx) {
 
 function approveBadge(idx) { showToast('Đã duyệt cấp danh hiệu! 🎉'); renderBadgePending(); }
 function rejectBadge(idx)  { showToast('Đã từ chối.'); renderBadgePending(); }
-
-/* Tab 4 — Tiêu chí chấm đề xuất */
-function renderCriteriaTab() {
-  const list = loadKey(KEY.CRITERIA, DEFAULT_CRITERIA);
-
-  document.getElementById('criteriaList').innerHTML = list.map((c, i) => {
-    const total = c.items.reduce((s, it) => s + it.max, 0);
-    const rows = c.items.map(it => `
-      <tr>
-        <td>${escHtml(it.label)}</td>
-        <td style="text-align:center">${it.max}</td>
-      </tr>`).join('');
-
-    return `
-      <div class="content-card" style="margin-bottom:12px">
-        <div class="content-card-header">
-          <div>
-            <div class="content-card-title">${escHtml(c.name)}</div>
-            <div style="font-size:11px;color:#888;margin-top:2px">${c.weekStart} → ${c.weekEnd} · Tổng: ${total} điểm</div>
-          </div>
-          <div style="display:flex;gap:6px">
-            <button class="btn btn-sm btn-secondary" onclick="openEditCriteria(${i})">✏️ Sửa</button>
-            <button class="btn btn-sm btn-danger btn-icon" onclick="deleteCriteria(${i})">🗑️</button>
-          </div>
-        </div>
-        <div class="content-card-body" style="padding:0">
-          <table class="data-table">
-            <thead><tr><th>Tiêu chí</th><th style="text-align:center">Điểm tối đa</th></tr></thead>
-            <tbody>${rows}</tbody>
-          </table>
-        </div>
-      </div>`;
-  }).join('') || '<div style="color:#aaa;text-align:center;padding:32px">Chưa có bộ tiêu chí nào</div>';
-}
-
-function openAddCriteria() {
-  document.getElementById('criteriaEditIdx').value = '';
-  document.getElementById('criteriaSetName').value  = '';
-  document.getElementById('criteriaWeekStart').value = '';
-  document.getElementById('criteriaWeekEnd').value   = '';
-  document.getElementById('criteriaItemsBody').innerHTML = '';
-  addCriteriaItem();
-  document.getElementById('modalCriteriaTitle').textContent = 'Tạo bộ tiêu chí mới';
-  openModal('modalCriteria');
-}
-
-function openEditCriteria(idx) {
-  const list = loadKey(KEY.CRITERIA, DEFAULT_CRITERIA);
-  const c = list[idx];
-  document.getElementById('criteriaEditIdx').value    = idx;
-  document.getElementById('criteriaSetName').value    = c.name;
-  document.getElementById('criteriaWeekStart').value  = c.weekStart;
-  document.getElementById('criteriaWeekEnd').value    = c.weekEnd;
-  const tbody = document.getElementById('criteriaItemsBody');
-  tbody.innerHTML = '';
-  c.items.forEach(it => addCriteriaItem(it.label, it.max));
-  document.getElementById('modalCriteriaTitle').textContent = 'Sửa bộ tiêu chí';
-  openModal('modalCriteria');
-}
-
-function addCriteriaItem(label = '', max = 5) {
-  const tbody = document.getElementById('criteriaItemsBody');
-  const tr = document.createElement('tr');
-  tr.innerHTML = `
-    <td><input class="form-control" placeholder="Tên tiêu chí..." value="${label}" style="padding:6px 10px;font-size:13px"></td>
-    <td><input class="inline-input" type="number" min="1" max="20" value="${max}"></td>
-    <td><button class="btn btn-ghost btn-icon btn-sm" onclick="this.closest('tr').remove()">✕</button></td>`;
-  tbody.appendChild(tr);
-}
-
-function saveCriteria() {
-  const idx   = document.getElementById('criteriaEditIdx').value;
-  const name  = document.getElementById('criteriaSetName').value.trim();
-  const start = document.getElementById('criteriaWeekStart').value;
-  const end   = document.getElementById('criteriaWeekEnd').value;
-
-  if (!name || !start || !end) { showToast('Vui lòng điền đầy đủ!', 'error'); return; }
-
-  const rows = document.querySelectorAll('#criteriaItemsBody tr');
-  const items = [];
-  rows.forEach(row => {
-    const inputs = row.querySelectorAll('input');
-    const label = inputs[0].value.trim();
-    const max   = +inputs[1].value;
-    if (label) items.push({ label, max });
-  });
-
-  if (!items.length) { showToast('Cần ít nhất 1 tiêu chí!', 'error'); return; }
-
-  const list = loadKey(KEY.CRITERIA, DEFAULT_CRITERIA);
-  const entry = { id: 'c' + Date.now(), name, weekStart: start, weekEnd: end, items };
-
-  if (idx !== '') { list[+idx] = entry; }
-  else            { list.push(entry); }
-
-  saveKey(KEY.CRITERIA, list);
-  closeModal('modalCriteria');
-  renderCriteriaTab();
-  showToast('Đã lưu bộ tiêu chí!');
-}
-
-function deleteCriteria(idx) {
-  if (!confirm('Xóa bộ tiêu chí này?')) return;
-  const list = loadKey(KEY.CRITERIA, DEFAULT_CRITERIA);
-  list.splice(idx, 1);
-  saveKey(KEY.CRITERIA, list);
-  renderCriteriaTab();
-  showToast('Đã xóa.');
-}
 
 /* ══════════════════════════════════════════════
    MODULE ③ — BÁO CÁO FAS
@@ -1283,196 +1156,6 @@ function exportCSV() {
 }
 
 /* ══════════════════════════════════════════════
-   MODULE ④ — ĐỀ XUẤT THỰC ĐƠN
-══════════════════════════════════════════════ */
-function renderProposals() {
-  const trays    = loadKey(KEY.TRAY_LOG, DEFAULT_TRAY_LOG);
-  const criteria = loadKey(KEY.CRITERIA, DEFAULT_CRITERIA);
-
-  // Criteria selector
-  const sel = document.getElementById('criteriaSelector');
-  sel.innerHTML = '<option value="">— Chọn bộ tiêu chí —</option>' +
-    criteria.map((c, i) => `<option value="${i}">${escHtml(c.name)}</option>`).join('');
-
-  renderProposalTable(trays);
-}
-
-/* Thành phần dinh dưỡng của khay: % năng lượng Tinh bột / Đạm / Béo, tính từ bảng dinh dưỡng chuẩn.
-   Ô khay tìm theo ingredientId, khay cũ không có thì tìm theo tên; không tìm thấy thì bỏ qua (thêm dấu *). */
-function trayResolve(t) { return mmTrayResolve(t); }
-function trayMacroCell(t) {
-  const { found, missing } = trayResolve(t);
-  const r = mmTrayPct(found);
-  if (!r.pct) return '<span style="color:#aaa">—</span>';
-  const star = missing.length ? `<span title="Chưa có số liệu: ${escHtml(missing.join(', '))}" style="color:#E67E22;cursor:help">*</span>` : '';
-  return `<span title="Tinh bột / Đạm / Béo (% năng lượng)">🍚 ${Math.round(r.pct.carbs)}% · 🥩 ${Math.round(r.pct.protein)}% · 🧈 ${Math.round(r.pct.fat)}%</span>${star}`;
-}
-
-/* Cột ĐIỂM: điểm cân bằng năng lượng tính lại theo công thức hiện hành của BGH khi mọi ô khay có số liệu;
-   thiếu số liệu thì hiện điểm đã lưu lúc học sinh gửi (kèm dấu *). */
-function trayScoreCell(t) {
-  const { found, missing } = trayResolve(t);
-  if (found.length && !missing.length) return `<b>${mmTrayScore(found).total}</b> / 100`;
-  if (typeof t.nutritionScore === 'number')
-    return `<b>${t.nutritionScore}</b> / 100<span title="Điểm lưu lúc gửi (khay có nguyên liệu chưa có số liệu)" style="color:#E67E22;cursor:help">*</span>`;
-  return '<span style="color:#aaa">—</span>';
-}
-
-function renderProposalTable(trays) {
-  const tbody = document.getElementById('proposalsTbody');
-
-  tbody.innerHTML = trays.map((t, i) => {
-    const icons = t.tray.map(item => item.icon).join('');
-    let confirmCell;
-    if (t.parentConfirmed === true) {
-      const time = t.confirmedAt ? formatTime(t.confirmedAt) : '';
-      confirmCell = `<span class="badge badge-green">✓ ${time}</span>`;
-    } else if (t.parentConfirmed === false) {
-      confirmCell = `<span class="badge badge-red">✗ Không nấu được</span>`;
-    } else {
-      confirmCell = `<span class="badge badge-orange">⏳ Chưa xác nhận</span>`;
-    }
-
-    return `
-      <tr>
-        <td><input type="checkbox" class="tray-check" data-idx="${i}"></td>
-        <td><strong>${escHtml(t.studentName)}</strong></td>
-        <td style="font-size:13px">${escHtml(t.trayName)}</td>
-        <td style="font-size:18px;letter-spacing:2px" title="${escHtml(t.tray.map(x=>x.name).join(' · '))}">${icons}</td>
-        <td style="font-size:12px;white-space:nowrap">${trayMacroCell(t)}</td>
-        <td style="font-size:13px;white-space:nowrap">${trayScoreCell(t)}</td>
-        <td style="font-size:11px;color:#888">${formatTime(t.sentAt)}</td>
-        <td>${confirmCell}</td>
-        <td>
-          ${t.schoolScore !== null
-            ? `<span class="badge badge-blue">${t.schoolScore} điểm</span>`
-            : '<span style="color:#aaa;font-size:12px">Chưa chấm</span>'}
-        </td>
-        <td style="font-size:12px;color:#888">${escHtml(t.schoolNote || '—')}</td>
-        <td>
-          <button class="btn btn-sm btn-primary" onclick="openGradePanel(${i})">
-            ${t.schoolScore !== null ? '✏️ Sửa' : '📝 Chấm'}
-          </button>
-        </td>
-      </tr>`;
-  }).join('');
-}
-
-function openGradePanel(idx) {
-  const trays    = loadKey(KEY.TRAY_LOG, DEFAULT_TRAY_LOG);
-  const criteria = loadKey(KEY.CRITERIA, DEFAULT_CRITERIA);
-  const t = trays[idx];
-
-  // Chọn bộ tiêu chí đang active
-  const selIdx = document.getElementById('criteriaSelector').value;
-  const crit   = selIdx !== '' ? criteria[+selIdx] : null;
-
-  document.getElementById('gradeStudentName').textContent = `${t.studentName} — "${t.trayName}"`;
-  document.getElementById('gradeTrayIcons').textContent   = t.tray.map(x => x.icon).join(' ');
-  document.getElementById('gradeIdx').value = idx;
-
-  const body = document.getElementById('gradeCriteriaBody');
-
-  if (!crit) {
-    body.innerHTML = `
-      <div style="color:#888;font-size:13px;padding:8px 0">
-        Chưa chọn bộ tiêu chí. Hãy chọn ở dropdown phía trên.
-      </div>
-      <div class="criteria-row" style="margin-top:12px">
-        <span class="criteria-name">Điểm tự nhập</span>
-        <input class="inline-input" type="number" id="manualScore" min="0" max="100"
-          value="${t.schoolScore ?? ''}">
-        <span class="criteria-max">/ 100</span>
-      </div>`;
-  } else {
-    const savedScores = t._criteriaScores || {};
-    body.innerHTML = crit.items.map((item, i) => {
-      const saved = savedScores[i] ?? 0;
-      const btns  = Array.from({ length: item.max + 1 }, (_, v) => `
-        <button class="score-btn ${saved === v ? 'active' : ''}"
-          onclick="setScore(this,${i},${v})" data-crit="${i}" data-val="${v}">${v}</button>`).join('');
-      return `
-        <div class="criteria-row">
-          <span class="criteria-name">${escHtml(item.label)}</span>
-          <div class="score-btn-group">${btns}</div>
-          <span class="criteria-max">/ ${item.max}</span>
-        </div>`;
-    }).join('');
-  }
-
-  updateGradeTotal(t, crit);
-  document.getElementById('gradeNote').value = t.schoolNote || '';
-  openModal('modalGrade');
-}
-
-function setScore(btn, critIdx, val) {
-  // Highlight nút trong nhóm
-  btn.closest('.score-btn-group').querySelectorAll('.score-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  updateGradeTotal();
-}
-
-function updateGradeTotal() {
-  const btns   = document.querySelectorAll('#gradeCriteriaBody .score-btn.active');
-  let total = 0;
-  btns.forEach(b => { total += +b.dataset.val; });
-  const manual = document.getElementById('manualScore');
-  if (manual) total = +manual.value || 0;
-  document.getElementById('gradeTotalScore').textContent = total;
-}
-
-function saveGrade() {
-  const idx      = +document.getElementById('gradeIdx').value;
-  const trays    = loadKey(KEY.TRAY_LOG, DEFAULT_TRAY_LOG);
-  const criteria = loadKey(KEY.CRITERIA, DEFAULT_CRITERIA);
-  const selIdx   = document.getElementById('criteriaSelector').value;
-  const note     = document.getElementById('gradeNote').value.trim();
-
-  let score = 0;
-  const manual = document.getElementById('manualScore');
-  if (manual) {
-    score = +manual.value || 0;
-  } else {
-    document.querySelectorAll('#gradeCriteriaBody .score-btn.active').forEach(b => { score += +b.dataset.val; });
-  }
-
-  // Lưu điểm từng tiêu chí
-  const scores = {};
-  document.querySelectorAll('#gradeCriteriaBody .score-btn.active').forEach(b => {
-    scores[+b.dataset.crit] = +b.dataset.val;
-  });
-
-  trays[idx].schoolScore = score;
-  trays[idx].schoolNote  = note;
-  trays[idx]._criteriaScores = scores;
-  saveKey(KEY.TRAY_LOG, trays);
-
-  closeModal('modalGrade');
-  renderProposalTable(trays);
-  showToast(`Đã lưu điểm ${score} cho ${trays[idx].studentName}!`);
-}
-
-/* Chấm hàng loạt */
-function batchGrade() {
-  const checked = document.querySelectorAll('.tray-check:checked');
-  if (!checked.length) { showToast('Chưa chọn học sinh nào!', 'error'); return; }
-  const score = +document.getElementById('batchScore').value;
-  const note  = document.getElementById('batchNote').value.trim();
-  if (isNaN(score)) { showToast('Điểm không hợp lệ!', 'error'); return; }
-
-  const trays = loadKey(KEY.TRAY_LOG, DEFAULT_TRAY_LOG);
-  checked.forEach(cb => {
-    const i = +cb.dataset.idx;
-    trays[i].schoolScore = score;
-    trays[i].schoolNote  = note || trays[i].schoolNote;
-  });
-  saveKey(KEY.TRAY_LOG, trays);
-  closeModal('modalBatch');
-  renderProposalTable(trays);
-  showToast(`Đã chấm ${checked.length} học sinh · ${score} điểm.`);
-}
-
-/* ══════════════════════════════════════════════
    MODAL HELPERS
 ══════════════════════════════════════════════ */
 function openModal(id) {
@@ -1501,9 +1184,7 @@ function refreshTab(kind) {
     ingredients: renderIngredientsTab,
     xp:        renderXPTab,
     badges:    renderBadgesTab,
-    criteria:  renderCriteriaTab,
     report:    renderReport,
-    proposals: renderProposals,
   }[kind];
   if (!fn) return;
   fn();
@@ -1531,7 +1212,7 @@ function formatTime(iso) {
 
 /* XP, danh hiệu hoặc tài khoản đổi ở tab khác (học sinh, phụ huynh) → bảng tài khoản tự cập nhật */
 window.addEventListener('storage', e => {
-  const keys = [MM_KEYS.XP_LOG, MM_KEYS.XP_CONFIG, MM_KEYS.BADGES_LOG, MM_KEYS.BADGES, MM_KEYS.FAS_LOG, MM_KEYS.ACCOUNTS, MM_KEYS.TRAY_LOG];
+  const keys = [MM_KEYS.XP_LOG, MM_KEYS.XP_CONFIG, MM_KEYS.BADGES_LOG, MM_KEYS.BADGES, MM_KEYS.FAS_LOG, MM_KEYS.ACCOUNTS];
   if (e.key !== null && keys.indexOf(e.key) === -1) return;
   const panel = document.getElementById('module-accounts');
   if (panel && panel.classList.contains('active')) renderAccounts();

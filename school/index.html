@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏫</text></svg>">
   <title>Ban Giám Hiệu — MOODMEAL MAGIC TRAY</title>
-  <link rel="stylesheet" href="../css/base.css?v=20261127a">
-  <link rel="stylesheet" href="../css/school.css?v=20261127a">
+  <link rel="stylesheet" href="../css/base.css?v=20261127b">
+  <link rel="stylesheet" href="../css/school.css?v=20261127b">
 </head>
 <body class="page-school">
 <div class="school-layout">
@@ -28,9 +28,6 @@
       </button>
       <button class="nav-link" data-module="report"    onclick="switchModule('report')">
         <span class="nav-icon">📊</span><span>Báo cáo FAS</span>
-      </button>
-      <button class="nav-link" data-module="proposals" onclick="switchModule('proposals')">
-        <span class="nav-icon">🍱</span><span>Đề xuất thực đơn</span>
       </button>
     </nav>
 
@@ -106,7 +103,6 @@
           <button class="tab-btn"        data-tab="ingredients" onclick="switchSettingsTab('ingredients')">🥕 Nguyên liệu</button>
           <button class="tab-btn"        data-tab="xp"       onclick="switchSettingsTab('xp')">⭐ XP & Level</button>
           <button class="tab-btn"        data-tab="badges"   onclick="switchSettingsTab('badges')">🏅 Danh hiệu</button>
-          <button class="tab-btn"        data-tab="criteria" onclick="switchSettingsTab('criteria')">📝 Tiêu chí chấm</button>
         </div>
 
         <!-- Tab: Thực đơn -->
@@ -200,15 +196,7 @@
           </div>
         </div>
 
-        <!-- Tab: Tiêu chí chấm -->
-        <div class="tab-panel" id="tab-criteria">
-          <div style="display:flex;gap:8px;margin-bottom:16px">
-            <button class="btn btn-primary" onclick="openAddCriteria()">+ Tạo bộ tiêu chí</button>
-            <button class="btn btn-secondary" style="margin-left:auto" onclick="refreshTab('criteria')">↻ Làm mới</button>
-          </div>
-          <div id="criteriaList"></div>
-        </div>
-      </div>
+      </div><!-- /module-settings -->
 
       <!-- ══════════════════════════════════
            MODULE ③ — BÁO CÁO FAS
@@ -273,45 +261,6 @@
                 </tr>
               </thead>
               <tbody id="fasTableBody"></tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      <!-- ══════════════════════════════════
-           MODULE ④ — ĐỀ XUẤT THỰC ĐƠN
-      ══════════════════════════════════ -->
-      <div class="module-panel" id="module-proposals">
-        <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap">
-          <select class="form-control" id="criteriaSelector" style="width:260px;padding:8px 12px" onchange="">
-            <option value="">— Chọn bộ tiêu chí để chấm —</option>
-          </select>
-          <button class="btn btn-secondary" onclick="openModal('modalBatch')">⚡ Chấm hàng loạt</button>
-          <button class="btn btn-secondary" style="margin-left:auto" onclick="refreshTab('proposals')">↻ Làm mới</button>
-        </div>
-
-        <div class="content-card">
-          <div class="content-card-header">
-            <span class="content-card-title">Danh sách đề xuất tuần này</span>
-          </div>
-          <div style="overflow-x:auto">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th style="width:36px"><input type="checkbox" id="checkAll" onchange="toggleAllChecks(this)"></th>
-                  <th>Học sinh</th>
-                  <th>Tên khay</th>
-                  <th>Nguyên liệu</th>
-                  <th>Thành phần dinh dưỡng</th>
-                  <th>Điểm</th>
-                  <th>Gửi lúc</th>
-                  <th>PH xác nhận</th>
-                  <th>Điểm BGH</th>
-                  <th>Ghi chú</th>
-                  <th>Thao tác</th>
-                </tr>
-              </thead>
-              <tbody id="proposalsTbody"></tbody>
             </table>
           </div>
         </div>
@@ -653,113 +602,15 @@
   </div>
 </div>
 
-<!-- Modal: Tạo/Sửa tiêu chí chấm -->
-<div class="modal-overlay" id="modalCriteria">
-  <div class="modal-box" style="max-width:580px">
-    <div class="modal-header">
-      <span class="modal-title" id="modalCriteriaTitle">Tạo bộ tiêu chí</span>
-      <button class="modal-close" onclick="closeModal('modalCriteria')">×</button>
-    </div>
-    <div class="modal-body">
-      <input type="hidden" id="criteriaEditIdx">
-      <div class="form-group-s">
-        <label class="form-label-s">Tên bộ tiêu chí *</label>
-        <input class="form-control" id="criteriaSetName" placeholder="vd: Tuần 3 — Ưu tiên rau xanh">
-      </div>
-      <div class="form-row">
-        <div class="form-group-s">
-          <label class="form-label-s">Tuần bắt đầu</label>
-          <input class="form-control" type="date" id="criteriaWeekStart">
-        </div>
-        <div class="form-group-s">
-          <label class="form-label-s">Tuần kết thúc</label>
-          <input class="form-control" type="date" id="criteriaWeekEnd">
-        </div>
-      </div>
-      <div style="margin-top:4px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-          <label class="form-label-s" style="margin:0">Danh sách tiêu chí</label>
-          <button class="btn btn-secondary btn-sm" onclick="addCriteriaItem()">+ Thêm tiêu chí</button>
-        </div>
-        <table class="data-table">
-          <thead><tr><th>Tên tiêu chí</th><th style="width:90px;text-align:center">Điểm tối đa</th><th style="width:40px"></th></tr></thead>
-          <tbody id="criteriaItemsBody"></tbody>
-        </table>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeModal('modalCriteria')">Hủy</button>
-      <button class="btn btn-primary"   onclick="saveCriteria()">Lưu bộ tiêu chí</button>
-    </div>
-  </div>
-</div>
-
-<!-- Modal: Chấm điểm học sinh -->
-<div class="modal-overlay" id="modalGrade">
-  <div class="modal-box" style="max-width:540px">
-    <div class="modal-header">
-      <span class="modal-title">📝 Chấm điểm đề xuất</span>
-      <button class="modal-close" onclick="closeModal('modalGrade')">×</button>
-    </div>
-    <div class="modal-body">
-      <input type="hidden" id="gradeIdx">
-      <div style="background:var(--purple-light);border-radius:10px;padding:12px 14px;margin-bottom:16px">
-        <div style="font-size:14px;font-weight:700;color:var(--purple-dark)" id="gradeStudentName"></div>
-        <div style="font-size:22px;margin-top:4px;letter-spacing:2px" id="gradeTrayIcons"></div>
-      </div>
-      <div id="gradeCriteriaBody"></div>
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:16px;padding-top:12px;border-top:1px solid var(--border-light)">
-        <span style="font-size:13px;color:var(--text-muted)">Tổng điểm:</span>
-        <span style="font-size:22px;font-weight:800;color:var(--green-primary)" id="gradeTotalScore">0</span>
-      </div>
-      <div class="form-group-s" style="margin-top:12px">
-        <label class="form-label-s">Ghi chú của BGH</label>
-        <input class="form-control" id="gradeNote" placeholder="Nhận xét ngắn (không bắt buộc)">
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeModal('modalGrade')">Hủy</button>
-      <button class="btn btn-primary"   onclick="saveGrade()">💾 Lưu điểm</button>
-    </div>
-  </div>
-</div>
-
-<!-- Modal: Chấm hàng loạt -->
-<div class="modal-overlay" id="modalBatch">
-  <div class="modal-box" style="max-width:420px">
-    <div class="modal-header">
-      <span class="modal-title">⚡ Chấm hàng loạt</span>
-      <button class="modal-close" onclick="closeModal('modalBatch')">×</button>
-    </div>
-    <div class="modal-body">
-      <p style="font-size:13px;color:#888;margin-bottom:16px">
-        Áp cùng 1 điểm cho tất cả học sinh đã chọn (checkbox trong bảng).
-      </p>
-      <div class="form-group-s">
-        <label class="form-label-s">Điểm áp dụng</label>
-        <input class="form-control" type="number" id="batchScore" min="0" max="100" placeholder="vd: 6">
-      </div>
-      <div class="form-group-s">
-        <label class="form-label-s">Ghi chú chung (không bắt buộc)</label>
-        <input class="form-control" id="batchNote" placeholder="vd: Đạt cơ bản">
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeModal('modalBatch')">Hủy</button>
-      <button class="btn btn-primary"   onclick="batchGrade()">Áp điểm</button>
-    </div>
-  </div>
-</div>
-
 <!-- ══ SCRIPTS ══ -->
-<script src="../js/config.js?v=20261127a"></script>
-<script src="../js/seed.js?v=20261127a"></script>
-<script src="../js/utils.js?v=20261127a"></script>
-<script src="../js/store.js?v=20261127a"></script>
-<script src="../js/auth.js?v=20261127a"></script>
-<script src="../js/xp.js?v=20261127a"></script>
-<script src="../js/badges.js?v=20261127a"></script>
-<script src="js/school.js?v=20261127a"></script>
+<script src="../js/config.js?v=20261127b"></script>
+<script src="../js/seed.js?v=20261127b"></script>
+<script src="../js/utils.js?v=20261127b"></script>
+<script src="../js/store.js?v=20261127b"></script>
+<script src="../js/auth.js?v=20261127b"></script>
+<script src="../js/xp.js?v=20261127b"></script>
+<script src="../js/badges.js?v=20261127b"></script>
+<script src="js/school.js?v=20261127b"></script>
 <script>
   /* Filter accounts table by search */
   function filterAccountsTable(q) {
@@ -770,12 +621,6 @@
     });
   }
 
-  /* Toggle all proposal checkboxes */
-  function toggleAllChecks(master) {
-    document.querySelectorAll('.tray-check').forEach(cb => {
-      cb.checked = master.checked;
-    });
-  }
 </script>
 </body>
 </html>

@@ -1,7 +1,7 @@
 /* ═══════════════════════════════════════════════
    parent.js — MOODMEAL MAGIC TRAY v3
    Giao diện Phụ huynh
-   ① Tiến trình con  ② Gợi ý nấu ăn  ③ Lịch sử
+   ① Tiến trình con  ② Yêu cầu thử món của con
 ═══════════════════════════════════════════════ */
 
 /* ── Storage helpers ─────────────────────────── */
@@ -11,7 +11,6 @@ function save(key, data)     { store.set(key, data); }
 /* ── Session & linked student ────────────────── */
 let SESSION   = null;
 let STUDENT   = null; // account object của con
-let TRAY_ITEM = null; // khay cơm mới nhất chưa xác nhận
 
 document.addEventListener('DOMContentLoaded', () => {
   SESSION = auth.check('parent');
@@ -25,10 +24,8 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('parentName').textContent  = SESSION.name;
   document.getElementById('childName').textContent   = STUDENT ? STUDENT.name : '—';
 
-  // Render 3 section
+  // Render các section
   renderSection1();
-  renderSection2();
-  renderSection3();
   startChildDate();
 });
 
@@ -56,38 +53,42 @@ function renderSection1() {
 }
 
 /* ══════════════════════════════════════════════
-   Lịch hành trình FAS (thay combobox chọn món)
-   - Mỗi lần đánh giá so với lần thử trước của chính món đó:
-     up (tăng) · down (giảm) · same (giữ nguyên / thử lần đầu)
+   Lịch hành trình FAS (theo NHÓM thực phẩm)
+   - Mỗi lượt thử thật so với lượt thử thật trước đó của chính nhóm đó (cả trường và nhà):
+     up (tăng) · down (giảm) · same (giữ nguyên / thử lần đầu / Chưa thử)
    - Ngày: tăng → xanh lá ▲, giảm → cam ▼, có cả hai → vàng ▲▼, còn lại → xanh dương •
 ══════════════════════════════════════════════ */
-let FAS_DAYS     = {};    // { 'YYYY-MM-DD': [{ foodName, score, attempt, trend }] }
+let FAS_DAYS     = {};    // { 'YYYY-MM-DD': [{ key, label, score, attempt, ts, trend }] }
 let FAS_MONTH    = null;  // ngày 1 của tháng đang xem
 let FAS_SEL_DATE = null;
-let FAS_SEL_FOOD = null;
+let FAS_SEL_FOOD = null;  // khóa nhóm đang chọn trong ngày
 
 const FAS_TREND_MARK = { up: '▲', down: '▼', mixed: '▲▼', same: '•' };
 
 function buildFasDays() {
   const myLog = load(MM_KEYS.FAS_LOG, []).filter(r => r.studentId === STUDENT?.id);
-  const byFood = {};
-  myLog.forEach(r => { const k = r.foodId || r.foodName; (byFood[k] = byFood[k] || []).push(r); });
+  const byGroup = {};
+  myLog.forEach(r => { const k = r.groupId || r.foodId || r.foodName; (byGroup[k] = byGroup[k] || []).push(r); });
 
   const days = {};
-  Object.values(byFood).forEach(list => {
-    list.sort((a, b) => a.attempt - b.attempt);
-    list.forEach((r, i) => {
-      const prev  = i > 0 ? list[i - 1].score : null;
-      const trend = prev === null || Math.abs(r.score - prev) < 0.001 ? 'same'
+  Object.entries(byGroup).forEach(([key, list]) => {
+    list.sort((a, b) => String(a.timestamp).localeCompare(String(b.timestamp)));
+    const grp = mmGroupById(key);
+    const label = grp ? `${grp.icon} ${grp.name}` : (list[0].foodName || key);
+    let prev = null;                                   // điểm của lượt thử thật gần nhất trước đó
+    list.forEach(r => {
+      const tried = r.score >= 1;
+      const trend = !tried || prev === null || Math.abs(r.score - prev) < 0.001 ? 'same'
                   : (r.score > prev ? 'up' : 'down');
+      if (tried) prev = r.score;
       const date  = toLocalDateStr(new Date(r.timestamp));
-      (days[date] = days[date] || []).push({ foodName: r.foodName, score: r.score, attempt: r.attempt, trend });
+      (days[date] = days[date] || []).push({ key, label, score: r.score, attempt: r.attempt, ts: r.timestamp, trend });
     });
   });
-  // Mỗi món chỉ giữ lần đánh giá cuối cùng trong ngày
+  // Mỗi nhóm chỉ giữ lượt đánh giá cuối cùng trong ngày
   Object.keys(days).forEach(d => {
     const last = {};
-    days[d].forEach(e => { if (!last[e.foodName] || e.attempt > last[e.foodName].attempt) last[e.foodName] = e; });
+    days[d].forEach(e => { if (!last[e.key] || String(e.ts) > String(last[e.key].ts)) last[e.key] = e; });
     days[d] = Object.values(last);
   });
   return days;
@@ -106,7 +107,7 @@ function initFasCalendar() {
   const prefix = toLocalDateStr(FAS_MONTH).slice(0, 7);          // 'YYYY-MM'
   const dates  = Object.keys(FAS_DAYS).filter(d => d.slice(0, 7) === prefix).sort();
   FAS_SEL_DATE = dates.length ? dates[dates.length - 1] : null;
-  FAS_SEL_FOOD = FAS_SEL_DATE ? FAS_DAYS[FAS_SEL_DATE][0].foodName : null;
+  FAS_SEL_FOOD = FAS_SEL_DATE ? FAS_DAYS[FAS_SEL_DATE][0].key : null;
   renderFasCalendar();
   renderFasDay();
 }
@@ -119,7 +120,7 @@ function shiftFasMonth(dir) {
 function selectFasDate(date) {
   if (!FAS_DAYS[date]) return;
   FAS_SEL_DATE = date;
-  FAS_SEL_FOOD = FAS_DAYS[date][0].foodName;
+  FAS_SEL_FOOD = FAS_DAYS[date][0].key;
   renderFasCalendar();
   renderFasDay();
 }
@@ -127,7 +128,7 @@ function selectFasDate(date) {
 function selectFasFood(i) {
   const items = FAS_DAYS[FAS_SEL_DATE] || [];
   if (!items[i]) return;
-  FAS_SEL_FOOD = items[i].foodName;
+  FAS_SEL_FOOD = items[i].key;
   renderFasDay();
 }
 
@@ -146,7 +147,7 @@ function renderFasCalendar() {
     const cls   = ['fas-cal-cell', items ? 'has ' + trend : '', date === todayStr ? 'today' : '',
                    date === FAS_SEL_DATE ? 'sel' : ''].join(' ');
     cells += items
-      ? `<button class="${cls}" onclick="selectFasDate('${date}')" title="${items.length} món đã đánh giá">
+      ? `<button class="${cls}" onclick="selectFasDate('${date}')" title="${items.length} nhóm đã đánh giá">
            <span class="fas-cal-num">${d}</span><span class="fas-cal-mark">${FAS_TREND_MARK[trend]}</span></button>`
       : `<div class="${cls}"><span class="fas-cal-num">${d}</span></div>`;
   }
@@ -184,15 +185,15 @@ function renderFasDay() {
   const dn = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
   const d  = new Date(FAS_SEL_DATE + 'T00:00:00');
   box.innerHTML = `
-    <div class="fas-day-title">${dn[d.getDay()]}, ${formatYmd(FAS_SEL_DATE)} · ${items.length} món</div>
+    <div class="fas-day-title">${dn[d.getDay()]}, ${formatYmd(FAS_SEL_DATE)} · ${items.length} nhóm</div>
     <div class="fas-day-chips">
       ${items.map((e, i) => `
-        <button class="fas-food-chip ${e.trend} ${e.foodName === FAS_SEL_FOOD ? 'active' : ''}" onclick="selectFasFood(${i})">
-          <span class="fas-food-mark">${FAS_TREND_MARK[e.trend]}</span>${escHtml(e.foodName)}
+        <button class="fas-food-chip ${e.trend} ${e.key === FAS_SEL_FOOD ? 'active' : ''}" onclick="selectFasFood(${i})">
+          <span class="fas-food-mark">${FAS_TREND_MARK[e.trend]}</span>${escHtml(e.label)}
         </button>`).join('')}
     </div>`;
-  const sel = items.find(e => e.foodName === FAS_SEL_FOOD) || items[0];
-  renderFasChart(sel.foodName, sel.attempt);
+  const sel = items.find(e => e.key === FAS_SEL_FOOD) || items[0];
+  renderFasChart(sel.key, sel.ts);
 }
 
 /* Ngày giờ hiện tại dưới thanh XP của con (cập nhật mỗi 30 giây) */
@@ -201,12 +202,8 @@ function startChildDate() {
   if (!el) return;
   const days = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
   const pad  = n => String(n).padStart(2, '0');
-  const cookEl = document.getElementById('cookDate');
-  const wd = ['CN', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7'];
   const showNow = () => {
     const d = new Date();
-    if (cookEl) cookEl.textContent =
-      `(${wd[d.getDay()]}, ${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()})`;
     el.textContent =
       `${days[d.getDay()]}, ${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} · ${pad(d.getHours())}:${pad(d.getMinutes())}`;
   };
@@ -268,20 +265,21 @@ window.addEventListener('storage', e => {
   renderChildCard();
 });
 
-/* uptoAttempt: chỉ tính các lần thử đến lần này (lần của ngày được chọn) */
-function renderFasChart(foodName, uptoAttempt) {
+/* key: nhóm thực phẩm (mã nhóm; dòng cũ chưa có nhóm thì mã nguyên liệu); uptoTs: chỉ tính các lượt đến mốc thời gian này */
+function renderFasChart(key, uptoTs) {
   const fasLog = load(MM_KEYS.FAS_LOG, []);
-  const entries = fasLog
-    .filter(r => r.studentId === STUDENT?.id && r.foodName === foodName)
-    .filter(r => uptoAttempt == null || r.attempt <= uptoAttempt)
-    .sort((a, b) => a.attempt - b.attempt);
+  const rows = fasLog
+    .filter(r => r.studentId === STUDENT?.id && (r.groupId || r.foodId || r.foodName) === key)
+    .filter(r => uptoTs == null || String(r.timestamp) <= String(uptoTs))
+    .sort((a, b) => String(a.timestamp).localeCompare(String(b.timestamp)));
+  const entries = mmTriedRows(rows);                    // chỉ lượt thử thật (điểm 1–4); "Chưa thử" không tính
 
   const bars    = document.getElementById('fasBarsParent');
   const fagNote = document.getElementById('fasFagNote');
 
-  // Build 4 slots — hiện 4 lần thử gần nhất (nếu > 4 lần thì trượt cửa sổ)
+  // 4 ô — hiện 4 lượt thử gần nhất của nhóm (nếu > 4 lượt thì trượt cửa sổ)
   const shown = entries.slice(-4);
-  const base  = shown.length ? shown[0].attempt : 1;
+  const base  = entries.length - shown.length + 1;
   const slots = Array.from({ length: 4 }, (_, i) => shown[i] ?? null);
   bars.innerHTML = slots.map((e, i) => {
     const val = e ? e.score : null;
@@ -297,234 +295,15 @@ function renderFasChart(foodName, uptoAttempt) {
   }).join('');
 
   // FAG note
+  fagNote.style.display = 'block';
   if (entries.length >= 2) {
     const fag = (entries[entries.length - 1].score - entries[0].score).toFixed(1);
     const arrow = fag >= 0 ? '📈' : '📉';
     fagNote.textContent = `${arrow} FAS ${fag >= 0 ? 'tăng' : 'giảm'} ${Math.abs(fag)} qua ${entries.length} lần thử`;
-    fagNote.style.display = 'block';
   } else {
-    fagNote.style.display = entries.length === 1 ? 'block' : 'none';
-    if (entries.length === 1) fagNote.textContent = '🌱 Mới thử lần đầu! Tiếp tục khám phá nhé!';
+    fagNote.textContent = entries.length === 1 ? '🌱 Mới thử lần đầu! Tiếp tục khám phá nhé!'
+                                               : '🌱 Con chưa thử nhóm này. Khi sẵn sàng con sẽ thử nhé!';
   }
-}
-
-/* ══════════════════════════════════════════════
-   SECTION ② — Gợi ý nấu ăn hôm nay
-══════════════════════════════════════════════ */
-function renderSection2() {
-  const trayLog = load(MM_KEYS.TRAY_LOG, []);
-
-  // Lấy khay mới nhất của con, chưa xác nhận (parentConfirmed === null)
-  const myTrays = trayLog
-    .filter(t => t.studentId === STUDENT?.id)
-    .sort((a, b) => new Date(b.sentAt) - new Date(a.sentAt));
-
-  const pending = myTrays.find(t => t.parentConfirmed === null);
-  TRAY_ITEM = pending || null;
-
-  const wrap = document.getElementById('trayPreviewWrap');
-
-  if (!TRAY_ITEM) {
-    // Kiểm tra có khay đã xác nhận hôm nay không
-    const today     = toLocalDateStr(new Date());
-    const confirmed = myTrays.find(t =>
-      t.parentConfirmed === true &&
-      t.confirmedAt && toLocalDateStr(new Date(t.confirmedAt)) === today
-    );
-
-    const declined = myTrays.find(t =>
-      t.parentConfirmed === false && t.respondedAt &&
-      toLocalDateStr(new Date(t.respondedAt)) === today
-    );
-
-    if (confirmed) {
-      wrap.innerHTML = `
-        <div class="no-tray-placeholder">
-          ✅ Ba mẹ đã xác nhận khay cơm hôm nay!<br>
-          <span style="font-size:12px;color:#aaa">"${escHtml(confirmed.trayName)}"</span>
-        </div>`;
-    } else if (declined) {
-      wrap.innerHTML = `
-        <div class="no-tray-placeholder">
-          🌱 Ba mẹ đã báo tối nay chưa nấu được khay cơm.<br>
-          <span style="font-size:12px;color:#aaa">"${escHtml(declined.trayName)}" · Mỗi khay chỉ phản hồi một lần</span>
-        </div>`;
-    } else {
-      wrap.innerHTML = `
-        <div class="no-tray-placeholder">
-          🌱 Con chưa gửi khay cơm hôm nay.<br>
-          <span style="font-size:12px;color:#aaa">Nhắc con thiết kế khay sau bữa trưa nhé!</span>
-        </div>`;
-    }
-    // Ẩn nút confirm
-    document.getElementById('confirmActions').style.display = 'none';
-    return;
-  }
-
-  // Render tray preview
-  const icons = TRAY_ITEM.tray.map(x => x.icon).join('');
-  const itemsHTML = TRAY_ITEM.tray.map(x => `
-    <div class="tray-item-chip">
-      <span class="tray-item-icon">${escHtml(x.icon)}</span>
-      <div>
-        <div class="tray-item-name">${escHtml(x.name)}</div>
-        <div class="tray-item-group">${groupLabel(x.group)}</div>
-      </div>
-    </div>`).join('');
-
-  wrap.innerHTML = `
-    <div class="tray-name-display">${escHtml(TRAY_ITEM.trayName)} ${icons}</div>
-    <div class="tray-items-row">${itemsHTML}</div>
-    ${trayNutritionHtml(TRAY_ITEM)}
-    <div class="tray-meta">
-      <span class="tray-sent-time">Con gửi lúc ${formatTime(TRAY_ITEM.sentAt)}</span>
-    </div>`;
-
-  document.getElementById('confirmActions').style.display = 'flex';
-}
-
-/* Điểm và thành phần dinh dưỡng của khay: tính theo công thức BGH hiện hành khi mọi ô khay có số liệu;
-   thiếu số liệu thì dùng điểm đã lưu lúc con gửi (dấu *) và chỉ vẽ thanh tỉ lệ cho các ô có số liệu. */
-const PARENT_MACROS = [['carbs', 'Tinh bột', '#F59E0B'], ['protein', 'Đạm', '#8B5CF6'], ['fat', 'Béo', '#EF4444']];
-function trayNutritionHtml(t) {
-  const { found, missing } = mmTrayResolve(t);
-  const base = mmTrayPct(found);
-  let score = null, star = false;
-  if (found.length && !missing.length) score = mmTrayScore(found).total;
-  else if (typeof t.nutritionScore === 'number') { score = t.nutritionScore; star = true; }
-  if (score === null && !base.pct) return '';
-  const starHtml = star || (missing.length && base.pct)
-    ? `<span class="tray-star" title="${escHtml(missing.length ? 'Chưa có số liệu: ' + missing.join(', ') : 'Điểm lưu lúc con gửi')}">*</span>` : '';
-  const head = score === null ? '' : `
-    <div class="tray-score-row">
-      <span class="tray-score-label">Điểm khay</span>
-      <span class="tray-score-val">${score}<small> / 100</small>${starHtml}</span>
-    </div>`;
-  const bar = base.pct ? `
-    <div class="tray-macro-bar" role="img" aria-label="${PARENT_MACROS.map(([k, l]) => l + ' ' + Math.round(base.pct[k]) + '%').join(', ')}">
-      ${PARENT_MACROS.map(([k, , c]) => `<span style="width:${base.pct[k].toFixed(1)}%;background:${c}"></span>`).join('')}
-    </div>
-    <div class="tray-macro-legend">
-      ${PARENT_MACROS.map(([k, l, c]) => `<span><i style="background:${c}"></i>${l} ${Math.round(base.pct[k])}%</span>`).join('')}
-    </div>` : '';
-  return `<div class="tray-nutrition">${head}${bar}</div>`;
-}
-
-function groupLabel(g) {
-  return { tinBot: 'Tinh bột', dam: 'Đạm', rauCu: 'Rau củ', traiCay: 'Trái cây' }[g] || g;
-}
-
-/* Mỗi khay chỉ được phản hồi một lần: đọc lại từ nhật ký (phòng bấm hai lần hoặc đã trả lời ở tab khác) */
-function trayAlreadyAnswered() {
-  const cur = load(MM_KEYS.TRAY_LOG, []).find(t => t.id === TRAY_ITEM.id);
-  if (cur && cur.parentConfirmed !== null && cur.parentConfirmed !== undefined) {
-    showToast('Khay này ba mẹ đã phản hồi rồi');
-    renderSection2();
-    return true;
-  }
-  return false;
-}
-
-/* Bấm xác nhận đã nấu */
-function confirmCooked() {
-  if (!TRAY_ITEM || trayAlreadyAnswered()) return;
-  const now = new Date().toISOString();
-  updateTrayLog(TRAY_ITEM.id, { parentConfirmed: true, confirmedAt: now });
-
-  // Cộng XP "Ba mẹ xác nhận đã nấu" cho con theo bảng của BGH (mỗi khay chỉ cộng một lần)
-  const xpRes  = STUDENT ? awardXp(STUDENT.id, 'parent_confirm', TRAY_ITEM.id) : null;
-  const gained = xpRes ? xpRes.awarded : 0;
-  const lvText = xpRes && xpRes.leveledUp ? ` Con lên Level ${xpRes.after.level}!` : '';
-  renderChildCard();   // cập nhật ngay thẻ XP / Level của con
-
-  // UI
-  const btnYes = document.getElementById('btnConfirmYes');
-  const btnNo  = document.getElementById('btnConfirmNo');
-  const result = document.getElementById('confirmResult');
-  btnYes.disabled = true;
-  btnNo.disabled  = true;
-  btnYes.textContent = `✅ Đã xác nhận lúc ${formatClock(now)}`;
-  result.textContent = `🎉 Con nhận +${gained} XP!${lvText} Cảm ơn ba mẹ đã ủng hộ con khám phá ẩm thực!`;
-  result.className   = 'confirm-result show yes';
-
-  showToast(`✅ Đã xác nhận! Con nhận +${gained} XP 🌱${lvText}`);
-  // Refresh timeline
-  setTimeout(renderSection3, 400);
-}
-
-/* Bấm chưa nấu được */
-function notCooked() {
-  if (!TRAY_ITEM || trayAlreadyAnswered()) return;
-  updateTrayLog(TRAY_ITEM.id, { parentConfirmed: false, respondedAt: new Date().toISOString() });
-
-  const btnYes = document.getElementById('btnConfirmYes');
-  const btnNo  = document.getElementById('btnConfirmNo');
-  const result = document.getElementById('confirmResult');
-  btnYes.disabled = true;
-  btnNo.disabled  = true;
-  btnNo.textContent = '✗ Tối nay chưa nấu được';
-  result.textContent = 'Hẹn lần sau nhé! 🌱 Con sẽ tiếp tục gửi gợi ý.';
-  result.className   = 'confirm-result show no';
-
-  showToast('Đã ghi nhận. Hẹn lần sau! 🌱');
-  setTimeout(renderSection3, 400);
-}
-
-/* Cập nhật tray_log theo id */
-function updateTrayLog(id, patch) {
-  const log = load(MM_KEYS.TRAY_LOG, []);
-  const idx = log.findIndex(t => t.id === id);
-  if (idx === -1) return;
-  log[idx] = { ...log[idx], ...patch };
-  save(MM_KEYS.TRAY_LOG, log);
-}
-
-/* ══════════════════════════════════════════════
-   SECTION ③ — Lịch sử xác nhận
-══════════════════════════════════════════════ */
-function renderSection3() {
-  const trayLog = load(MM_KEYS.TRAY_LOG, []);
-  const myTrays = trayLog
-    .filter(t => t.studentId === STUDENT?.id && t.sentAt)
-    .sort((a, b) => new Date(b.sentAt) - new Date(a.sentAt))
-    .slice(0, 14); // 2 tuần ~ tối đa 14 bữa
-
-  const timeline = document.getElementById('historyTimeline');
-
-  if (!myTrays.length) {
-    timeline.innerHTML = `<div class="timeline-empty">📭 Chưa có lịch sử khay cơm</div>`;
-    return;
-  }
-
-  timeline.innerHTML = myTrays.map(t => {
-    const icons = t.tray ? t.tray.map(x => x.icon).join('') : '—';
-    let statusClass, statusText, dotClass;
-
-    if (t.parentConfirmed === true) {
-      dotClass    = 'confirmed';
-      statusClass = 'yes';
-      statusText  = `✅ Ba mẹ xác nhận đã nấu lúc ${formatTime(t.confirmedAt)}`;
-    } else if (t.parentConfirmed === false) {
-      dotClass    = 'declined';
-      statusClass = 'no';
-      statusText  = '✗ Tối đó chưa nấu được';
-    } else {
-      dotClass    = 'pending';
-      statusClass = 'pending';
-      statusText  = '⏳ Chờ ba mẹ xác nhận';
-    }
-
-    return `
-      <div class="timeline-item">
-        <div class="timeline-dot ${dotClass}"></div>
-        <div class="timeline-content">
-          <div class="timeline-date">${formatDateFull(t.sentAt)}</div>
-          <div class="timeline-tray-name">"${escHtml(t.trayName)}"</div>
-          <div class="timeline-icons">${icons}</div>
-          <div class="timeline-status ${statusClass}">${statusText}</div>
-        </div>
-      </div>`;
-  }).join('');
 }
 
 /* ══════════════════════════════════════════════

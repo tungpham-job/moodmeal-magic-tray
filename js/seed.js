@@ -31,11 +31,9 @@ const DEFAULT_XP_CONFIG = {
     { level: 4, name: 'Đại sứ dinh dưỡng',   xpFrom: 600, xpTo: 9999 },
   ],
   actions: [
-    { id: 'first_try',       label: 'Thử món lần đầu',          xp: 15 },
-    { id: 'emoji_rate',      label: 'Đánh giá emoji',            xp: 5  },
-    { id: 'try_again',       label: 'Bấm TRY AGAIN',            xp: 3  },
-    { id: 'send_tray',       label: 'Gửi khay cơm cho ba mẹ',   xp: 10 },
-    { id: 'parent_confirm',  label: 'Ba mẹ xác nhận đã nấu',    xp: 20 },
+    { id: 'first_try',       label: 'Thử lần đầu của nhóm thực phẩm', xp: 15 },
+    { id: 'emoji_rate',      label: 'Đánh giá emoji',                 xp: 5  },
+    { id: 'parent_confirm',  label: 'Ba mẹ nấu món thử lại',          xp: 20 },
   ]
 };
 
@@ -44,53 +42,8 @@ const DEFAULT_BADGES = [
   { id: 'b01', icon: '🌱', name: 'Người mới',     desc: 'Đăng nhập lần đầu',                    auto: true,  active: true },
   { id: 'b02', icon: '🥬', name: 'Bạn Rau',       desc: 'FAS nhóm Rau ≥ 3.0',                  auto: true,  active: true },
   { id: 'b03', icon: '🥦', name: 'Người xanh',    desc: 'Thử ≥ 3 nguyên liệu nhóm Rau',        auto: true,  active: true },
-  { id: 'b04', icon: '👨‍🍳', name: 'Đại bếp nhí',  desc: 'Khay cơm được PH xác nhận ≥ 5 lần', auto: false, active: true },
   { id: 'b05', icon: '⭐', name: 'Sao dinh dưỡng', desc: 'FAG tổng ≥ 5.0',                     auto: false, active: true },
 ];
-
-/* ── Seed: Bảng dinh dưỡng chuẩn ────────────────
-   Danh sách để BGH CHỌN khi thêm nguyên liệu (sửa lại được; lưu ở mm_nutrition_table).
-   Nhóm dinh dưỡng: Tinh bột · Đạm · Rau củ · Trái cây (canh là món, không phải nhóm).
-   carbs / protein / fat: gam trên 100 g; portion: khẩu phần chuẩn một ô khay (gam).
-   ref: true = số liệu THAM KHẢO (nguồn thứ cấp, đã làm tròn), cần đối chiếu
-   "Bảng thành phần thực phẩm Việt Nam" của Viện Dinh dưỡng trước khi dùng cho nghiên cứu. */
-const DEFAULT_NUTRITION_TABLE = [
-  { id:'com-trang', group:'Tinh bột', name:'Cơm trắng',     icon:'🍚', planet:'Đạm',      portion:100, carbs:28,  protein:2.7, fat:0.3, ref:true },
-  { id:'thit-heo',  group:'Đạm',      name:'Thịt heo',      icon:'🥩', planet:'Đạm',      portion:50,  carbs:0,   protein:21,  fat:6,   ref:true },
-  { id:'trung',     group:'Đạm',      name:'Trứng',         icon:'🥚', planet:'Đạm',      portion:50,  carbs:1,   protein:13,  fat:11,  ref:true },
-  { id:'ca',        group:'Đạm',      name:'Cá',            icon:'🐟', planet:'Đạm',      portion:50,  carbs:0,   protein:18,  fat:5.5, ref:true },
-  { id:'rau-muong', group:'Rau củ',   name:'Rau muống',     icon:'🥬', planet:'Rau củ',   portion:80,  carbs:3.5, protein:3,   fat:0,   ref:true },
-  { id:'ca-rot',    group:'Rau củ',   name:'Cà rốt',        icon:'🥕', planet:'Rau củ',   portion:80,  carbs:10,  protein:1,   fat:0,   ref:true },
-  { id:'ca-chua',   group:'Rau củ',   name:'Cà chua',       icon:'🍅', planet:'Rau củ',   portion:80,  carbs:3,   protein:1,   fat:0,   ref:true },
-  { id:'bau',       group:'Rau củ',   name:'Bầu',           icon:'🥒', planet:'Rau củ',   portion:80,  carbs:4,   protein:1,   fat:0,   ref:true },
-  { id:'bong-cai',  group:'Rau củ',   name:'Bông cải xanh', icon:'🥦', planet:'Xanh lá',  portion:80,  carbs:5,   protein:2,   fat:0,   ref:true },
-  { id:'chuoi',     group:'Trái cây', name:'Chuối',         icon:'🍌', planet:'Trái cây', portion:80,  carbs:23,  protein:1,   fat:0,   ref:true },
-  { id:'cam',       group:'Trái cây', name:'Cam',           icon:'🍊', planet:'Trái cây', portion:80,  carbs:12,  protein:1,   fat:0,   ref:true },
-  { id:'tao',       group:'Trái cây', name:'Táo',           icon:'🍎', planet:'Trái cây', portion:80,  carbs:14,  protein:0,   fat:0,   ref:true },
-];
-
-/* ── Seed: Nguyên liệu ───────────────────────────
-   id cố định, dùng làm foodId của nhật ký FAS (nối các lần thử của cùng một nguyên liệu).
-   Số liệu dinh dưỡng được SAO từ bảng chuẩn (sửa riêng từng nguyên liệu được).
-   alwaysUnlocked: có sẵn cho mọi bé ("Mở khóa sẵn"); còn lại mở khi bé đã thử (có FAS). */
-const MM_DEFAULT_UNLOCKED = ['com-trang', 'thit-heo', 'rau-muong', 'chuoi'];
-const MM_DEFAULT_INGREDIENT_IDS = ['com-trang', 'thit-heo', 'trung', 'ca', 'rau-muong', 'ca-rot', 'ca-chua', 'bau', 'bong-cai', 'chuoi'];
-function mmIngredientFromTable(t, unlocked) {
-  return { id:t.id, name:t.name, icon:t.icon, group:t.group, planet:t.planet,
-           portion:t.portion, carbs:t.carbs, protein:t.protein, fat:t.fat,
-           alwaysUnlocked: !!unlocked, active:true };
-}
-/* Công thức tính điểm khay cơm (cân bằng năng lượng) — BGH sửa ở Thiết lập → Nguyên liệu → Công thức tính điểm.
-   targets: khoảng khuyến nghị % năng lượng [thấp, cao] cho Carbs / Đạm / Béo.
-   tolerance: lệch ra ngoài khoảng bao nhiêu điểm phần trăm thì điểm chất đó về 0.
-   groupPts: điểm cho mỗi nhóm có mặt (4 nhóm). macroPts: điểm tối đa của mỗi chất.
-   Tổng điểm luôn quy về thang 100. Khoảng mặc định chưa đối chiếu nguồn chính thức. */
-const DEFAULT_SCORE_FORMULA = {
-  targets: { carbs: [55, 65], protein: [13, 20], fat: [20, 30] },
-  tolerance: 15,
-  groupPts: 6.25,
-  macroPts: 25,
-};
 
 /* ── Seed: Nhóm thực phẩm (mỗi nhóm = 1 hành tinh) ───────────
    FAS / FAG được tính THEO NHÓM: các nguyên liệu cùng nhóm là một đối tượng.
@@ -120,26 +73,35 @@ const MM_INGREDIENT_GROUP = {
   'chuoi':'g-trai-cay', 'cam':'g-trai-cay', 'tao':'g-trai-cay', 'dua-hau':'g-trai-cay',
 };
 
-/* Nguyên liệu bổ sung (ngoài 10 nguyên liệu cũ lấy từ bảng dinh dưỡng). */
-const MM_EXTRA_INGREDIENTS = [
-  { id:'bun',       name:'Bún',          icon:'🍜' }, { id:'pho',       name:'Phở',          icon:'🍜' },
-  { id:'mi',        name:'Mì',           icon:'🍝' }, { id:'banh-mi',   name:'Bánh mì',      icon:'🥖' },
-  { id:'thit-ga',   name:'Thịt gà',      icon:'🍗' }, { id:'thit-bo',   name:'Thịt bò',      icon:'🥩' },
-  { id:'tom',       name:'Tôm',          icon:'🦐' }, { id:'muc',       name:'Mực',          icon:'🦑' },
-  { id:'cua',       name:'Cua',          icon:'🦀' }, { id:'trung-vit', name:'Trứng vịt',    icon:'🥚' },
-  { id:'trung-cut', name:'Trứng cút',    icon:'🥚' }, { id:'dau-hu',    name:'Đậu hũ',       icon:'🫘' },
-  { id:'dau-xanh',  name:'Đậu xanh',     icon:'🫘' }, { id:'dau-den',   name:'Đậu đen',      icon:'🫘' },
-  { id:'rau-den',   name:'Rau dền',      icon:'🥬' }, { id:'rau-lang',  name:'Rau lang',     icon:'🥬' },
-  { id:'bap-cai',   name:'Bắp cải',      icon:'🥬' }, { id:'khoai-lang',name:'Khoai lang',   icon:'🍠' },
-  { id:'khoai-tay', name:'Khoai tây',    icon:'🥔' }, { id:'bi',        name:'Bí',           icon:'🎃' },
-  { id:'ca-tim',    name:'Cà tím',       icon:'🍆' }, { id:'cam',       name:'Cam',          icon:'🍊' },
-  { id:'tao',       name:'Táo',          icon:'🍎' }, { id:'dua-hau',   name:'Dưa hấu',      icon:'🍉' },
+/* Nguyên liệu mặc định, theo thứ tự nhóm. `id` cố định, dùng làm foodId của nhật ký FAS. */
+const MM_DEFAULT_INGREDIENT_LIST = [
+  { id:'com-trang', name:'Cơm trắng',     icon:'🍚' }, { id:'bun',        name:'Bún',          icon:'🍜' },
+  { id:'pho',       name:'Phở',           icon:'🍜' }, { id:'mi',         name:'Mì',           icon:'🍝' },
+  { id:'banh-mi',   name:'Bánh mì',       icon:'🥖' },
+  { id:'thit-heo',  name:'Thịt heo',      icon:'🥩' }, { id:'thit-ga',    name:'Thịt gà',      icon:'🍗' },
+  { id:'thit-bo',   name:'Thịt bò',       icon:'🥩' },
+  { id:'ca',        name:'Cá',            icon:'🐟' }, { id:'tom',        name:'Tôm',          icon:'🦐' },
+  { id:'muc',       name:'Mực',           icon:'🦑' }, { id:'cua',        name:'Cua',          icon:'🦀' },
+  { id:'trung',     name:'Trứng',         icon:'🥚' }, { id:'trung-vit',  name:'Trứng vịt',    icon:'🥚' },
+  { id:'trung-cut', name:'Trứng cút',     icon:'🥚' },
+  { id:'dau-hu',    name:'Đậu hũ',        icon:'🫘' }, { id:'dau-xanh',   name:'Đậu xanh',     icon:'🫘' },
+  { id:'dau-den',   name:'Đậu đen',       icon:'🫘' },
+  { id:'rau-den',   name:'Rau dền',       icon:'🥬' }, { id:'rau-lang',   name:'Rau lang',     icon:'🥬' },
+  { id:'rau-muong', name:'Rau muống',     icon:'🥬' }, { id:'bap-cai',    name:'Bắp cải',      icon:'🥬' },
+  { id:'bong-cai',  name:'Bông cải xanh', icon:'🥦' },
+  { id:'khoai-lang',name:'Khoai lang',    icon:'🍠' }, { id:'khoai-tay',  name:'Khoai tây',    icon:'🥔' },
+  { id:'ca-rot',    name:'Cà rốt',        icon:'🥕' },
+  { id:'bi',        name:'Bí',            icon:'🎃' }, { id:'bau',        name:'Bầu',          icon:'🥒' },
+  { id:'ca-tim',    name:'Cà tím',        icon:'🍆' }, { id:'ca-chua',    name:'Cà chua',      icon:'🍅' },
+  { id:'chuoi',     name:'Chuối',         icon:'🍌' }, { id:'cam',        name:'Cam',          icon:'🍊' },
+  { id:'tao',       name:'Táo',           icon:'🍎' }, { id:'dua-hau',    name:'Dưa hấu',      icon:'🍉' },
 ].map(x => ({ id:x.id, name:x.name, icon:x.icon, groupId:MM_INGREDIENT_GROUP[x.id], active:true }));
 
-const DEFAULT_INGREDIENTS = DEFAULT_NUTRITION_TABLE
-  .filter(t => MM_DEFAULT_INGREDIENT_IDS.indexOf(t.id) >= 0)
-  .map(t => Object.assign(mmIngredientFromTable(t, MM_DEFAULT_UNLOCKED.indexOf(t.id) >= 0), { groupId: MM_INGREDIENT_GROUP[t.id] }))
-  .concat(MM_EXTRA_INGREDIENTS);
+const DEFAULT_INGREDIENTS = MM_DEFAULT_INGREDIENT_LIST;
+
+/* Nguyên liệu bổ sung của schema v4 (migration v4 thêm vào dữ liệu cũ nếu còn thiếu). */
+const MM_EXTRA_INGREDIENTS = MM_DEFAULT_INGREDIENT_LIST.filter(x =>
+  ['com-trang','thit-heo','trung','ca','rau-muong','ca-rot','ca-chua','bau','bong-cai','chuoi'].indexOf(x.id) < 0);
 
 /* ═════════════ PHẦN B — DỮ LIỆU MẪU (DEMO) ═════════════ */
 
@@ -219,32 +181,16 @@ const SEED_ACCOUNTS = [
 /* XP nền của học sinh mẫu: các lần cộng XP sau này cộng dồn lên số này */
 const DEFAULT_XP_BASE = 185;
 
-/* ── Seed: Grading criteria ──────────────────── */
-const DEFAULT_CRITERIA = [
-  {
-    id: 'c01',
-    name: 'Tuần 3 — Ưu tiên rau xanh',
-    weekStart: '2026-10-21',
-    weekEnd:   '2026-10-25',
-    items: [
-      { label: 'Có rau xanh trong khay',       max: 3 },
-      { label: 'Cân bằng đủ 4 nhóm thực phẩm', max: 4 },
-      { label: 'Tên khay cơm sáng tạo',        max: 2 },
-      { label: 'Ba mẹ đã xác nhận nấu ở nhà',  max: 1 },
-    ]
-  }
-];
-
 /* ── Seed: Daily menu ────────────────────────── */
 const DEFAULT_MENU = [
-  { id:'m01', date:'2026-10-20', name:'Cơm trắng',        ingredientId:'com-trang', groupId:'g-tinh-bot', group:'Tinh bột', planet:'Đạm',    isNew: false },
-  { id:'m02', date:'2026-10-20', name:'Thịt kho trứng',   ingredientId:'thit-heo', groupId:'g-thit',  group:'Đạm',      planet:'Đạm',    isNew: false },
-  { id:'m03', date:'2026-10-20', name:'Rau muống xào tỏi',ingredientId:'rau-muong', groupId:'g-rau', group:'Rau củ',   planet:'Rau củ', isNew: false },
-  { id:'m04', date:'2026-10-20', name:'Canh chua',         ingredientId:'ca-chua', groupId:'g-rau-qua',   group:'Rau củ',  planet:'Rau củ', isNew: false },
-  { id:'m05', date:'2026-10-21', name:'Cơm trắng',         ingredientId:'com-trang', groupId:'g-tinh-bot', group:'Tinh bột', planet:'Đạm',    isNew: false },
-  { id:'m06', date:'2026-10-21', name:'Cá kho tộ',         ingredientId:'ca', groupId:'g-hai-san',        group:'Đạm',      planet:'Đạm',    isNew: false },
-  { id:'m07', date:'2026-10-21', name:'Bông cải xanh xào', ingredientId:'bong-cai', groupId:'g-rau',  group:'Rau củ',   planet:'Xanh lá',isNew: true  },
-  { id:'m08', date:'2026-10-21', name:'Canh bầu',          ingredientId:'bau', groupId:'g-rau-qua',       group:'Rau củ',  planet:'Rau củ', isNew: true  },
+  { id:'m01', date:'2026-10-20', name:'Cơm trắng',        ingredientId:'com-trang', groupId:'g-tinh-bot', isNew: false },
+  { id:'m02', date:'2026-10-20', name:'Thịt kho trứng',   ingredientId:'thit-heo', groupId:'g-thit', isNew: false },
+  { id:'m03', date:'2026-10-20', name:'Rau muống xào tỏi',ingredientId:'rau-muong', groupId:'g-rau', isNew: false },
+  { id:'m04', date:'2026-10-20', name:'Canh chua',         ingredientId:'ca-chua', groupId:'g-rau-qua', isNew: false },
+  { id:'m05', date:'2026-10-21', name:'Cơm trắng',         ingredientId:'com-trang', groupId:'g-tinh-bot', isNew: false },
+  { id:'m06', date:'2026-10-21', name:'Cá kho tộ',         ingredientId:'ca', groupId:'g-hai-san', isNew: false },
+  { id:'m07', date:'2026-10-21', name:'Bông cải xanh xào', ingredientId:'bong-cai', groupId:'g-rau', isNew: true  },
+  { id:'m08', date:'2026-10-21', name:'Canh bầu',          ingredientId:'bau', groupId:'g-rau-qua', isNew: true  },
 ];
 
 /* Thực đơn mẫu + món demo "Trứng chiên" cho ngày hôm nay.
@@ -253,7 +199,7 @@ function mmDemoMenuWithToday() {
   const today = toLocalDateStr(new (window.MM_RealDate || Date)());
   return DEFAULT_MENU.concat([
     { id: 'm-demo-trung-chien', date: today, name: 'Trứng chiên', ingredientId: 'trung', groupId: 'g-trung',
-      icon: '🥚', group: 'Đạm', planet: 'Đạm', isNew: true },
+      icon: '🥚', isNew: true },
   ]);
 }
 
@@ -270,59 +216,6 @@ const DEFAULT_FAS_LOG = [
   { studentId:'tranthanhkhoa', foodId:'rau-muong', groupId:'g-rau', place:'school', foodName:'Rau muống',   attempt:2, score:4, rating:4, tryAgain:false, timestamp:'2026-10-17T12:00:00' },
 ];
 
-/* ── Seed: Tray log (demo) ───────────────────── */
-const DEFAULT_TRAY_LOG = [
-  {
-    id: 't01', studentId: 'phambaotruc', studentName: 'Phạm Bảo Trúc',
-    trayName: 'Cầu vồng dinh dưỡng',
-    tray: [
-      { group:'tinBot', icon:'🍚', name:'Cơm trắng' },
-      { group:'dam',    icon:'🥩', name:'Thịt kho'  },
-      { group:'rauCu',  icon:'🥦', name:'Bông cải'  },
-      { group:'traiCay', icon:'🍌', name:'Chuối', ingredientId:'chuoi' },
-    ],
-    nutritionScore: 87,
-    sentAt: '2026-10-21T11:45:00',
-    parentConfirmed: true, confirmedAt: '2026-10-21T19:20:00',
-    schoolScore: null, schoolNote: ''
-  },
-  {
-    id: 't02', studentId: 'nguyenminhan', studentName: 'Nguyễn Minh An',
-    trayName: 'Bữa trưa siêu nhân',
-    tray: [
-      { group:'tinBot', icon:'🍞', name:'Bánh mì' },
-      { group:'dam',    icon:'🐟', name:'Cá hấp'  },
-      { group:'rauCu',  icon:'🥕', name:'Cà rốt'  },
-    ],
-    nutritionScore: 65,
-    sentAt: '2026-10-22T12:01:00',
-    parentConfirmed: false, confirmedAt: null,
-    schoolScore: null, schoolNote: ''
-  },
-  {
-    id: 't03', studentId: 'tranthanhkhoa', studentName: 'Trần Thanh Khoa',
-    trayName: 'Hành tinh xanh của em',
-    tray: [
-      { group:'tinBot', icon:'🍚', name:'Cơm trắng' },
-      { group:'dam',    icon:'🥚', name:'Trứng'     },
-      { group:'rauCu',  icon:'🥕', name:'Cà rốt'   },
-      { group:'traiCay', icon:'🍌', name:'Chuối', ingredientId:'chuoi' },
-    ],
-    nutritionScore: 80,
-    sentAt: '2026-10-22T11:50:00',
-    parentConfirmed: null, confirmedAt: null,
-    schoolScore: null, schoolNote: ''
-  },
-];
-
-/* Hành tinh của các món mẫu cũ (khóa đã bỏ dấu), dùng khi dòng FAS/thực đơn chưa ghi hành tinh.
-   Dự phòng cho dữ liệu cũ; dùng chung cho student/js/today.js và js/badges.js. */
-const LEGACY_FOOD_PLANET = {
-  'ca rot': 'Rau củ', 'rau muong': 'Rau củ', 'ca chua': 'Rau củ',
-  'bong cai xanh': 'Xanh lá', 'bong cai': 'Xanh lá',
-  'thit ga': 'Đạm', 'trung kho': 'Đạm', 'ca kho': 'Đạm', 'thit heo': 'Đạm',
-};
-
 /* ═════════════ PHẦN C — KHỞI TẠO ═════════════ */
 
 /* Phiên bản cấu trúc dữ liệu trong localStorage (khóa mm_schema_version).
@@ -330,56 +223,19 @@ const LEGACY_FOOD_PLANET = {
    v2 = nhóm dinh dưỡng đổi thành Tinh bột · Đạm · Rau củ · Trái cây (bỏ "Canh"),
         nguyên liệu có khẩu phần + Carbs/Protein/Fat + alwaysUnlocked, thêm bảng chuẩn
         mm_nutrition_table, bỏ cột "NL mở khóa" của Level.
-   v3 = khay đã gửi: ô nhóm cũ 'canh' đổi thành ô Trái cây 🍌 Chuối (mã nhóm khay: tinBot · dam · rauCu · traiCay).
+   v3 = khay đã gửi: ô nhóm cũ 'canh' đổi thành ô Trái cây 🍌 Chuối (chức năng khay đã bỏ ở v5).
    v4 = nhóm thực phẩm (mm_food_groups): nguyên liệu và thực đơn có groupId; nhật ký FAS có groupId + place ('school'|'home'),
         lượt thử (attempt) đánh số lại THEO NHÓM của từng học sinh (lượt cũ giữ ở legacyAttempt); điểm 0 = "Chưa thử" (attempt = null).
+   v5 = bỏ khay cơm: xóa mm_tray_log, mm_nutrition_table, mm_score_formula, mm_grading_criteria; bỏ các trường dinh dưỡng và hành tinh
+        cũ của nguyên liệu/thực đơn/FAS; XP bỏ try_again và send_tray; bỏ huy hiệu b04.
    Dữ liệu cũ chưa có số phiên bản được coi là v0; các hàm nâng cấp chạy lần lượt tới bản hiện tại.
    Muốn đổi cấu trúc: tăng số này và thêm MM_MIGRATIONS[n] = function () {…}
    — hàm nâng dữ liệu từ bản n-1 lên bản n. */
-const MM_SCHEMA_VERSION = 4;
+const MM_SCHEMA_VERSION = 5;
 const MM_MIGRATIONS = {
-  2: function () {
-    const K = MM_KEYS;
-    const byId = {};
-    DEFAULT_NUTRITION_TABLE.forEach(t => { byId[t.id] = t; });
-
-    const ings = store.get(K.INGREDIENTS, null);
-    if (Array.isArray(ings)) {
-      ings.forEach(g => {
-        if (g.group === 'Canh') g.group = 'Rau củ';
-        const t = byId[g.id];
-        if (t && g.carbs === undefined) {
-          g.portion = t.portion; g.carbs = t.carbs; g.protein = t.protein; g.fat = t.fat;
-        }
-        if (g.alwaysUnlocked === undefined) g.alwaysUnlocked = MM_DEFAULT_UNLOCKED.indexOf(g.id) >= 0;
-      });
-      if (!ings.some(g => g.id === 'chuoi')) ings.push(mmIngredientFromTable(byId['chuoi'], true));
-      store.set(K.INGREDIENTS, ings);
-    }
-
-    const menu = store.get(K.MENU, null);
-    if (Array.isArray(menu)) {
-      menu.forEach(m => { if (m.group === 'Canh') m.group = 'Rau củ'; });
-      store.set(K.MENU, menu);
-    }
-
-    const cfg = store.get(K.XP_CONFIG, null);
-    if (cfg && Array.isArray(cfg.levels)) {
-      cfg.levels.forEach(l => { delete l.unlock; });
-      store.set(K.XP_CONFIG, cfg);
-    }
-  },
-  3: function () {
-    const log = store.get(MM_KEYS.TRAY_LOG, null);
-    if (!Array.isArray(log)) return;
-    log.forEach(t => {
-      if (!Array.isArray(t.tray) || !t.tray.some(x => x.group === 'canh')) return;
-      const hasFruit = t.tray.some(x => x.group === 'traiCay');
-      t.tray = t.tray.filter(x => x.group !== 'canh');
-      if (!hasFruit) t.tray.push({ group: 'traiCay', icon: '🍌', name: 'Chuối', ingredientId: 'chuoi' });
-    });
-    store.set(MM_KEYS.TRAY_LOG, log);
-  },
+  /* v2 và v3 (nhóm dinh dưỡng cũ, khay đã gửi) đã bỏ cùng chức năng khay cơm: dữ liệu cũ đi thẳng qua v4 và v5. */
+  2: function () {},
+  3: function () {},
   4: function () {
     const K = MM_KEYS;
     if (!store.has(K.FOOD_GROUPS)) store.set(K.FOOD_GROUPS, DEFAULT_FOOD_GROUPS);
@@ -430,6 +286,40 @@ const MM_MIGRATIONS = {
       store.set(K.FAS_LOG, log);
     }
   },
+  5: function () {
+    const K = MM_KEYS;
+    // Bỏ khay cơm, bảng dinh dưỡng, công thức điểm, tiêu chí chấm
+    ['mm_nutrition_table', 'mm_score_formula', 'mm_tray_log', 'mm_grading_criteria'].forEach(k => store.remove(k));
+
+    const ings = store.get(K.INGREDIENTS, null);
+    if (Array.isArray(ings)) {
+      ings.forEach(g => { ['group', 'planet', 'portion', 'carbs', 'protein', 'fat', 'alwaysUnlocked'].forEach(f => { delete g[f]; }); });
+      store.set(K.INGREDIENTS, ings);
+    }
+    const menu = store.get(K.MENU, null);
+    if (Array.isArray(menu)) {
+      menu.forEach(m => { delete m.group; delete m.planet; });
+      store.set(K.MENU, menu);
+    }
+    const log = store.get(K.FAS_LOG, null);
+    if (Array.isArray(log)) {
+      log.forEach(r => { delete r.planet; });
+      store.set(K.FAS_LOG, log);
+    }
+    // XP: bỏ hành động try_again và send_tray; đổi tên hành động còn lại (sổ XP cũ giữ nguyên)
+    const cfg = store.get(K.XP_CONFIG, null);
+    if (cfg && Array.isArray(cfg.actions)) {
+      cfg.actions = cfg.actions.filter(a => a.id !== 'try_again' && a.id !== 'send_tray');
+      cfg.actions.forEach(a => {
+        if (a.id === 'first_try') a.label = 'Thử lần đầu của nhóm thực phẩm';
+        if (a.id === 'parent_confirm') a.label = 'Ba mẹ nấu món thử lại';
+      });
+      store.set(K.XP_CONFIG, cfg);
+    }
+    // Huy hiệu b04 (Đại bếp nhí) gắn với khay cơm → bỏ
+    const bd = store.get(K.BADGES, null);
+    if (Array.isArray(bd)) store.set(K.BADGES, bd.filter(x => x.id !== 'b04'));
+  },
 };
 
 /* Kế hoạch dữ liệu khởi tạo: [khóa, hàm trả về giá trị].
@@ -440,13 +330,9 @@ function mmSeedPlan() {
   return [
     [K.XP_CONFIG,   () => DEFAULT_XP_CONFIG],
     [K.FOOD_GROUPS, () => DEFAULT_FOOD_GROUPS],
-    [K.NUTRITION,   () => DEFAULT_NUTRITION_TABLE],
-    [K.SCORE_FORMULA, () => DEFAULT_SCORE_FORMULA],
     [K.BADGES,      () => DEFAULT_BADGES],
     [K.ACCOUNTS,    () => (demo ? SEED_ACCOUNTS : SEED_ACCOUNTS.filter(a => a.role === 'admin'))],
-    [K.CRITERIA,    () => (demo ? DEFAULT_CRITERIA : [])],
     [K.FAS_LOG,     () => (demo ? DEFAULT_FAS_LOG : [])],
-    [K.TRAY_LOG,    () => (demo ? DEFAULT_TRAY_LOG : [])],
   ];
 }
 

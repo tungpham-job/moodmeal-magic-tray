@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍱</text></svg>">
   <title>MoodMeal Magic Tray</title>
-  <link rel="stylesheet" href="../css/base.css?v=20261127a">
-  <link rel="stylesheet" href="../css/student.css?v=20261127a">
+  <link rel="stylesheet" href="../css/base.css?v=20261127b">
+  <link rel="stylesheet" href="../css/student.css?v=20261127b">
 </head>
 <body class="page-student">
 <div class="phone-frame">
@@ -72,11 +72,6 @@
         <div><div class="nc-title">Thử món & Đánh giá</div><div class="nc-sub">Bấm emoji sau khi thử · Nhận XP ngay</div></div>
         <span class="nc-arr">›</span>
       </a>
-      <a href="screen3.html" class="nav-card nav-card-purple">
-        <span class="nc-icon">🎨</span>
-        <div><div class="nc-title">Thiết kế Khay cơm</div><div class="nc-sub">Thiết kế khay · Gửi gợi ý cho ba mẹ</div></div>
-        <span class="nc-arr">›</span>
-      </a>
     </div>
     <div class="gap"></div>
   </div>
@@ -85,17 +80,16 @@
     <a href="index.html"   class="nav-item"><span class="nav-icon">🏠</span>Trang chủ</a>
     <a href="screen1.html" class="nav-item"><span class="nav-icon">🌍</span>Hành tinh</a>
     <a href="screen2.html" class="nav-item"><span class="nav-icon">🍱</span>Thử món</a>
-    <a href="screen3.html" class="nav-item"><span class="nav-icon">🎨</span>Khay cơm</a>
   </nav>
 </div>
 
-<script src="../js/config.js?v=20261127a"></script>
-<script src="../js/seed.js?v=20261127a"></script>
-<script src="../js/utils.js?v=20261127a"></script>
-<script src="../js/store.js?v=20261127a"></script>
-<script src="../js/auth.js?v=20261127a"></script>
-<script src="../js/xp.js?v=20261127a"></script>
-<script src="js/nav.js?v=20261127a"></script>
+<script src="../js/config.js?v=20261127b"></script>
+<script src="../js/seed.js?v=20261127b"></script>
+<script src="../js/utils.js?v=20261127b"></script>
+<script src="../js/store.js?v=20261127b"></script>
+<script src="../js/auth.js?v=20261127b"></script>
+<script src="../js/xp.js?v=20261127b"></script>
+<script src="js/nav.js?v=20261127b"></script>
 <script>
   /* Auth guard */
   const SESSION = auth.check('student');
@@ -109,7 +103,7 @@
   /* Render today's menu from mm_daily_menu */
   (function renderMenu() {
     const today = toLocalDateStr(new Date());
-    const groupIcons = { 'Tinh bột':'🍚', 'Đạm':'🥩', 'Rau củ':'🥦', 'Trái cây':'🍎' };
+    const groupOf = m => mmGroupById(m.groupId) || { name: '', icon: '🍽️' };
 
     const menu = store.get(MM_KEYS.MENU, []);
 
@@ -124,10 +118,10 @@
 
     grid.innerHTML = todayItems.map(m => `
       <div class="menu-item">
-        <span class="m-icon">${escHtml(m.icon || groupIcons[m.group] || '🍽️')}</span>
+        <span class="m-icon">${escHtml(m.icon || groupOf(m).icon || '🍽️')}</span>
         <div>
           <div class="m-name">${escHtml(m.name)}</div>
-          <div class="m-group">${escHtml(m.group)}</div>
+          <div class="m-group">${escHtml(groupOf(m).name)}</div>
         </div>
         ${m.isNew ? '<span class="m-new">MỚI!</span>' : ''}
       </div>`).join('');
@@ -137,7 +131,7 @@
     if (newItem) {
       document.getElementById('missionTitle').textContent = 'Mục tiêu hôm nay';
       document.getElementById('missionSub').textContent   =
-        `Thử "${newItem.name}" → +${xpAmount('first_try')} XP · Khám phá ${newItem.planet}!`;
+        `Thử "${newItem.name}" → +${xpAmount('first_try')} XP · Khám phá Hành tinh ${groupOf(newItem).name}!`;
     }
   })();
 </script>
