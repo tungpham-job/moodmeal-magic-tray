@@ -142,7 +142,7 @@ def admin_part(browser, base):
     check('báo cáo: chuỗi 1 → 2 → 2 → 3 và FAG +2, mỗi điểm có ngày giờ nhỏ bên dưới', scores == ['1', '2', '2', '3'] and dates[0] == '07/10 12:00' and dates[3] == '21/10 12:00' and '+2' in t, (scores, dates))
     check('rê chuột vào điểm: hiện đủ ngày giờ + nơi thử', row.locator('.fas-step').first.get_attribute('title') == '07/10/2026 12:00 · Trường', row.locator('.fas-step').first.get_attribute('title'))
     ws = page.evaluate("()=>[...document.querySelectorAll('.fas-table th')].map(t=>t.getBoundingClientRect().width)")
-    check('cột Chuỗi lượt thử rộng nhất; Nhóm/FAG/Trường/Nhà/TRY AGAIN hẹp', ws[2] == max(ws) and all(w <= 90 for w in ws[1:2] + ws[3:]), ws)
+    check('cột Chuỗi lượt thử rộng nhất; Lớp/Nhóm/FAG/Trường/Nhà/TRY AGAIN hẹp', ws[3] == max(ws) and all(w <= 90 for w in ws[1:3] + ws[4:]), ws)
     page.evaluate("""()=>{const L=JSON.parse(localStorage.getItem('mm_fas_log'));
       L.push({studentId:'tranthanhkhoa',foodId:'cua',foodName:'Cua',groupId:'g-hai-san',place:'school',attempt:null,score:0,rating:0,tryAgain:true,notTried:true,timestamp:'2026-11-01T12:00:00'});
       L.push({studentId:'tranthanhkhoa',foodId:'ca',foodName:'Cá',groupId:'g-hai-san',place:'home',attempt:1,score:2,rating:2,tryAgain:false,timestamp:'2026-11-02T12:00:00'});

@@ -136,6 +136,7 @@ const SEED_ACCOUNTS = [
     linkedId: 'phbaotruc',
     avatar: '🧒',
     characterId: 'gao',
+    className: '5A12',
     xp: 605
   },
   {
@@ -144,7 +145,8 @@ const SEED_ACCOUNTS = [
     role: 'student',
     name: 'Nguyễn Minh An',
     linkedId: 'phminhan',
-    avatar: '🧒'
+    avatar: '🧒',
+    className: '4A9'
   },
   {
     id: 'tranthanhkhoa',
@@ -152,7 +154,8 @@ const SEED_ACCOUNTS = [
     role: 'student',
     name: 'Trần Thanh Khoa',
     linkedId: 'phthanhkhoa',
-    avatar: '🧒'
+    avatar: '🧒',
+    className: '3A4'
   },
   {
     id: 'phbaotruc',

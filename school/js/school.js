@@ -76,6 +76,30 @@ function switchModule(name) {
 /* ══════════════════════════════════════════════
    MODULE ① — TÀI KHOẢN
 ══════════════════════════════════════════════ */
+/* ── Lớp của học sinh (chỉ dùng ở giao diện BGH) ──
+   Lớp gõ tự do; chuẩn hóa: bỏ khoảng trắng, viết hoa ("4a9" → "4A9") để lọc không bị lệch. */
+function normClass(v) { return String(v == null ? '' : v).trim().replace(/\s+/g, '').toUpperCase(); }
+function classOf(acc) { return normClass(acc && acc.className); }
+/* Danh sách lớp đang có (xếp theo số trước chữ), từ các tài khoản học sinh */
+function classListOf(accounts) {
+  const set = new Set();
+  accounts.filter(a => a.role === 'student').forEach(a => { const c = classOf(a); if (c) set.add(c); });
+  return [...set].sort((a, b) => a.localeCompare(b, 'vi', { numeric: true }));
+}
+/* Đổ danh sách lớp vào ô chọn lọc; giữ lựa chọn cũ nếu còn. "__none" = học sinh chưa có lớp */
+function fillClassFilter(selId, accounts) {
+  const sel = document.getElementById(selId); if (!sel) return;
+  const keep = sel.value, students = accounts.filter(a => a.role === 'student');
+  const list = classListOf(accounts);
+  sel.innerHTML = '<option value="">— Tất cả lớp —</option>' + list.map(c => `<option value="${escHtml(c)}">Lớp ${escHtml(c)}</option>`).join('') +
+    (students.some(a => !classOf(a)) ? '<option value="__none">Chưa có lớp</option>' : '');
+  sel.value = [...sel.options].some(o => o.value === keep) ? keep : '';
+}
+function fillClassDatalist(accounts) {
+  const dl = document.getElementById('accClassList');
+  if (dl) dl.innerHTML = classListOf(accounts).map(c => `<option value="${escHtml(c)}"></option>`).join('');
+}
+
 function renderAccounts() {
   const accounts = auth.getAccounts();
   const tbody = document.getElementById('accountsTbody');
@@ -106,9 +130,10 @@ function renderAccounts() {
     }
 
     return `
-      <tr data-id="${escHtml(acc.id)}">
+      <tr data-id="${escHtml(acc.id)}" data-role="${escHtml(acc.role)}" data-class="${escHtml(classOf(acc))}">
         <td><code style="font-size:12px">${escHtml(acc.id)}</code></td>
         <td><strong>${escHtml(acc.name)}</strong></td>
+        <td>${acc.role !== 'student' ? '<span style="color:#aaa">—</span>' : classOf(acc) ? `<span class="badge badge-blue">${escHtml(classOf(acc))}</span>` : '<span style="color:#aaa">Chưa có lớp</span>'}</td>
         <td><span class="badge ${roleBadge}">${roleLabel(acc.role)}</span></td>
         <td>${linked ? escHtml(linked.name) : '<span style="color:#aaa">—</span>'}</td>
         ${statCells}
@@ -122,6 +147,8 @@ function renderAccounts() {
         </td>
       </tr>`;
   }).join('');
+  fillClassFilter('accFilterClass', accounts);
+  if (typeof filterAccountsTable === 'function') filterAccountsTable();
 }
 
 function roleLabel(role) {
@@ -196,6 +223,8 @@ function openAddAccount() {
   document.getElementById('accFormId').readOnly = false;
   document.getElementById('accEditId').value = '';
   document.getElementById('accFormXp').value = '0';
+  document.getElementById('accFormClass').value = '';
+  fillClassDatalist(auth.getAccounts());
   renderLinkedSelect('student');
   toggleStudentStats('student', null);
   openModal('modalAccount');
@@ -215,6 +244,8 @@ function openEditAccount(id) {
   document.getElementById('accFormRole').value = acc.role;
   document.getElementById('accFormRole').disabled = acc.id === 'admin';   // không đổi vai trò tài khoản admin
   document.getElementById('accFormXp').value = acc.role === 'student' ? getStudentXp(acc.id) : '';
+  document.getElementById('accFormClass').value = classOf(acc);
+  fillClassDatalist(accounts);
   renderLinkedSelect(acc.role, acc.linkedId);
   toggleStudentStats(acc.role, acc.id);
   openModal('modalAccount');
@@ -259,6 +290,8 @@ function saveAccount() {
   if (!editId && !ID_PATTERN.test(id)) { showToast('ID chỉ gồm chữ không dấu, số, dấu . _ - (tối đa 30 ký tự)!', 'error'); return; }
 
   const isStudent = role === 'student';
+  const clsVal = isStudent ? normClass(document.getElementById('accFormClass').value) : '';
+  if (isStudent && !editId && !clsVal) { showToast('Vui lòng nhập Lớp của học sinh mới!', 'error'); return; }
   let xpVal = null;
   if (isStudent) {
     xpVal = parseInt(document.getElementById('accFormXp').value, 10);
@@ -293,6 +326,7 @@ function saveAccount() {
   /* Nhân vật đồng hành lưu cùng tài khoản; đổi/gán mới thì hiện thẳng hình của Level hiện tại (không chiếu hoạt ảnh lên cấp) */
   const savedAcc = accounts.find(a => a.id === (editId || id));
   if (savedAcc) {
+    if (clsVal) savedAcc.className = clsVal; else delete savedAcc.className;   // lớp chỉ có ở học sinh
     const prevChar = savedAcc.characterId || null;
     if (isStudent) { if (charVal) savedAcc.characterId = charVal; else delete savedAcc.characterId; }
     else delete savedAcc.characterId;
@@ -355,7 +389,7 @@ function importCSV() {
   if (!raw) { showToast('Chưa có dữ liệu CSV!', 'error'); return; }
   const lines = raw.split('\n').filter(l => l.trim());
   const accounts = auth.getAccounts();
-  let added = 0;
+  let added = 0, noClass = 0;
 
   lines.forEach(line => {
     const parts = line.split(',').map(s => s.trim());
@@ -364,7 +398,9 @@ function importCSV() {
     if (!id || !name || !pass) return;
     if (!ID_PATTERN.test(id)) return;            // bỏ qua ID có ký tự không hợp lệ
     if (accounts.find(a => a.id === id)) return; // bỏ qua trùng
-    accounts.push({ id, name, pass, role: 'student', linkedId: null, avatar: '🧒', locked: false, xp: 0 });
+    const cls = normClass(parts[3]);
+    if (!cls) { noClass++; return; }             // lớp bắt buộc
+    accounts.push({ id, name, pass, role: 'student', linkedId: null, avatar: '🧒', locked: false, xp: 0, className: cls });
     added++;
   });
 
@@ -372,7 +408,7 @@ function importCSV() {
   document.getElementById('csvPaste').value = '';
   closeModal('modalImport');
   renderAccounts();
-  showToast(`Đã import ${added} tài khoản mới!`);
+  showToast(`Đã import ${added} tài khoản mới!` + (noClass ? ` Bỏ qua ${noClass} dòng thiếu lớp.` : ''), noClass && !added ? 'error' : undefined);
 }
 
 /* ══════════════════════════════════════════════
@@ -1199,16 +1235,29 @@ function renderReport() {
   renderFasStats(fasLog, accounts);
 
   // Populate filters
-  const studentSel = document.getElementById('filterStudent');
-  studentSel.innerHTML = '<option value="">— Tất cả học sinh —</option>' +
-    accounts.map(a => `<option value="${escHtml(a.id)}">${escHtml(a.name)}</option>`).join('');
+  fillClassFilter('filterClass', accounts);
+  fillReportStudentSelect(accounts);
 
   const foodSel = document.getElementById('filterFood');
   foodSel.innerHTML = '<option value="">— Tất cả nhóm —</option>' +
     mmFoodGroups(true).map(g => `<option value="${escHtml(g.id)}">${escHtml(g.icon)} ${escHtml(g.name)}</option>`).join('');
   document.getElementById('filterPlace').value = '';
 
-  renderFasTable(fasLog, accounts, '', '', '');
+  applyReportFilter();
+}
+
+/* Ô chọn học sinh của báo cáo: thu theo lớp đang chọn */
+function fillReportStudentSelect(students) {
+  const sel = document.getElementById('filterStudent'), cls = document.getElementById('filterClass').value;
+  const keep = sel.value;
+  sel.innerHTML = '<option value="">— Tất cả học sinh —</option>' +
+    students.filter(a => reportClassMatch(a, cls)).map(a => `<option value="${escHtml(a.id)}">${escHtml(a.name)}</option>`).join('');
+  sel.value = [...sel.options].some(o => o.value === keep) ? keep : '';
+}
+function reportClassMatch(acc, cls) { return !cls || (cls === '__none' ? !classOf(acc) : classOf(acc) === cls); }
+function onReportClassChange() {
+  fillReportStudentSelect(auth.getAccounts().filter(a => a.role === 'student'));
+  applyReportFilter();
 }
 
 /* Các dòng nhật ký gom theo (học sinh, nhóm thực phẩm), mỗi nhóm xếp theo thời gian.
@@ -1255,7 +1304,12 @@ function renderFasStats(fasLog, accounts) {
 function applyReportFilter() {
   const fasLog   = loadKey(KEY.FAS_LOG, DEFAULT_FAS_LOG);
   const accounts = auth.getAccounts().filter(a => a.role === 'student');
-  renderFasTable(fasLog, accounts,
+  /* Lớp đang chọn: thống kê phía trên và bảng chi tiết chỉ tính học sinh của lớp đó */
+  const cls = document.getElementById('filterClass').value;
+  const ids = new Set(accounts.filter(a => reportClassMatch(a, cls)).map(a => a.id));
+  const logC = cls ? fasLog.filter(r => ids.has(r.studentId)) : fasLog;
+  renderFasStats(logC, accounts);
+  renderFasTable(logC, accounts,
     document.getElementById('filterStudent').value,
     document.getElementById('filterFood').value,
     document.getElementById('filterPlace').value);
@@ -1299,6 +1353,7 @@ function renderFasTable(fasLog, accounts, stuFilter, groupFilter, placeFilter) {
       return `
       <tr>
         <td><strong>${escHtml(acc?.name || c.studentId)}</strong></td>
+        <td style="white-space:nowrap">${classOf(acc) ? escHtml(classOf(acc)) : '<span style="color:var(--text-muted)">—</span>'}</td>
         <td>${label}</td>
         <td>${fasChainHtml(c.rows)}</td>
         <td style="text-align:center;font-weight:700;${fagColor}">${fagN !== null ? (fagN > 0 ? '+' : '') + fagN : '—'}</td>
@@ -1310,7 +1365,7 @@ function renderFasTable(fasLog, accounts, stuFilter, groupFilter, placeFilter) {
 
   document.getElementById('fasTableBody').innerHTML = rows.length
     ? rows.join('')
-    : '<tr><td colspan="7" style="text-align:center;color:#aaa;padding:24px">Không có dữ liệu</td></tr>';
+    : '<tr><td colspan="8" style="text-align:center;color:#aaa;padding:24px">Không có dữ liệu</td></tr>';
 }
 
 /* Ô CSV: luôn đặt trong dấu nháy kép và nhân đôi dấu nháy bên trong */
@@ -1319,11 +1374,11 @@ function csvCell(v) { return '"' + String(v == null ? '' : v).replace(/"/g, '""'
 function exportCSV() {
   const fasLog = loadKey(KEY.FAS_LOG, DEFAULT_FAS_LOG);
   const accounts = auth.getAccounts();
-  const header = ['Học sinh', 'Nhóm', 'Nguyên liệu', 'Món', 'Nơi thử', 'Lần thử của nhóm', 'FAS', 'TRY AGAIN', 'Thời gian'].map(csvCell).join(',');
+  const header = ['Học sinh', 'Lớp', 'Nhóm', 'Nguyên liệu', 'Món', 'Nơi thử', 'Lần thử của nhóm', 'FAS', 'TRY AGAIN', 'Thời gian'].map(csvCell).join(',');
   const rows = fasLog.map(r => {
     const acc = accounts.find(a => a.id === r.studentId);
     const grp = r.groupId ? mmGroupById(r.groupId) : null;
-    return [acc?.name || r.studentId, grp ? grp.name : '', r.foodName, r.dishName || '', r.place === 'home' ? 'Nhà' : 'Trường',
+    return [acc?.name || r.studentId, classOf(acc), grp ? grp.name : '', r.foodName, r.dishName || '', r.place === 'home' ? 'Nhà' : 'Trường',
             r.attempt == null ? 'Chưa thử' : r.attempt, r.score, r.tryAgain ? 'Có' : 'Không', r.timestamp].map(csvCell).join(',');
   });
   const csv = [header, ...rows].join('\n');

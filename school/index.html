@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏫</text></svg>">
   <title>Ban Giám Hiệu — MOODMEAL MAGIC TRAY</title>
-  <link rel="stylesheet" href="../css/base.css?v=20261127ze">
-  <link rel="stylesheet" href="../css/school.css?v=20261127ze">
-  <link rel="stylesheet" href="../css/characters.css?v=20261127ze">
+  <link rel="stylesheet" href="../css/base.css?v=20261127zf">
+  <link rel="stylesheet" href="../css/school.css?v=20261127zf">
+  <link rel="stylesheet" href="../css/characters.css?v=20261127zf">
 </head>
 <body class="page-school">
 <div class="school-layout">
@@ -71,8 +71,13 @@
         <div class="content-card">
           <div class="content-card-header">
             <span class="content-card-title">Danh sách tài khoản</span>
-            <input class="form-control" style="width:220px;padding:6px 10px;font-size:12px"
-              placeholder="🔍 Tìm tên hoặc ID..." oninput="filterAccountsTable(this.value)">
+            <div style="display:flex;gap:8px">
+              <select class="form-control" id="accFilterClass" style="width:140px;padding:6px 10px;font-size:12px" onchange="filterAccountsTable()">
+                <option value="">— Tất cả lớp —</option>
+              </select>
+              <input class="form-control" id="accSearch" style="width:220px;padding:6px 10px;font-size:12px"
+                placeholder="🔍 Tìm tên, ID hoặc lớp..." oninput="filterAccountsTable()">
+            </div>
           </div>
           <div style="overflow-x:auto">
             <table class="data-table">
@@ -80,6 +85,7 @@
                 <tr>
                   <th>ID</th>
                   <th>Họ tên</th>
+                  <th>Lớp</th>
                   <th>Vai trò</th>
                   <th>Liên kết</th>
                   <th>XP</th>
@@ -253,6 +259,9 @@
           <div class="content-card-header">
             <span class="content-card-title">Bảng FAS chi tiết theo nhóm</span>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <select class="form-control" id="filterClass" style="width:140px;padding:6px 10px;font-size:12px" onchange="onReportClassChange()">
+                <option value="">— Tất cả lớp —</option>
+              </select>
               <select class="form-control" id="filterStudent" style="width:180px;padding:6px 10px;font-size:12px" onchange="applyReportFilter()">
                 <option value="">— Tất cả học sinh —</option>
               </select>
@@ -273,6 +282,7 @@
               <thead>
                 <tr>
                   <th class="fas-c-stu">Học sinh</th>
+                  <th class="fas-c-cls">Lớp</th>
                   <th class="fas-c-grp">Nhóm</th>
                   <th>Chuỗi lượt thử (FAS)</th>
                   <th class="fas-c-n" style="text-align:center">FAG</th>
@@ -336,6 +346,11 @@
 
       <!-- Chỉ hiện với vai trò Học sinh -->
       <div id="studentStatsWrap" style="display:none">
+        <div class="form-group-s">
+          <label class="form-label-s">Lớp * <span style="font-weight:400;color:#888">(bắt buộc khi thêm học sinh mới)</span></label>
+          <input class="form-control" id="accFormClass" list="accClassList" maxlength="12" placeholder="vd: 4A9" autocomplete="off">
+          <datalist id="accClassList"></datalist>
+        </div>
         <div class="form-row">
           <div class="form-group-s">
             <label class="form-label-s">XP hiện có</label>
@@ -376,8 +391,8 @@
     </div>
     <div class="modal-body">
       <p style="font-size:12px;color:#888;margin-bottom:10px">
-        Mỗi dòng: <code>id,họ_tên,mật_khẩu</code><br>
-        Ví dụ: <code>hs004,Lê Minh Khoa,pass123</code>
+        Mỗi dòng: <code>id,họ_tên,mật_khẩu,lớp</code> (lớp bắt buộc)<br>
+        Ví dụ: <code>hs004,Lê Minh Khoa,pass123,4A9</code>
       </p>
       <textarea class="form-control" id="csvPaste" rows="8" placeholder="Dán dữ liệu CSV vào đây..."></textarea>
     </div>
@@ -629,22 +644,24 @@
 </div>
 
 <!-- ══ SCRIPTS ══ -->
-<script src="../js/config.js?v=20261127ze"></script>
-<script src="../js/seed.js?v=20261127ze"></script>
-<script src="../js/utils.js?v=20261127ze"></script>
-<script src="../js/store.js?v=20261127ze"></script>
-<script src="../js/auth.js?v=20261127ze"></script>
-<script src="../js/xp.js?v=20261127ze"></script>
-<script src="../js/characters.js?v=20261127ze"></script>
-<script src="../js/badges.js?v=20261127ze"></script>
-<script src="js/school.js?v=20261127ze"></script>
+<script src="../js/config.js?v=20261127zf"></script>
+<script src="../js/seed.js?v=20261127zf"></script>
+<script src="../js/utils.js?v=20261127zf"></script>
+<script src="../js/store.js?v=20261127zf"></script>
+<script src="../js/auth.js?v=20261127zf"></script>
+<script src="../js/xp.js?v=20261127zf"></script>
+<script src="../js/characters.js?v=20261127zf"></script>
+<script src="../js/badges.js?v=20261127zf"></script>
+<script src="js/school.js?v=20261127zf"></script>
 <script>
   /* Filter accounts table by search */
-  function filterAccountsTable(q) {
-    const rows = document.querySelectorAll('#accountsTbody tr');
-    q = q.toLowerCase();
-    rows.forEach(r => {
-      r.style.display = r.textContent.toLowerCase().includes(q) ? '' : 'none';
+  function filterAccountsTable() {
+    const q = (document.getElementById('accSearch').value || '').toLowerCase();
+    const cls = document.getElementById('accFilterClass').value;   // '' = tất cả · '__none' = học sinh chưa có lớp · còn lại = tên lớp
+    document.querySelectorAll('#accountsTbody tr').forEach(r => {
+      const okText = r.textContent.toLowerCase().includes(q);
+      const okCls = !cls || (cls === '__none' ? (r.dataset.role === 'student' && !r.dataset.class) : r.dataset.class === cls);
+      r.style.display = okText && okCls ? '' : 'none';
     });
   }
 
