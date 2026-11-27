@@ -9,8 +9,8 @@
 
   const map = {
     'index.html':   0,
-    'screen1.html': 1,
-    'screen2.html': 2,
+    'screen2.html': 1,   // Thử món ở giữa
+    'screen1.html': 2,   // Hành tinh
   };
 
   const idx = map[page] ?? -1;
