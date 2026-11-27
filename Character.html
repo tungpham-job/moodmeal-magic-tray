@@ -452,18 +452,20 @@ function renderPet(){
   document.getElementById('petCard').classList.toggle('max',lvIdx===3);
 }
 function playEvolve(){
-  if(lvIdx>=3) lvIdx=0;
   const st=document.getElementById('petStage'), up=document.getElementById('lvUp');
+  const back=lvIdx>=3;   /* đang ở Level 4: bấm để quay về Level 1 */
   st.classList.add('evolving');
-  setTimeout(()=>{lvIdx++; renderPet(); st.classList.add('evolving');},700);
-  up.textContent=`🎉 Lên Level ${lvIdx+2}!`; up.classList.remove('show-up'); void up.offsetWidth; up.classList.add('show-up');
+  setTimeout(()=>{lvIdx= back?0:lvIdx+1; renderPet(); st.classList.add('evolving');},700);
+  up.textContent= back ? '↺ Quay về Level 1' : `🎉 Lên Level ${lvIdx+2}!`; up.classList.remove('show-up'); void up.offsetWidth; up.classList.add('show-up');
   setTimeout(()=>st.classList.remove('evolving'),1900);
 }
-function nextSpecies(){spIdx=(spIdx+1)%SPECIES.length; renderPet();}
+function nextSpecies(){spIdx=(spIdx+1)%SPECIES.length; renderPet(); syncChooser();}
 renderPet();
 
 /* chooser */
-document.getElementById('chooser').innerHTML=SPECIES.map((s,i)=>`<div class="opt${i===0?' picked':''}">${creature(s.id,0)}<b>${s.name}</b><span>${s.desc}</span></div>`).join('');
+document.getElementById('chooser').innerHTML=SPECIES.map((s,i)=>`<div class="opt${i===spIdx?' picked':''}" data-i="${i}" style="cursor:pointer">${creature(s.id,0)}<b>${s.name}</b><span>${s.desc}</span></div>`).join('');
+function syncChooser(){document.querySelectorAll('#chooser .opt').forEach(o=>o.classList.toggle('picked',+o.dataset.i===spIdx));}
+document.querySelectorAll('#chooser .opt').forEach(o=>o.addEventListener('click',()=>{spIdx=+o.dataset.i; renderPet(); syncChooser();}));
 
 /* ---------- 4. BGH ---------- */
 document.getElementById('spList').innerHTML=SPECIES.map((s,i)=>`<div class="sp-item${i===0?' on':''}">${creature(s.id,1)}<div><b>${s.name}</b><small>${s.stages.join(' → ')}</small></div><span class="tog">Bật</span></div>`).join('');
