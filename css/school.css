@@ -599,3 +599,6 @@ textarea.form-control { resize: vertical; min-height: 80px; }
 .fas-step b { display: block; font-size: 15px; }
 .fas-step small { display: block; font-size: 10.5px; color: var(--text-muted); line-height: 1.3; margin-top: 1px; }
 .fas-arr { color: #9AA8B2; margin-top: 2px; }
+
+/* Cửa sổ Sửa/Thêm tài khoản rộng hơn (650px) để Phụ huynh liên kết và Lớp nằm chung một hàng */
+#modalAccount .modal-box { max-width: 650px; }

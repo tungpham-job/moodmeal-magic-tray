@@ -203,6 +203,7 @@ function renderCharSelect(studentId) {
 function toggleStudentStats(role, studentId) {
   const wrap = document.getElementById('studentStatsWrap');
   wrap.style.display = role === 'student' ? 'block' : 'none';
+  document.getElementById('classWrap').style.display = role === 'student' ? 'block' : 'none';   // ô Lớp nằm cạnh "Phụ huynh liên kết"
   if (role !== 'student') return;
   fillLevelSelect();
   const xpEl = document.getElementById('accFormXp');

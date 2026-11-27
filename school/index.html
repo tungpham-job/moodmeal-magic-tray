@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏫</text></svg>">
   <title>Ban Giám Hiệu — MOODMEAL MAGIC TRAY</title>
-  <link rel="stylesheet" href="../css/base.css?v=20261127zf">
-  <link rel="stylesheet" href="../css/school.css?v=20261127zf">
-  <link rel="stylesheet" href="../css/characters.css?v=20261127zf">
+  <link rel="stylesheet" href="../css/base.css?v=20261127zg">
+  <link rel="stylesheet" href="../css/school.css?v=20261127zg">
+  <link rel="stylesheet" href="../css/characters.css?v=20261127zg">
 </head>
 <body class="page-school">
 <div class="school-layout">
@@ -339,18 +339,20 @@
           </select>
         </div>
       </div>
-      <div class="form-group-s" id="linkedWrap">
-        <label class="form-label-s" id="linkedLabel">Phụ huynh liên kết</label>
-        <select class="form-control" id="accFormLinked"></select>
+      <div class="form-row" style="margin-bottom:0">
+        <div class="form-group-s" id="linkedWrap">
+          <label class="form-label-s" id="linkedLabel">Phụ huynh liên kết</label>
+          <select class="form-control" id="accFormLinked"></select>
+        </div>
+        <div class="form-group-s" id="classWrap" style="display:none">
+          <label class="form-label-s">Lớp *</label>
+          <input class="form-control" id="accFormClass" list="accClassList" maxlength="12" placeholder="vd: 4A9 (bắt buộc khi thêm mới)" autocomplete="off">
+          <datalist id="accClassList"></datalist>
+        </div>
       </div>
 
       <!-- Chỉ hiện với vai trò Học sinh -->
       <div id="studentStatsWrap" style="display:none">
-        <div class="form-group-s">
-          <label class="form-label-s">Lớp * <span style="font-weight:400;color:#888">(bắt buộc khi thêm học sinh mới)</span></label>
-          <input class="form-control" id="accFormClass" list="accClassList" maxlength="12" placeholder="vd: 4A9" autocomplete="off">
-          <datalist id="accClassList"></datalist>
-        </div>
         <div class="form-row">
           <div class="form-group-s">
             <label class="form-label-s">XP hiện có</label>
@@ -644,15 +646,15 @@
 </div>
 
 <!-- ══ SCRIPTS ══ -->
-<script src="../js/config.js?v=20261127zf"></script>
-<script src="../js/seed.js?v=20261127zf"></script>
-<script src="../js/utils.js?v=20261127zf"></script>
-<script src="../js/store.js?v=20261127zf"></script>
-<script src="../js/auth.js?v=20261127zf"></script>
-<script src="../js/xp.js?v=20261127zf"></script>
-<script src="../js/characters.js?v=20261127zf"></script>
-<script src="../js/badges.js?v=20261127zf"></script>
-<script src="js/school.js?v=20261127zf"></script>
+<script src="../js/config.js?v=20261127zg"></script>
+<script src="../js/seed.js?v=20261127zg"></script>
+<script src="../js/utils.js?v=20261127zg"></script>
+<script src="../js/store.js?v=20261127zg"></script>
+<script src="../js/auth.js?v=20261127zg"></script>
+<script src="../js/xp.js?v=20261127zg"></script>
+<script src="../js/characters.js?v=20261127zg"></script>
+<script src="../js/badges.js?v=20261127zg"></script>
+<script src="js/school.js?v=20261127zg"></script>
 <script>
   /* Filter accounts table by search */
   function filterAccountsTable() {
