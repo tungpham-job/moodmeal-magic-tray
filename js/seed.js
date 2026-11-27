@@ -196,34 +196,34 @@ const DEFAULT_MENU = [
 ];
 
 /* Thực đơn demo cho tuần này và tuần sau (thứ Hai–thứ Sáu, theo ngày thật của máy):
-   mỗi ngày 3 món thuộc 3 nhóm khác nhau; món có cờ `n` là món "MỚI" của ngày đó.
+   mỗi ngày 3 món thuộc 3 nhóm khác nhau, trong đó luôn có 1 món nhóm Rau (để thử chấm điểm FAS); món có cờ `n` là món "MỚI" của ngày đó.
    Nhóm lấy từ nguyên liệu (MM_INGREDIENT_GROUP). 10 ngày = 2 tuần × 5 ngày. */
 const MM_DEMO_WEEKS = [
   [ // Thứ Hai
-    ['Thịt kho tàu','thit-heo'], ['Canh bí đỏ','bi','n'], ['Chuối tráng miệng','chuoi'] ],
+    ['Thịt kho tàu','thit-heo'], ['Canh rau dền','rau-den','n'], ['Chuối tráng miệng','chuoi'] ],
   [ // Thứ Ba
     ['Cá kho tộ','ca'], ['Rau muống xào tỏi','rau-muong'], ['Đậu hũ sốt cà','dau-hu','n'] ],
   [ // Thứ Tư
-    ['Tôm rim','tom','n'], ['Khoai lang hấp','khoai-lang'], ['Canh bầu','bau'] ],
+    ['Tôm rim','tom','n'], ['Bắp cải luộc','bap-cai'], ['Canh bầu','bau'] ],
   [ // Thứ Năm
     ['Gà rang gừng','thit-ga'], ['Bông cải xanh xào','bong-cai','n'], ['Cam tráng miệng','cam'] ],
   [ // Thứ Sáu
-    ['Cơm trắng','com-trang'], ['Cà rốt xào','ca-rot','n'], ['Trứng ốp la','trung'] ],
+    ['Cơm trắng','com-trang'], ['Rau lang xào','rau-lang','n'], ['Trứng ốp la','trung'] ],
   [ // Tuần sau: Thứ Hai
-    ['Bún thịt nướng','bun'], ['Thịt bò xào hành','thit-bo','n'], ['Dưa hấu','dua-hau'] ],
+    ['Bún thịt nướng','bun'], ['Thịt bò xào hành','thit-bo','n'], ['Rau muống luộc','rau-muong'] ],
   [ // Thứ Ba
     ['Mực xào','muc','n'], ['Rau lang luộc','rau-lang'], ['Chè đậu xanh','dau-xanh'] ],
   [ // Thứ Tư
-    ['Cơm trắng','com-trang'], ['Trứng cút kho','trung-cut','n'], ['Cà tím xào','ca-tim'] ],
+    ['Cơm trắng','com-trang'], ['Trứng cút kho','trung-cut','n'], ['Bắp cải xào','bap-cai'] ],
   [ // Thứ Năm
-    ['Bánh mì ốp la phô mai','banh-mi'], ['Khoai tây nghiền','khoai-tay','n'], ['Táo tráng miệng','tao'] ],
+    ['Bánh mì ốp la phô mai','banh-mi'], ['Bông cải xanh hấp','bong-cai','n'], ['Táo tráng miệng','tao'] ],
   [ // Thứ Sáu
-    ['Mì xào rau củ','mi'], ['Đậu đen hầm','dau-den','n'], ['Canh chua cà chua','ca-chua'] ],
+    ['Mì xào rau củ','mi'], ['Đậu đen hầm','dau-den','n'], ['Rau dền luộc','rau-den'] ],
 ];
 
 /* Thực đơn mẫu + thực đơn demo 2 tuần + món "Trứng chiên" (món MỚI) cho ngày hôm nay.
    Dùng ngày thật của máy: đặt lại cũng đưa ngày giả lập về ngày thật. Hôm nay luôn có đúng
-   3 món: "Trứng chiên" + 2 món khác nhóm (lấy từ thực đơn của hôm nay, ngày cuối tuần lấy của thứ Hai). */
+   3 món (có 1 món Rau): "Trứng chiên" + 2 món khác nhóm (lấy từ thực đơn của hôm nay, ngày cuối tuần lấy của thứ Hai). */
 function mmDemoMenuWithToday() {
   const realNow = new (window.MM_RealDate || Date)();
   const today = toLocalDateStr(realNow);
@@ -243,7 +243,9 @@ function mmDemoMenuWithToday() {
     dishes.forEach((d, i) => out.push(mk(date, d, i)));
   });
   const idx = (realNow.getDay() + 6) % 7;               // 0 = thứ Hai … 6 = Chủ nhật
-  const base = MM_DEMO_WEEKS[idx < 5 ? idx : 0].filter(d => MM_INGREDIENT_GROUP[d[1]] !== 'g-trung').slice(0, 2);
+  const noEgg = MM_DEMO_WEEKS[idx < 5 ? idx : 0].filter(d => MM_INGREDIENT_GROUP[d[1]] !== 'g-trung');
+  const base = noEgg.slice(0, 2);
+  if (!base.some(d => MM_INGREDIENT_GROUP[d[1]] === 'g-rau')) base[1] = noEgg.find(d => MM_INGREDIENT_GROUP[d[1]] === 'g-rau');   // luôn có 1 món Rau
   /* "Trứng chiên" (món MỚI) đứng đầu danh sách của hôm nay, rồi 2 món nền không "MỚI" */
   out.push({ id: 'm-demo-trung-chien', date: today, name: 'Trứng chiên', ingredientId: 'trung', groupId: 'g-trung',
     icon: '🥚', isNew: true });
