@@ -416,22 +416,21 @@ body.page-student {
 .it-body .food-card { margin: 8px 10px 0; box-shadow: none; }
 .it-body .home-note { margin: 8px 14px 0; }
 .it-lock { display: none; margin: 4px 12px 8px; font-size: 11.5px; color: #2E9E4F; font-weight: 700; text-align: center; }
-.it.done .food-card, .it.done .ta-card, .it.done .confirm-btn, .it.done .skip-note, .it.done .gap, .it.done .home-note { display: none; }
+.it.done .food-bar, .it.done .ta-card, .it.done .confirm-btn, .it.done .skip-note, .it.done .gap, .it.done .home-note { display: none; }
 .it.done .it-lock { display: block; }
 .it.done .emoji-label { padding-top: 10px; }
 
-/* Vùng đánh giá của mỗi món gọn hơn: bỏ tên/nhóm trùng với dòng đầu, thu gọn phần trên,
-   giữ khoảng cách rộng giữa các hàng nút bấm (emoji → Thử lại → Xác nhận) để tránh bấm nhầm */
-.it-body .food-img { height: 56px; }
-.it-body .food-img span { font-size: 36px !important; }
-.it-body .food-info { padding: 6px 12px 8px; }
-.it-body .food-xp { margin-top: 0; }
-.it-body .food-card { margin: 6px 10px 0; }
+/* Vùng đánh giá của mỗi món gọn: một thanh "Lần thử đầu của nhóm" (trái) + nhãn XP vàng (phải), không còn khung ảnh/icon trùng dòng đầu.
+   Giữ khoảng cách rộng giữa các hàng nút bấm (emoji → Thử lại → Xác nhận) để tránh bấm nhầm */
+.it-body .food-bar { margin: 8px 10px 0; padding: 6px 12px; background: #E3F6EC; border-radius: 8px;
+  display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.it-body .food-bar .food-badge { position: static; background: none; color: #1B5E4A; font-size: 12.5px; font-weight: 700; padding: 0; border-radius: 0; }
+.it-body .food-bar .food-xp { margin: 0; background: #FFF4D6; color: #7A5A00; font-size: 11.5px; font-weight: 700; padding: 2px 10px; border-radius: 999px; white-space: nowrap; }
 .it-body .emoji-label { padding: 6px 14px 4px; }
-.it-body .emoji-btn { min-height: 54px; padding: 5px 2px; gap: 2px; }
-.it-body .emoji-btn.selected { padding: 4px 1px; }
-.it-body .emoji-btn .e-icon { font-size: 24px; }
+.it-body .emoji-btn { height: 65px; min-height: 65px; padding: 4px 2px; gap: 3px; }
+.it-body .emoji-btn.selected { padding: 3px 1px; }
+.it-body .emoji-btn .e-icon { font-size: 26px; }
 .it-body .ta-card { margin: 12px 12px 8px; }
-.it-body .ta-btn { height: 32px; }
-.it-body .confirm-btn { height: 40px; margin: 12px 12px 0; }
+.it-body .ta-btn { height: 35px; }
+.it-body .confirm-btn { height: 45px; margin: 12px 12px 0; }
 .it-body .gap { height: 2px; }

@@ -159,7 +159,7 @@ function toggleFood(i) {
 
 /* ── Vẽ danh sách ─────────────────────────────── */
 function foodBlockHtml(f, i) {
-  const badge = f.history.length ? `Lần thử thứ ${f.nextAttempt} của nhóm` : 'Lần thử đầu tiên của nhóm!';
+  const badge = f.history.length ? `🔁 Lần thử thứ ${f.nextAttempt}` : '🌟 Lần thử đầu của nhóm';
   const faces = [[4, '❤️', 'Rất thích'], [3, '🙂', 'Có thể ăn'], [2, '😐', 'Chưa quen'], [1, '🙁', 'Không thích'], [0, '🚫', 'Chưa thử']]
     .map(([v, e, l], k) => `<button type="button" class="emoji-btn${v === 0 ? ' not-tried' : ''}" role="radio" aria-checked="false" aria-label="${l}, ${v} điểm" tabindex="${k === 0 ? 0 : -1}" data-val="${v}" onclick="pickEmoji(${i}, this)" onkeydown="emojiKey(event, ${i})"><span class="e-tick" aria-hidden="true">✓</span><span class="e-icon" aria-hidden="true">${e}</span><span class="e-label">${l}</span></button>`)
     .join('');
@@ -173,16 +173,11 @@ function foodBlockHtml(f, i) {
     </button>
     <div class="it-body" id="body-${i}" hidden>
     ${f.home ? `<div class="home-note">Bạn đã thử món chưa? Đánh giá trước cuối ${escHtml(dayLabel(f.deadline))} nhé!</div>` : ''}
-    <div class="food-card${f.home ? ' home-card' : ''}">
-      <div class="food-img">
-        <span style="font-size:56px">${escHtml(foodIcon(f.item))}</span>
-        <div class="food-badge">${badge}</div>
-      </div>
-      <div class="food-info">
-        <div class="food-xp">${f.history.length
-          ? `⭐ +${xpAmount('emoji_rate')} XP khi đánh giá`
-          : `⭐ +${xpAmount('first_try') + xpAmount('emoji_rate')} XP khi thử và đánh giá`}</div>
-      </div>
+    <div class="food-bar${f.home ? ' home-card' : ''}">
+      <span class="food-badge">${badge}</span>
+      <span class="food-xp">${f.history.length
+        ? `⭐ +${xpAmount('emoji_rate')} XP`
+        : `⭐ +${xpAmount('first_try') + xpAmount('emoji_rate')} XP`}</span>
     </div>
 
     <div class="emoji-label" id="emojiQ-${i}">Sau khi thử, em cảm thấy thế nào?</div>
