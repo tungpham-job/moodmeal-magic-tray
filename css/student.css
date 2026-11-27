@@ -419,3 +419,19 @@ body.page-student {
 .it.done .food-card, .it.done .ta-card, .it.done .confirm-btn, .it.done .skip-note, .it.done .gap, .it.done .home-note { display: none; }
 .it.done .it-lock { display: block; }
 .it.done .emoji-label { padding-top: 10px; }
+
+/* Vùng đánh giá của mỗi món gọn hơn: bỏ tên/nhóm trùng với dòng đầu, thu gọn phần trên,
+   giữ khoảng cách rộng giữa các hàng nút bấm (emoji → Thử lại → Xác nhận) để tránh bấm nhầm */
+.it-body .food-img { height: 56px; }
+.it-body .food-img span { font-size: 36px !important; }
+.it-body .food-info { padding: 6px 12px 8px; }
+.it-body .food-xp { margin-top: 0; }
+.it-body .food-card { margin: 6px 10px 0; }
+.it-body .emoji-label { padding: 6px 14px 4px; }
+.it-body .emoji-btn { min-height: 54px; padding: 5px 2px; gap: 2px; }
+.it-body .emoji-btn.selected { padding: 4px 1px; }
+.it-body .emoji-btn .e-icon { font-size: 24px; }
+.it-body .ta-card { margin: 12px 12px 8px; }
+.it-body .ta-btn { height: 32px; }
+.it-body .confirm-btn { height: 40px; margin: 12px 12px 0; }
+.it-body .gap { height: 2px; }

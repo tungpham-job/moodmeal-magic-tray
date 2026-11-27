@@ -37,6 +37,7 @@ def student_part(browser, base):
     check('mỗi dòng món hiện tên, nhóm và "Chưa đánh giá"', 'Trứng chiên' in page.inner_text('#hd-0') and 'Nhóm Trứng' in page.inner_text('#hd-0') and 'Chưa đánh giá' in page.inner_text('#st-0'))
     page.click('#hd-0'); page.wait_for_timeout(250)
     check('bấm một món: nội dung mở ngay bên dưới (emoji, Thử lại, Xác nhận)', page.locator('#body-0').is_visible() and page.locator('#food-0 .emoji-btn:visible').count() == 5 and page.locator('#confirmBtn-0').is_visible())
+    check('vùng đánh giá gọn: không lặp tên món/nhóm của dòng đầu, cao ≤ 320px', page.locator('#body-0 .food-name').count() == 0 and page.locator('#body-0 .food-group').count() == 0 and page.evaluate("()=>document.getElementById('body-0').getBoundingClientRect().height") <= 320)
     page.click('#hd-1'); page.wait_for_timeout(250)
     check('chỉ mở một món một lúc: mở món 2 thì món 1 đóng', page.locator('#body-1').is_visible() and page.locator('#body-0').is_hidden() and page.locator('.it-body:visible').count() == 1)
     page.click('#hd-1'); page.wait_for_timeout(250)
