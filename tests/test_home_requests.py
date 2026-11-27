@@ -72,6 +72,10 @@ def run(browser, base):
     st.goto(base + '/student/screen2.html'); st.wait_for_timeout(600)
     check('có thẻ "Bữa tối ở nhà" đứng đầu', st.locator('.home-card').count() == 1 and st.locator('#food-0 .home-card').count() == 1 and 'Bữa tối ở nhà' in st.inner_text('#food-0'))
     check('tóm tắt nhắc món ở nhà chờ đánh giá', 'ở nhà chờ em đánh giá' in st.inner_text('#evalSummary').lower(), st.inner_text('#evalSummary'))
+    nt = st.inner_text('#food-0 .home-note')
+    check('thẻ ở nhà: tiêu đề và ghi chú tách hai dòng, đúng nội dung', st.inner_text('#homeLabel-0').lower() == '🏠 bữa tối ở nhà' and nt.startswith('Bạn đã thử món chưa? Đánh giá trước cuối ') and nt.endswith(' nhé!'), nt)
+    fs = st.evaluate("()=>{const g=s=>{const c=getComputedStyle(document.querySelector(s));return [c.fontSize,c.fontFamily,c.fontWeight]};return [g('#homeLabel-0'),g('#food-1 .school-label, #schoolLabel'),parseFloat(getComputedStyle(document.querySelector('.home-note')).fontSize)]}")
+    check('tiêu đề ở nhà cùng font/cỡ/đậm với tiêu đề ở trường; ghi chú nhỏ hơn', fs[0] == fs[1] and fs[2] < float(fs[0][0][:-2]), fs)
     sl = st.locator('#schoolLabel')
     check('thẻ "🏫 Bữa trưa ở trường" đứng đầu danh sách món trưa, sau thẻ ở nhà',
           sl.count() == 1 and 'bữa trưa ở trường' in sl.inner_text().lower() and st.evaluate("()=>{const l=document.getElementById('schoolLabel').getBoundingClientRect().top,h=document.querySelector('.home-card').getBoundingClientRect().top,f=document.querySelector('#food-1 .food-card').getBoundingClientRect().top;return h<l&&l<f}"))
