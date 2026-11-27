@@ -45,8 +45,8 @@ table.evo td.sp small{display:block;font-weight:400;color:var(--muted);font-size
 .pet .nm{font-size:14px;font-weight:800;color:var(--green-dark)}
 .pet .lv{font-size:11px;color:#37474F}
 .pet .nxt{font-size:10px;color:var(--muted);margin-top:2px}
-.pet .btns{display:flex;gap:6px;justify-content:center;margin-top:7px}
-.mini{font-size:10.5px;border:1px solid #BFE8CF;background:#fff;color:var(--green-dark);border-radius:10px;padding:3px 9px;cursor:pointer;font-family:inherit}
+.pet .btns{display:flex;gap:8px;justify-content:center;margin-top:7px}
+.mini{font-size:13px;font-weight:700;border:1px solid #BFE8CF;background:#fff;color:var(--green-dark);border-radius:12px;padding:8px 14px;cursor:pointer;font-family:inherit;white-space:nowrap}
 .goal{margin:10px 12px 0;background:#E8F8EE;border:1px solid #CDEED9;border-radius:12px;padding:9px 12px;font-size:12px}
 .goal b{display:block;color:var(--green-dark)}
 .lbl{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;margin:12px 14px 5px}
@@ -118,15 +118,14 @@ table.lv svg{width:52px;height:52px}
 <body>
 <div class="wrap">
 <h1>Nhân vật đồng hành MoodMeal — sơ đồ tiến hóa và mockup</h1>
-<p class="sub">Bản thiết kế để duyệt (chưa lập trình). Các nhân vật bên dưới là nhân vật <b>gốc do mình thiết kế</b> theo chủ đề thực phẩm, vẽ bằng hình học SVG.</p>
-<div class="note"><b>Về việc dùng Pokémon:</b> Pokémon là nhân vật có bản quyền của Nintendo/Game Freak/The Pokémon Company. Tôi không vẽ hay tái tạo các nhân vật đó, và nếu đưa vào sản phẩm dự thi STEMPETITION thì cũng có rủi ro về bản quyền. Vì vậy tôi thiết kế 9 dòng nhân vật gốc với cùng cơ chế "chọn nhân vật đầu game, lên cấp thì tiến hóa". Cơ chế chọn nhân vật và tiến hóa đều giữ nguyên, nên sau này bạn có thể đổi hình bằng tranh các em tự vẽ qua trang BGH.</div>
+<p class="sub">Bản thiết kế các nhân vật theo chủ đề thực phẩm</p>
 
 <h2>1. Sơ đồ tiến hóa</h2>
 <p class="sub">9 dòng nhân vật × 4 cấp, khớp bảng Level hiện tại (Người mới 0–99 XP · Người khám phá 100–299 · Nhà thám hiểm 300–599 · Đại sứ dinh dưỡng 600+). Mỗi lần lên level là một lần tiến hóa.</p>
 <div class="card"><div style="overflow-x:auto"><table class="evo" id="evoTable"></table></div></div>
 
 <h2>2. Trang chủ học sinh</h2>
-<p class="sub">Nhân vật nằm ngay dưới thông tin học sinh và trên "🎯 Mục tiêu hôm nay". Mục "Chọn session hôm nay" (Bản đồ Hành tinh, Thử món &amp; Đánh giá) đã bỏ, học sinh dùng tab ở cạnh dưới. Bấm "▶ Xem tiến hóa" để xem hoạt ảnh lên cấp (nhân vật chớp sáng rồi đổi hình, kèm chữ Lên Level).</p>
+<p class="note" style="color:#C62828;font-weight:700">Bấm "▶ Xem tiến hóa" và "🔄 Đổi nhân vật" để xem hoạt ảnh lên cấp của các nhân vật.</p>
 <div class="row">
   <div>
     <div class="phone"><div class="screen" id="homeScreen">
@@ -143,7 +142,7 @@ table.lv svg{width:52px;height:52px}
           <div class="nm" id="petName">Lá Nhí</div>
           <div class="lv" id="petLv">Dòng Lá · Level 2 · Người khám phá</div>
           <div class="nxt" id="petNxt">Còn 115 XP để tiến hóa thành <b>Cây Khỏe</b></div>
-          <div class="btns"><button class="mini" onclick="playEvolve()">▶ Xem tiến hóa</button><button class="mini" onclick="nextSpecies()">🔄 Đổi nhân vật (demo)</button></div>
+          <div class="btns"><button class="mini" onclick="playEvolve()">▶ Xem tiến hóa</button><button class="mini" onclick="nextSpecies()">🔄 Đổi nhân vật</button></div>
           <div class="levelup" id="lvUp">🎉 Lên Level!</div>
         </div>
         <div class="goal"><b>🎯 Mục tiêu hôm nay</b>Thử "Trứng chiên" → +15 XP · Khám phá Hành tinh Trứng!</div>
