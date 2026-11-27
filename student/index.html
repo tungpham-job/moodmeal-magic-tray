@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍱</text></svg>">
   <title>MoodMeal Magic Tray</title>
-  <link rel="stylesheet" href="../css/base.css?v=20261127r">
-  <link rel="stylesheet" href="../css/student.css?v=20261127r">
-  <link rel="stylesheet" href="../css/characters.css?v=20261127r">
+  <link rel="stylesheet" href="../css/base.css?v=20261127s">
+  <link rel="stylesheet" href="../css/student.css?v=20261127s">
+  <link rel="stylesheet" href="../css/characters.css?v=20261127s">
 </head>
 <body class="page-student">
 <div class="phone-frame">
@@ -73,14 +73,14 @@
   </nav>
 </div>
 
-<script src="../js/config.js?v=20261127r"></script>
-<script src="../js/seed.js?v=20261127r"></script>
-<script src="../js/utils.js?v=20261127r"></script>
-<script src="../js/store.js?v=20261127r"></script>
-<script src="../js/auth.js?v=20261127r"></script>
-<script src="../js/xp.js?v=20261127r"></script>
-<script src="../js/characters.js?v=20261127r"></script>
-<script src="js/nav.js?v=20261127r"></script>
+<script src="../js/config.js?v=20261127s"></script>
+<script src="../js/seed.js?v=20261127s"></script>
+<script src="../js/utils.js?v=20261127s"></script>
+<script src="../js/store.js?v=20261127s"></script>
+<script src="../js/auth.js?v=20261127s"></script>
+<script src="../js/xp.js?v=20261127s"></script>
+<script src="../js/characters.js?v=20261127s"></script>
+<script src="js/nav.js?v=20261127s"></script>
 <script>
   /* Auth guard */
   const SESSION = auth.check('student');
@@ -107,14 +107,21 @@
       return;
     }
 
+    /* Món đã đánh giá hôm nay ở trường (đọc từ nhật ký FAS, cùng cách màn Thử món xác định) */
+    const sid = SESSION ? SESSION.userId : null;
+    const todayRows = store.get(MM_KEYS.FAS_LOG, []).filter(r => r.studentId === sid &&
+      (!r.place || r.place === 'school') && toLocalDateStr(new Date(r.timestamp)) === today);
+    const isRated = m => todayRows.some(r => (m.ingredientId && r.foodId === m.ingredientId) ||
+      normFood(r.foodName) === normFood(m.name));
+
     grid.innerHTML = todayItems.map(m => `
-      <div class="menu-item">
+      <div class="menu-item${isRated(m) ? ' rated' : ''}">
         <span class="m-icon">${escHtml(m.icon || groupOf(m).icon || '🍽️')}</span>
         <div>
-          <div class="m-name">${escHtml(m.name)}</div>
+          <div class="m-name">${escHtml(m.name)}${m.isNew ? '<span class="m-new">MỚI!</span>' : ''}</div>
           <div class="m-group">${escHtml(groupOf(m).name)}</div>
         </div>
-        ${m.isNew ? '<span class="m-new">MỚI!</span>' : ''}
+        ${isRated(m) ? '<span class="m-done">✔ Đã đánh giá</span>' : ''}
       </div>`).join('');
 
     /* Mission banner: highlight new item if any */
@@ -126,6 +133,6 @@
     }
   })();
 </script>
-<script src="js/character.js?v=20261127r"></script>
+<script src="js/character.js?v=20261127s"></script>
 </body>
 </html>

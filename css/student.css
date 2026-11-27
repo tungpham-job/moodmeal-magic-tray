@@ -141,10 +141,12 @@ body.page-student {
 .menu-item .m-name  { font-size: 12px; font-weight: 500; color: var(--text-main); }
 .menu-item .m-group { font-size: 10px; color: var(--text-muted); }
 .menu-item .m-new   {
-  margin-left: auto;
+  margin-left: 6px; vertical-align: middle;
   background: var(--green-dark); color: white;
   font-size: 8px; font-weight: 700; padding: 2px 6px; border-radius: 6px;
 }
+.menu-item .m-done  { margin-left: auto; color: #2E9E4F; font-weight: 800; font-size: 12px; white-space: nowrap; }
+.menu-item.rated    { background: #F1FAF4; border-color: #CDEED9; }
 
 /* ── Nav cards (home) ────────────────────────── */
 .nav-cards { padding: 4px 12px 8px; display: flex; flex-direction: column; gap: 7px; }
