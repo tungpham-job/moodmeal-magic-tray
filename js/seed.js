@@ -32,7 +32,7 @@ const DEFAULT_XP_CONFIG = {
   ],
   actions: [
     { id: 'first_try',       label: 'Thử lần đầu của nhóm thực phẩm', xp: 15 },
-    { id: 'emoji_rate',      label: 'Đánh giá emoji',                 xp: 5  },
+    { id: 'emoji_rate',      label: 'Đánh giá emoji',                 xp: 10 },
     { id: 'parent_confirm',  label: 'Ba mẹ nấu món thử lại',          xp: 20 },
   ]
 };
