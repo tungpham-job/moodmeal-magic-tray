@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Kiểm thử "Thêm thực đơn tuần này" + "Sửa món trong thực đơn" (BGH).
+"""Kiểm thử "Thêm thực đơn theo tuần" + "Sửa món trong thực đơn" (BGH).
 Chạy:  python tests/test_week_menu.py
 """
 import json, socket, subprocess, sys, time
@@ -25,8 +25,8 @@ def run(browser, base):
 
     pg.click('[data-module=settings]'); pg.wait_for_timeout(400)
     print('A. Nút và cửa sổ')
-    check('nút đổi tên "+ Thêm thực đơn tuần này"', 'Thêm thực đơn tuần này' in pg.inner_text('#tab-menu') and 'Thêm món hôm nay' not in pg.inner_text('#tab-menu'))
-    pg.click('button:has-text("Thêm thực đơn tuần này")'); pg.wait_for_timeout(200)
+    check('nút đổi tên "+ Thêm thực đơn theo tuần"', 'Thêm thực đơn theo tuần' in pg.inner_text('#tab-menu') and 'Thêm món hôm nay' not in pg.inner_text('#tab-menu'))
+    pg.click('button:has-text("Thêm thực đơn theo tuần")'); pg.wait_for_timeout(200)
     check('mở cửa sổ có 7 hàng ngày + 2 combobox + nút xếp tự động', pg.locator('#modalWeekMenu.show').count() == 1 and pg.locator('.wm-row').count() == 7 and pg.locator('#wmPerDay').count() == 1 and pg.locator('#wmGap').count() == 1 and pg.locator('button:has-text("Xếp thực đơn tự động")').count() == 1)
     check('mặc định 3 món/ngày, cách 2 ngày', pg.input_value('#wmPerDay') == '3' and pg.input_value('#wmGap') == '2')
 
