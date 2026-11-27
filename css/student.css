@@ -102,6 +102,16 @@ body.page-student {
   color: var(--text-muted); letter-spacing: 0.5px; text-transform: uppercase;
 }
 
+/* ── Nhãn tóm tắt màn Thử món: cố định ở đầu khi cuộn ── */
+.eval-summary {
+  position: sticky; top: 8px; z-index: 5;
+  margin: 10px 12px 4px; padding: 10px 14px;
+  background: #FFF8E1; border: 1px solid #FFE082; border-radius: 10px;
+  color: #C62828; font-size: 14px; font-weight: 700; text-align: center;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.10);
+}
+.eval-summary:empty { display: none; }
+
 /* ── Home hero ───────────────────────────────── */
 .home-hero {
   background: linear-gradient(160deg, #0E6655 0%, #1E8449 60%, #27AE60 100%);
