@@ -195,14 +195,60 @@ const DEFAULT_MENU = [
   { id:'m08', date:'2026-10-21', name:'Canh bầu',          ingredientId:'bau', groupId:'g-rau-qua', isNew: true  },
 ];
 
-/* Thực đơn mẫu + món demo "Trứng chiên" cho ngày hôm nay.
-   Dùng ngày thật của máy: đặt lại cũng đưa ngày giả lập về ngày thật. */
+/* Thực đơn demo cho tuần này và tuần sau (thứ Hai–thứ Sáu, theo ngày thật của máy):
+   mỗi ngày 3 món thuộc 3 nhóm khác nhau; món có cờ `n` là món "MỚI" của ngày đó.
+   Nhóm lấy từ nguyên liệu (MM_INGREDIENT_GROUP). 10 ngày = 2 tuần × 5 ngày. */
+const MM_DEMO_WEEKS = [
+  [ // Thứ Hai
+    ['Thịt kho tàu','thit-heo'], ['Canh bí đỏ','bi','n'], ['Chuối tráng miệng','chuoi'] ],
+  [ // Thứ Ba
+    ['Cá kho tộ','ca'], ['Rau muống xào tỏi','rau-muong'], ['Đậu hũ sốt cà','dau-hu','n'] ],
+  [ // Thứ Tư
+    ['Tôm rim','tom','n'], ['Khoai lang hấp','khoai-lang'], ['Canh bầu','bau'] ],
+  [ // Thứ Năm
+    ['Gà rang gừng','thit-ga'], ['Bông cải xanh xào','bong-cai','n'], ['Cam tráng miệng','cam'] ],
+  [ // Thứ Sáu
+    ['Cơm trắng','com-trang'], ['Cà rốt xào','ca-rot','n'], ['Trứng ốp la','trung'] ],
+  [ // Tuần sau: Thứ Hai
+    ['Bún thịt nướng','bun'], ['Thịt bò xào hành','thit-bo','n'], ['Dưa hấu','dua-hau'] ],
+  [ // Thứ Ba
+    ['Mực xào','muc','n'], ['Rau lang luộc','rau-lang'], ['Chè đậu xanh','dau-xanh'] ],
+  [ // Thứ Tư
+    ['Cơm trắng','com-trang'], ['Trứng cút kho','trung-cut','n'], ['Cà tím xào','ca-tim'] ],
+  [ // Thứ Năm
+    ['Bánh mì ốp la phô mai','banh-mi'], ['Khoai tây nghiền','khoai-tay','n'], ['Táo tráng miệng','tao'] ],
+  [ // Thứ Sáu
+    ['Mì xào rau củ','mi'], ['Đậu đen hầm','dau-den','n'], ['Canh chua cà chua','ca-chua'] ],
+];
+
+/* Thực đơn mẫu + thực đơn demo 2 tuần + món "Trứng chiên" (món MỚI) cho ngày hôm nay.
+   Dùng ngày thật của máy: đặt lại cũng đưa ngày giả lập về ngày thật. Hôm nay luôn có đúng
+   3 món: "Trứng chiên" + 2 món khác nhóm (lấy từ thực đơn của hôm nay, ngày cuối tuần lấy của thứ Hai). */
 function mmDemoMenuWithToday() {
-  const today = toLocalDateStr(new (window.MM_RealDate || Date)());
-  return DEFAULT_MENU.concat([
-    { id: 'm-demo-trung-chien', date: today, name: 'Trứng chiên', ingredientId: 'trung', groupId: 'g-trung',
-      icon: '🥚', isNew: true },
-  ]);
+  const realNow = new (window.MM_RealDate || Date)();
+  const today = toLocalDateStr(realNow);
+  const ing = id => MM_DEFAULT_INGREDIENT_LIST.find(x => x.id === id);
+  const mk = (date, d, i) => {
+    const x = ing(d[1]);
+    return { id: 'm-demo-' + date + '-' + i, date, name: d[0], ingredientId: x.id, groupId: x.groupId, icon: x.icon, isNew: d[2] === 'n' };
+  };
+  /* thứ Hai của tuần này */
+  const mon = new Date(realNow.getFullYear(), realNow.getMonth(), realNow.getDate());
+  mon.setDate(mon.getDate() - ((mon.getDay() + 6) % 7));
+  const out = DEFAULT_MENU.slice();
+  MM_DEMO_WEEKS.forEach((dishes, k) => {
+    const day = new Date(mon); day.setDate(mon.getDate() + Math.floor(k / 5) * 7 + (k % 5));
+    const date = toLocalDateStr(day);
+    if (date === today) return;                       // hôm nay xử lý riêng bên dưới
+    dishes.forEach((d, i) => out.push(mk(date, d, i)));
+  });
+  const idx = (realNow.getDay() + 6) % 7;               // 0 = thứ Hai … 6 = Chủ nhật
+  const base = MM_DEMO_WEEKS[idx < 5 ? idx : 0].filter(d => MM_INGREDIENT_GROUP[d[1]] !== 'g-trung').slice(0, 2);
+  /* "Trứng chiên" (món MỚI) đứng đầu danh sách của hôm nay, rồi 2 món nền không "MỚI" */
+  out.push({ id: 'm-demo-trung-chien', date: today, name: 'Trứng chiên', ingredientId: 'trung', groupId: 'g-trung',
+    icon: '🥚', isNew: true });
+  base.forEach((d, i) => out.push(mk(today, [d[0], d[1]], i)));
+  return out;
 }
 
 /* ── Seed: FAS log (demo) ────────────────────── */
