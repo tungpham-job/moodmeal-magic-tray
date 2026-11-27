@@ -5,8 +5,10 @@
    và biểu đồ riêng.  (cần js/today.js load trước file này)
 ═══════════════════════════════════════════ */
 
-/* Điểm FAS theo mức emoji: ❤️ 4 · 🙂 3 · 😐 2 · 🙁 1 */
+/* Điểm FAS theo mức emoji: ❤️ 4 · 🙂 3 · 😐 2 · 🙁 1 · 🚫 Chưa thử 0
+   (0 = chưa thử: lưu và hiện trong chuỗi lượt thử, nhưng không tính là lượt thử và không tính vào FAG) */
 const emojiMap = {
+  0: { val: 0 },
   4: { val: 4.0 },
   3: { val: 3.0 },
   2: { val: 2.0 },
@@ -29,13 +31,18 @@ function initFoods() {
     })
     .map(item => {
       const canon = canonicalFoodOf(item);
-      const all   = session ? foodHistoryOf(session.userId, item) : [];
-      /* Đã đánh giá món này hôm nay → giữ kết quả, khóa không cho đánh giá lại */
-      const todayEntry = all.find(r => isToday(r.timestamp)) || null;
-      const history = todayEntry ? all.filter(r => r.attempt < todayEntry.attempt) : all;
-      const nextAttempt = (all.length ? Math.max(...all.map(h => h.attempt)) : 0) + 1;
+      const all   = session ? foodHistoryOf(session.userId, item) : [];   // mọi lượt của NHÓM (trường + nhà)
+      /* Đã đánh giá nguyên liệu này hôm nay ở trường → giữ kết quả, khóa không cho đánh giá lại */
+      const todayEntry = all.find(r => isToday(r.timestamp) && isSchoolRow(r) &&
+        (r.foodId === canon.id || normFood(r.foodName) === normFood(canon.name))) || null;
+      /* history = các lượt THỬ thật (điểm 1–4) của nhóm trước lượt này */
+      const tried = mmTriedRows(all);
+      const history = todayEntry ? tried.filter(r => String(r.timestamp) < String(todayEntry.timestamp)) : tried;
+      const nextAttempt = history.length + 1;
+      const gid = groupIdOfItem(item);
+      const grp = mmGroupById(gid);
       return {
-        item, id: canon.id, name: canon.name, group: item.group, planet: item.planet,
+        item, id: canon.id, name: canon.name, groupId: gid, groupName: grp ? grp.name : (item.group || ''),
         history, nextAttempt, selected: null, tryAgain: false, done: false, todayEntry,
       };
     });
@@ -48,12 +55,15 @@ function isToday(ts) {
   return toLocalDateStr(new Date(ts)) === toLocalDateStr(new Date());
 }
 
+/* Dòng nhật ký ghi ở trường (dòng cũ chưa có place coi là ở trường) */
+function isSchoolRow(r) { return !r.place || r.place === 'school'; }
+
 /* Lần đánh giá hôm nay của học sinh với món f (đọc lại từ nhật ký) */
 function findTodayEntry(f) {
   const session = auth.getSession();
   if (!session) return null;
   return readJson(MM_KEYS.FAS_LOG, []).find(r =>
-    r.studentId === session.userId && isToday(r.timestamp) &&
+    r.studentId === session.userId && isToday(r.timestamp) && isSchoolRow(r) &&
     (r.foodId === f.id || normFood(r.foodName) === normFood(f.name))) || null;
 }
 
@@ -62,7 +72,7 @@ function restoreDone(i, entry) {
   const f = FOODS[i];
   f.done      = true;
   f.todayEntry = entry;
-  f.selected  = entry.rating || entry.score;
+  f.selected  = entry.rating != null ? entry.rating : entry.score;
   f.tryAgain  = !!entry.tryAgain;
 
   const sel = document.querySelector(`#food-${i} .emoji-btn[data-val="${f.selected}"]`);
@@ -77,7 +87,8 @@ function restoreDone(i, entry) {
   btn.textContent = '✅ Đã ghi nhận!';
 
   const bd = document.querySelector(`#food-${i} .food-badge`);
-  if (bd) bd.textContent = f.history.length ? `Lần thử thứ ${entry.attempt}` : 'Lần thử đầu tiên!';
+  if (bd) bd.textContent = Number(entry.score) === 0 ? 'Chưa thử hôm nay'
+    : (f.history.length ? `Lần thử thứ ${entry.attempt} của nhóm` : 'Lần thử đầu tiên của nhóm!');
 
   const xp = document.querySelector(`#food-${i} .food-xp`);
   if (xp) xp.textContent = '✅ Hôm nay em đã đánh giá món này rồi';
@@ -86,16 +97,17 @@ function restoreDone(i, entry) {
   renderFasBars(i, f.history, val);
   document.getElementById(`fasChart-${i}`).classList.add('show');
   document.getElementById(`fasNote-${i}`).textContent   = fasNote(f.history, val);
-  document.getElementById(`fasStatus-${i}`).textContent =
-    `✅ FAS lần ${entry.attempt}: ${val}/4 — Mỗi món chỉ đánh giá 1 lần mỗi ngày, mai em thử tiếp nhé!`;
+  document.getElementById(`fasStatus-${i}`).textContent = val === 0
+    ? '✅ Em chọn Chưa thử (không tính lượt thử) — Mỗi món chỉ đánh giá 1 lần mỗi ngày, mai em thử tiếp nhé!'
+    : `✅ FAS lần ${entry.attempt}: ${val}/4 — Mỗi món chỉ đánh giá 1 lần mỗi ngày, mai em thử tiếp nhé!`;
 }
 
 /* ── Vẽ danh sách ─────────────────────────────── */
 function foodBlockHtml(f, i, total) {
-  const badge = f.history.length ? `Lần thử thứ ${f.nextAttempt}` : 'Lần thử đầu tiên!';
+  const badge = f.history.length ? `Lần thử thứ ${f.nextAttempt} của nhóm` : 'Lần thử đầu tiên của nhóm!';
   const tag   = f.item.isNew ? 'Món mới hôm nay' : 'Hôm nay có trong thực đơn';
-  const faces = [[4, '❤️', 'Rất thích'], [3, '🙂', 'Có thể ăn'], [2, '😐', 'Chưa quen'], [1, '🙁', 'Không thích']]
-    .map(([v, e, l], k) => `<button type="button" class="emoji-btn" role="radio" aria-checked="false" aria-label="${l}, ${v} điểm" tabindex="${k === 0 ? 0 : -1}" data-val="${v}" onclick="pickEmoji(${i}, this)" onkeydown="emojiKey(event, ${i})"><span class="e-tick" aria-hidden="true">✓</span><span class="e-icon" aria-hidden="true">${e}</span><span class="e-label">${l}</span></button>`)
+  const faces = [[4, '❤️', 'Rất thích'], [3, '🙂', 'Có thể ăn'], [2, '😐', 'Chưa quen'], [1, '🙁', 'Không thích'], [0, '🚫', 'Chưa thử']]
+    .map(([v, e, l], k) => `<button type="button" class="emoji-btn${v === 0 ? ' not-tried' : ''}" role="radio" aria-checked="false" aria-label="${l}, ${v} điểm" tabindex="${k === 0 ? 0 : -1}" data-val="${v}" onclick="pickEmoji(${i}, this)" onkeydown="emojiKey(event, ${i})"><span class="e-tick" aria-hidden="true">✓</span><span class="e-icon" aria-hidden="true">${e}</span><span class="e-label">${l}</span></button>`)
     .join('');
   const divider = i > 0 ? 'border-top:6px solid #F0F2F5;margin-top:10px;padding-top:2px;' : '';
 
@@ -109,7 +121,7 @@ function foodBlockHtml(f, i, total) {
       </div>
       <div class="food-info">
         <div class="food-name">${escHtml(f.item.name)}</div>
-        <div class="food-group">${escHtml(f.group)} · ${tag}</div>
+        <div class="food-group">Nhóm ${escHtml(f.groupName)} · ${tag}</div>
         <div class="food-xp">${f.history.length
           ? `⭐ +${xpAmount('emoji_rate')} XP khi đánh giá`
           : `⭐ +${xpAmount('first_try') + xpAmount('emoji_rate')} XP khi thử và đánh giá`}</div>
@@ -124,10 +136,9 @@ function foodBlockHtml(f, i, total) {
     <div class="ta-card" id="taCard-${i}">
       <div class="ta-head">
         <div class="ta-q" id="taQ-${i}">Thử lại lần sau?</div>
-        <span class="ta-xp">+${xpAmount('try_again')} XP</span>
       </div>
       <div class="ta-row" role="radiogroup" aria-labelledby="taQ-${i}">
-        <button type="button" class="ta-btn" role="radio" aria-checked="false" aria-label="Muốn thử lại lần sau, nhận thêm ${xpAmount('try_again')} XP khi xác nhận" tabindex="0" data-val="1" onclick="pickTryAgain(${i}, this)" onkeydown="tryAgainKey(event, ${i})">Muốn</button>
+        <button type="button" class="ta-btn" role="radio" aria-checked="false" aria-label="Muốn thử lại lần sau" tabindex="0" data-val="1" onclick="pickTryAgain(${i}, this)" onkeydown="tryAgainKey(event, ${i})">Muốn</button>
         <button type="button" class="ta-btn" role="radio" aria-checked="false" aria-label="Để sau, chưa thử lại" tabindex="-1" data-val="0" onclick="pickTryAgain(${i}, this)" onkeydown="tryAgainKey(event, ${i})">Để sau</button>
       </div>
     </div>
@@ -140,7 +151,7 @@ function foodBlockHtml(f, i, total) {
     <div class="sr-only" id="live-${i}" role="status" aria-live="polite"></div>
 
     <div class="fas-chart" id="fasChart-${i}">
-      <div class="fas-chart-title">📈 Hành trình khám phá ${escHtml(f.name)}</div>
+      <div class="fas-chart-title">📈 Hành trình khám phá nhóm ${escHtml(f.groupName)}</div>
       <div class="fas-bars" id="fasBars-${i}" style="height:auto;min-height:56px"></div>
       <div class="fas-track-label">
         <span>FAS: 1.0 (Không thích)</span>
@@ -186,30 +197,31 @@ function updateSummary() {
 }
 
 /* ── Ghi 1 dòng vào mm_fas_log ─────────────────
-   attempt = lần lớn nhất đã có của học sinh + món này (so khớp theo tên) + 1.
-   `score` là điểm FAS (❤️ 4 · 🙂 3 · 😐 2 · 🙁 1); `rating` giữ mức emoji
-   gốc (1–4); `planet` là hành tinh của món để tính tiến trình khám phá. */
+   FAS tính THEO NHÓM: attempt = số lượt thử thật (điểm 1–4) đã có của học sinh trong nhóm + 1.
+   "Chưa thử" (điểm 0) được lưu nhưng không phải lượt thử: attempt = null, notTried = true.
+   `score` là điểm FAS (❤️ 4 · 🙂 3 · 😐 2 · 🙁 1 · 🚫 0); `rating` giữ mức emoji gốc;
+   `place` là nơi thử ('school' ở trường, 'home' ở nhà). */
 function writeFasLog(f, rating, score) {
   const session = auth.getSession();
   if (!session || !f) return null;
 
   const log = readJson(MM_KEYS.FAS_LOG, []);
-  const attempts = log
-    .filter(r => r.studentId === session.userId && (r.foodId === f.id || normFood(r.foodName) === normFood(f.name)))
-    .map(r => r.attempt);
+  const tried = f.groupId ? mmTriedRows(mmGroupRows(log, session.userId, f.groupId)) : [];
 
   const entry = {
     studentId: session.userId,
     foodId:    f.id,
     foodName:  f.name,
     dishName:  f.item.name,
-    planet:    f.planet,
-    attempt:   (attempts.length ? Math.max(...attempts) : 0) + 1,
+    groupId:   f.groupId,
+    place:     'school',
+    attempt:   score >= 1 ? tried.length + 1 : null,
     score,
     rating,
     tryAgain:  f.tryAgain,
     timestamp: new Date().toISOString(),
   };
+  if (score === 0) entry.notTried = true;
 
   log.push(entry);
   if (!store.set(MM_KEYS.FAS_LOG, log)) return null;
@@ -285,7 +297,7 @@ function tryAgainKey(ev, i) {
 
 /* Biểu đồ hành trình: tối đa 3 lần thử gần nhất của món này + lần hôm nay */
 function renderFasBars(i, prev, val) {
-  const bars = prev.slice(-3).map(e => ({ label: `Lần ${e.attempt}`, val: Number(e.score), cur: false }));
+  const bars = prev.slice(-3).map((e, k, arr) => ({ label: `Lần ${e.attempt}`, val: Number(e.score), cur: false }));
   bars.push({ label: 'Hôm nay', val, cur: true });
   document.getElementById(`fasBars-${i}`).innerHTML = bars.map(b => `
     <div class="fas-bar-wrap">
@@ -297,7 +309,8 @@ function renderFasBars(i, prev, val) {
 
 /* Ghi chú theo lịch sử của bé với món này */
 function fasNote(prev, val) {
-  if (!prev.length) return `Lần đầu thử món này! FAS ${val.toFixed(1)}/4 🌱`;
+  if (val === 0) return 'Em chưa thử món này, không sao! Khi nào sẵn sàng em thử nhé 🌱';
+  if (!prev.length) return `Lần đầu thử nhóm này! FAS ${val.toFixed(1)}/4 🌱`;
   const last  = Number(prev[prev.length - 1].score);
   const first = Number(prev[0].score);
   const delta = Math.round((val - last) * 10) / 10;
@@ -311,12 +324,12 @@ function fasNote(prev, val) {
 
 function confirmEval(i) {
   const f = FOODS[i];
-  if (!f || f.done || !f.selected) return;
+  if (!f || f.done || f.selected === null) return;
 
   /* Đã có đánh giá hôm nay (vd mở ở tab khác) → không ghi thêm, chỉ hiện kết quả đã có */
   const existing = findTodayEntry(f);
   if (existing) {
-    f.history = f.history.filter(r => r.attempt < existing.attempt);
+    f.history = f.history.filter(r => String(r.timestamp) < String(existing.timestamp));
     restoreDone(i, existing);
     updateSummary();
     return;
@@ -327,15 +340,15 @@ function confirmEval(i) {
   const entry = writeFasLog(f, f.selected, data.val);
   f.done = true;
 
-  /* Cộng XP theo bảng của BGH: thử món lần đầu, đánh giá emoji, TRY AGAIN */
+  /* Cộng XP theo bảng của BGH: thử lần đầu của nhóm (chỉ khi đã thử thật), đánh giá emoji (kể cả "Chưa thử").
+     Bấm "Muốn" không cộng XP. */
   const session = auth.getSession();
   let xpRes = null;
   if (session && entry) {
-    const ref  = `${f.id}#${entry.attempt}`;
+    const ref  = `${f.id}#${entry.timestamp}`;
     const list = [];
-    if (!prev.length) list.push(['first_try', f.id]);
+    if (data.val >= 1 && !prev.length) list.push(['first_try', f.groupId || f.id]);
     list.push(['emoji_rate', ref]);
-    if (f.tryAgain) list.push(['try_again', ref]);
     xpRes = awardXpBatch(session.userId, list);
     refreshXpDisplay(session.userId, session.name);
   }
@@ -349,7 +362,9 @@ function confirmEval(i) {
   renderFasBars(i, prev, data.val);
 
   const toast = document.getElementById(`toast-${i}`);
-  toast.textContent = `⭐ +${xpRes ? xpRes.awarded : 0} XP! FAS lần này: ${data.val}/4 🌱`;
+  toast.textContent = data.val === 0
+    ? `⭐ +${xpRes ? xpRes.awarded : 0} XP! Em chọn Chưa thử 🌱`
+    : `⭐ +${xpRes ? xpRes.awarded : 0} XP! FAS lần này: ${data.val}/4 🌱`;
   if (f.tryAgain) toast.textContent += ' · TRY AGAIN đã đặt!';
   if (xpRes && xpRes.leveledUp) toast.textContent += ' ' + levelUpText(xpRes);
   toast.classList.add('show');
@@ -358,8 +373,9 @@ function confirmEval(i) {
 
   document.getElementById(`fasChart-${i}`).classList.add('show');
   document.getElementById(`fasNote-${i}`).textContent   = fasNote(prev, data.val);
-  document.getElementById(`fasStatus-${i}`).textContent =
-    `✅ FAS lần ${entry ? entry.attempt : f.nextAttempt}: ${data.val}/4 — Đã ghi nhận!`;
+  document.getElementById(`fasStatus-${i}`).textContent = data.val === 0
+    ? '✅ Đã ghi nhận: Chưa thử (không tính lượt thử)'
+    : `✅ FAS lần ${entry ? entry.attempt : f.nextAttempt}: ${data.val}/4 — Đã ghi nhận!`;
 
   updateSummary();
 

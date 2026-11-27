@@ -16,6 +16,7 @@ const MM_KEYS = {
   ACCOUNTS:    'mm_accounts',
   MENU:        'mm_daily_menu',
   INGREDIENTS: 'mm_ingredients',
+  FOOD_GROUPS: 'mm_food_groups',      // nhóm thực phẩm (mỗi nhóm = 1 hành tinh)
   NUTRITION:   'mm_nutrition_table',  // bảng dinh dưỡng chuẩn để BGH chọn nguyên liệu
   SCORE_FORMULA: 'mm_score_formula',  // công thức tính điểm cân bằng năng lượng của khay
   XP_CONFIG:   'mm_xp_config',

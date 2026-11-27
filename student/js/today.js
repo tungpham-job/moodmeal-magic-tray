@@ -1,23 +1,18 @@
 /* ═══════════════════════════════════════════════
    today.js — Dữ liệu "hôm nay" dùng chung (Học sinh)
    - Món mục tiêu hôm nay: lấy từ thực đơn do BGH thiết lập
-   - Lịch sử FAS của bé theo từng món
+   - Lịch sử FAS của bé THEO NHÓM thực phẩm (mỗi nhóm = 1 hành tinh)
    - Trạng thái các hành tinh tính từ dữ liệu của bé
    Load SAU js/auth.js (cần toLocalDateStr).
 ═══════════════════════════════════════════════ */
 
-/* Bốn hành tinh (tên trùng với ô "Hành tinh" trong form thực đơn của BGH) */
-const PLANETS = [
-  { key: 'rauCu',   name: 'Rau củ',   icon: '🥕', total: 5, bar: '#1E8449', text: '#1E8449' },
-  { key: 'dam',     name: 'Đạm',      icon: '🍗', total: 5, bar: '#1F618D', text: '#1F618D' },
-  { key: 'xanhLa',  name: 'Xanh lá',  icon: '🥦', total: 5, bar: '#F0C040', text: '#B8860B' },
-  { key: 'traiCay', name: 'Trái cây', icon: '🍎', total: 4, bar: '#BDC3C7', text: '#BDC3C7' },
+/* Màu thanh tiến trình của các hành tinh (xoay vòng theo thứ tự nhóm) */
+const PLANET_COLORS = [
+  { bar: '#E0A030', text: '#A0700F' }, { bar: '#C0504D', text: '#9B2C2A' }, { bar: '#1F618D', text: '#1F618D' },
+  { bar: '#D4AC0D', text: '#9A7D0A' }, { bar: '#8E6E53', text: '#6E5340' }, { bar: '#1E8449', text: '#1E8449' },
+  { bar: '#E67E22', text: '#B35F10' }, { bar: '#7D3C98', text: '#7D3C98' }, { bar: '#E74C3C', text: '#C0392B' },
 ];
 
-const GROUP_ICON = { 'Tinh bột': '🍚', 'Đạm': '🥩', 'Rau củ': '🥦', 'Trái cây': '🍎' };
-
-/* Hành tinh của một số món trong dữ liệu mẫu (dùng khi dòng FAS cũ chưa ghi
-   hành tinh và tên món không có trong thực đơn). Khóa đã bỏ dấu, viết thường. */
 /* ── Tiện ích ─────────────────────────────────── */
 function readJson(key, fallback) { return store.get(key, fallback); }
 
@@ -40,7 +35,19 @@ function getTodayTarget() {
 
 /* Icon BGH chọn cho món; không có thì dùng icon theo nhóm */
 function foodIcon(item) {
-  return (item && item.icon) || GROUP_ICON[item && item.group] || '🍽️';
+  if (item && item.icon) return item.icon;
+  const ing = item && item.ingredientId ? getIngredient(item.ingredientId) : null;
+  if (ing && ing.icon) return ing.icon;
+  const g = mmGroupById(groupIdOfItem(item));
+  return (g && g.icon) || '🍽️';
+}
+
+/* Nhóm thực phẩm của một món trong thực đơn: ghi trên món; thiếu thì lấy theo nguyên liệu */
+function groupIdOfItem(item) {
+  if (!item) return null;
+  if (item.groupId) return item.groupId;
+  const ing = item.ingredientId ? getIngredient(item.ingredientId) : null;
+  return (ing && ing.groupId) || null;
 }
 
 /* ── Nguyên liệu (danh mục do BGH quản lý) ─────────
@@ -64,27 +71,7 @@ function canonicalFoodOf(item) {
   return canonicalFood(item.name);
 }
 
-/* Các lần thử của học sinh với món trong thực đơn (theo nguyên liệu) */
-function foodHistoryOf(studentId, item) {
-  if (item && item.ingredientId) {
-    return readJson(MM_KEYS.FAS_LOG, [])
-      .filter(r => r.studentId === studentId && r.foodId === item.ingredientId)
-      .sort((a, b) => a.attempt - b.attempt);
-  }
-  return foodHistory(studentId, item.name);
-}
-
-/* ── Lịch sử FAS ──────────────────────────────── */
-/* Các lần thử của một học sinh với một món (so khớp theo tên), theo thứ tự lần thử */
-function foodHistory(studentId, name) {
-  const n = normFood(name);
-  return readJson(MM_KEYS.FAS_LOG, [])
-    .filter(r => r.studentId === studentId && normFood(r.foodName) === n)
-    .sort((a, b) => a.attempt - b.attempt);
-}
-
-/* Mã và tên chuẩn của món: dùng lại mã/tên đã có trong nhật ký FAS để các màn
-   (Phụ huynh, Báo cáo BGH) gom đúng một món; chưa có thì tạo mới từ tên. */
+/* Mã và tên chuẩn của món cũ (không có nguyên liệu): dùng lại mã/tên trong nhật ký FAS, chưa có thì tạo từ tên. */
 function canonicalFood(name) {
   const n = normFood(name);
   const hit = readJson(MM_KEYS.FAS_LOG, []).find(r => normFood(r.foodName) === n);
@@ -92,46 +79,36 @@ function canonicalFood(name) {
              : { id: slugFood(name), name: String(name).trim() };
 }
 
-/* Hành tinh của một món (theo tên): thực đơn BGH trước, rồi bảng dữ liệu mẫu */
-function planetOfName(name) {
-  const n = normFood(name);
-  const fromMenu = readJson(MM_KEYS.MENU, [])
-    .filter(m => m.planet && normFood(m.name) === n)
-    .sort((a, b) => String(b.date).localeCompare(String(a.date)))[0];
-  return (fromMenu && fromMenu.planet) || LEGACY_FOOD_PLANET[n] || null;
+/* ── Lịch sử FAS THEO NHÓM ────────────────────────
+   Các lượt đánh giá của học sinh trong nhóm của món (cả trường và nhà), theo thời gian.
+   Lượt "Chưa thử" (điểm 0) có trong danh sách nhưng không tính là lượt thử (xem mmTriedRows). */
+function foodHistoryOf(studentId, item) {
+  const gid = groupIdOfItem(item);
+  if (!gid) return [];
+  return mmGroupRows(readJson(MM_KEYS.FAS_LOG, []), studentId, gid);
 }
 
-/* Các món bé đã thử (mỗi món một dòng), kèm hành tinh và lần thử gần nhất */
-function studentFoods(studentId) {
-  const byName = {};
-  readJson(MM_KEYS.FAS_LOG, []).filter(r => r.studentId === studentId).forEach(r => {
-    const n = r.foodId || normFood(r.foodName);
-    const o = byName[n] || (byName[n] = { name: r.foodName, planet: null, latest: r });
-    if (r.attempt >= o.latest.attempt) o.latest = r;
-    if (r.planet) o.planet = r.planet;
-  });
-  return Object.keys(byName).map(n => {
-    const o = byName[n];
-    if (!o.planet) {
-      const ing = getIngredient(o.latest.foodId);
-      o.planet = (ing && ing.planet) || planetOfName(o.name);
-    }
-    return o;
-  });
-}
-
-/* ── Trạng thái hành tinh ──────────────────────────
-   unlocked : bé đã thử ít nhất 1 món thuộc hành tinh
-   unlocking: chưa thử món nào, nhưng món mục tiêu hôm nay thuộc hành tinh này
-   locked   : còn lại */
+/* ── Trạng thái hành tinh (mỗi nhóm thực phẩm = 1 hành tinh) ──
+   unlocked : bé đã thử ít nhất 1 nguyên liệu của nhóm (điểm 1–4)
+   unlocking: chưa thử nguyên liệu nào, nhưng món mục tiêu hôm nay thuộc nhóm này
+   locked   : còn lại
+   ingredients: tất cả nguyên liệu đang dùng của nhóm; đã thử thì có FAS gần nhất, chưa thử thì tried = false. */
 function getPlanetStates(studentId) {
-  const target = getTodayTarget();
-  const foods = studentFoods(studentId);
-  return PLANETS.map(p => {
-    const tried = foods.filter(f => f.planet === p.name);
-    const explored = tried.length;
-    const state = explored > 0 ? 'unlocked'
-                : (target && target.planet === p.name ? 'unlocking' : 'locked');
-    return Object.assign({}, p, { tried, explored, state });
+  const target  = getTodayTarget();
+  const targetG = groupIdOfItem(target);
+  const log  = readJson(MM_KEYS.FAS_LOG, []);
+  const ings = readJson(MM_KEYS.INGREDIENTS, []).filter(g => g.active !== false);
+  return mmFoodGroups().map((g, i) => {
+    const rows = mmTriedRows(mmGroupRows(log, studentId, g.id));
+    const ingredients = ings.filter(x => x.groupId === g.id).map(x => {
+      const mine = rows.filter(r => r.foodId === x.id);
+      return { id: x.id, name: x.name, icon: x.icon || g.icon, tried: mine.length > 0,
+               fas: mine.length ? mine[mine.length - 1].score : null };
+    });
+    const explored = ingredients.filter(x => x.tried).length;
+    const state = explored > 0 ? 'unlocked' : (targetG === g.id ? 'unlocking' : 'locked');
+    const col = PLANET_COLORS[i % PLANET_COLORS.length];
+    return { key: g.id, name: g.name, icon: g.icon, total: ingredients.length, bar: col.bar, text: col.text,
+             ingredients, explored, state };
   });
 }

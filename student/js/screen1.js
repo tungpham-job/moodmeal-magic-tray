@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════
    screen1.js — Hành tinh Thực phẩm
-   Banner mục tiêu, 4 hành tinh, tiến trình và popup
+   Banner mục tiêu, các hành tinh (mỗi nhóm thực phẩm một hành tinh), tiến trình và popup
    đều tính từ thực đơn BGH + dữ liệu FAS của bé
    (cần js/today.js load trước file này)
 ═══════════════════════════════════════════ */
@@ -25,14 +25,14 @@ function renderMission() {
   }
 
   iconEl.textContent = foodIcon(target);
-  const p = PLANET_STATES.find(x => x.name === target.planet);
+  const p = PLANET_STATES.find(x => x.key === groupIdOfItem(target));
   let tail = '';
   if (p && p.state === 'unlocking') tail = ` · Mở khóa Hành tinh ${p.name}!`;
   else if (p)                       tail = ` · Khám phá thêm Hành tinh ${p.name}!`;
   subEl.textContent = `Thử "${target.name}" hôm nay → +${xpAmount('first_try')} XP${tail} 🌱`;
 }
 
-/* Lưới 4 hành tinh */
+/* Lưới hành tinh: mỗi nhóm thực phẩm một hành tinh (2 cột, cuộn dọc) */
 function renderPlanets() {
   document.getElementById('planetGrid').innerHTML = PLANET_STATES.map(p => {
     const click = `onclick="showPopup('${p.key}')"`;
@@ -89,48 +89,35 @@ function renderScreen1() {
   renderProgress();
 }
 
-/* Icon của một món bé đã thử: icon nguyên liệu (theo id, dòng FAS cũ thì theo tên); không có thì icon hành tinh */
-function triedFoodIcon(f, planetIcon) {
-  const id = f.latest && f.latest.foodId;
-  let ing = id ? getIngredient(id) : null;
-  if (!ing) {
-    const n = normFood(f.name);
-    ing = readJson(MM_KEYS.INGREDIENTS, []).find(g => normFood(g.name) === n) || null;
-  }
-  return (ing && ing.icon) || planetIcon;
-}
-
-/* Popup theo hành tinh */
+/* Popup theo hành tinh: liệt kê MỌI nguyên liệu của nhóm.
+   Đã thử → mở khóa (icon + FAS gần nhất); chưa thử → tên hiện mờ, ghi "Chưa thử". */
 function showPopup(key) {
   const p = PLANET_STATES.find(x => x.key === key);
   if (!p) return;
   const target = getTodayTarget();
-  let title, items = [];
+  const targetIng = target && target.ingredientId;
+  let title;
+  if (p.state === 'unlocked')       title = `${p.icon} Hành tinh ${p.name} — Đã mở khóa!`;
+  else if (p.state === 'unlocking') title = `${p.icon} Hành tinh ${p.name} — Đang mở khóa!`;
+  else                              title = `${p.icon} Hành tinh ${p.name} — Chưa mở`;
 
-  if (p.state === 'unlocked') {
-    title = `${p.icon} Hành tinh ${p.name} — Đã mở khóa!`;
-    p.tried.forEach(f => items.push({ icon: triedFoodIcon(f, p.icon), name: f.name, fas: `FAS: ${Number(f.latest.score).toFixed(1)} ⭐` }));
-    if (target && target.planet === p.name &&
-        !p.tried.some(f => foodKeyOf(target) === (f.latest.foodId || normFood(f.name)))) {
-      items.unshift({ icon: foodIcon(target), name: target.name, fas: '→ Thử hôm nay!' });
-    }
-    while (items.length < p.total) items.push({ icon: '❓', name: 'Nguyên liệu ẩn', fas: 'Chưa khám phá' });
-  } else if (p.state === 'unlocking') {
-    title = `${p.icon} Hành tinh ${p.name} — Đang mở khóa!`;
-    items.push({ icon: foodIcon(target), name: target.name, fas: '→ Thử hôm nay để mở khóa!' });
-    for (let i = 1; i < p.total; i++) items.push({ icon: '🔒', name: 'Món chưa mở', fas: 'Chưa mở' });
-  } else {
-    title = `${p.icon} Hành tinh ${p.name} — Chưa mở`;
-    items.push({ icon: '🔒', name: 'Thử một món thuộc hành tinh này để mở khóa', fas: 'Hành tinh bị khóa' });
-  }
+  const rows = p.ingredients.map(x => {
+    if (x.tried) return { icon: x.icon, name: x.name, note: `FAS: ${Number(x.fas).toFixed(1)} ⭐`, dim: false };
+    const today = targetIng === x.id;
+    return { icon: x.icon, name: x.name, note: today ? '→ Thử hôm nay!' : 'Chưa thử', dim: !today };
+  });
+  if (!rows.length) rows.push({ icon: '🔒', name: 'Nhóm này chưa có nguyên liệu', note: '', dim: true });
+  /* Nguyên liệu thử hôm nay lên đầu */
+  rows.sort((a, b) => (b.note === '→ Thử hôm nay!') - (a.note === '→ Thử hôm nay!'));
 
   document.getElementById('popupTitle').textContent = title;
-  document.getElementById('popupContent').innerHTML = items.map(it => `
-    <div class="popup-item">
+  document.getElementById('popupContent').innerHTML = rows.map(it => `
+    <div class="popup-item"${it.dim ? ' style="opacity:.45"' : ''}>
       <span class="pi-icon">${escHtml(it.icon)}</span>
       <span>${escHtml(it.name)}</span>
-      <span style="margin-left:auto;font-size:10px;color:#888">${escHtml(it.fas)}</span>
-    </div>`).join('');
+      <span style="margin-left:auto;font-size:10px;color:#888">${escHtml(it.note)}</span>
+    </div>`).join('') +
+    `<div style="padding:8px 4px 0;font-size:10px;color:#888">${p.explored} / ${p.total} nguyên liệu đã khám phá. Thử nguyên liệu nào, nguyên liệu đó được mở khóa.</div>`;
   document.getElementById('popup').classList.add('show');
 }
 

@@ -258,6 +258,11 @@ body.page-student {
 .emoji-btn.selected .e-label { color: #0B4F42; }
 .emoji-btn.selected .e-tick  { display: block; }
 .emoji-btn:hover:not(.selected) { border-color: #BDC3C7; }
+/* Nút "Chưa thử" (🚫): viền nét đứt để phân biệt với các mức cảm nhận; 5 nút trên một hàng nên gọn hơn */
+.emoji-row .emoji-btn { padding-left: 2px; padding-right: 2px; }
+.emoji-row .emoji-btn .e-label { font-size: 10px; }
+.emoji-btn.not-tried { border-style: dashed; }
+.emoji-btn.not-tried.selected { border-style: solid; }
 
 /* ── Câu hỏi "thử lại lần sau": một hàng không khung, câu hỏi + nhãn XP và hai nút 70×36px nằm sát nhau, canh giữa ── */
 .ta-card { display: flex; align-items: center; justify-content: center; gap: 12px; margin: 10px 12px 6px; padding: 0; }

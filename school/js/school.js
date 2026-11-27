@@ -9,6 +9,7 @@ const KEY = {
   ACCOUNTS:  MM_KEYS.ACCOUNTS,
   MENU:      MM_KEYS.MENU,
   INGREDIENTS: MM_KEYS.INGREDIENTS,
+  FOOD_GROUPS: MM_KEYS.FOOD_GROUPS,
   NUTRITION: MM_KEYS.NUTRITION,
   SCORE_FORMULA: MM_KEYS.SCORE_FORMULA,
   XP_CONFIG: MM_KEYS.XP_CONFIG,
@@ -407,8 +408,8 @@ function renderMenuTab() {
 
   function chipsOf(date) {
     return menu.filter(m => m.date === date).map(m => `
-        <div class="menu-chip" title="Nhóm: ${escHtml(m.group)} · Hành tinh: ${escHtml(m.planet)}">
-          <span class="menu-chip-icon">${escHtml(m.icon || groupIcon(m.group))}</span>
+        <div class="menu-chip" title="Nhóm: ${escHtml(menuGroupName(m))}">
+          <span class="menu-chip-icon">${escHtml(m.icon || groupIcon(m.groupId || m.group))}</span>
           <span class="menu-chip-name">${escHtml(m.name)}</span>
           ${m.isNew ? '<span class="menu-chip-new">MỚI</span>' : ''}
           <button class="btn btn-ghost btn-icon" style="padding:0;font-size:11px" onclick="deleteMenuItem('${m.id}')">✕</button>
@@ -479,8 +480,17 @@ function menuGoToday() {
   renderMenuTab();
 }
 
+/* Icon của nhóm thực phẩm theo mã nhóm; dữ liệu cũ ghi tên nhóm dinh dưỡng thì dùng bảng dự phòng */
 function groupIcon(group) {
+  const g = mmGroupById(group);
+  if (g) return g.icon;
   return { 'Tinh bột': '🍚', 'Đạm': '🥩', 'Rau củ': '🥦', 'Trái cây': '🍎' }[group] || '🍽️';
+}
+
+/* Tên nhóm thực phẩm của một món trong thực đơn (món cũ chưa có groupId → tên nhóm dinh dưỡng cũ) */
+function menuGroupName(m) {
+  const g = mmGroupById(m.groupId || (loadKey(KEY.INGREDIENTS, []).find(x => x.id === m.ingredientId) || {}).groupId);
+  return g ? g.name : (m.group || '—');
 }
 
 /* Tạo date string dạng YYYY-MM-DD theo LOCAL time (tránh lệch UTC+7) */
@@ -515,7 +525,6 @@ function saveMenuItem() {
   const date   = document.getElementById('menuDate').value;
   const name   = document.getElementById('menuName').value.trim();
   const icon   = document.getElementById('menuIcon').value.trim();
-  const group  = document.getElementById('menuGroup').value;
   const isNew  = document.getElementById('menuIsNew').checked;
 
   const ingId = document.getElementById('menuIngredient').value;
@@ -524,7 +533,7 @@ function saveMenuItem() {
   if (!name) { showToast('Vui lòng nhập tên món!', 'error'); return; }
 
   const menu = loadKey(KEY.MENU, []);
-  menu.push({ id: 'm' + Date.now(), date, name, ingredientId: ing.id, icon: icon || ing.icon || groupIcon(ing.group), group: ing.group, planet: ing.planet, isNew });
+  menu.push({ id: 'm' + Date.now(), date, name, ingredientId: ing.id, groupId: ing.groupId || null, icon: icon || ing.icon || groupIcon(ing.groupId), isNew });
   saveKey(KEY.MENU, menu);
   closeModal('modalMenu');
   renderMenuTab();
@@ -558,26 +567,28 @@ function openAddMenu(date) {
   document.getElementById('menuIngredient').value = '';
   document.getElementById('menuIconDisplay').textContent = '🍽️';
   document.getElementById('iconPickerPanel').style.display = 'none';
+  fillGroupSelect('menuGroup');
   renderMenuIngredientPick();
   openModal('modalMenu');
 }
 
-/* Danh sách nguyên liệu theo Nhóm + Hành tinh đang chọn trong form thêm món */
+/* Danh sách nguyên liệu theo nhóm thực phẩm đang chọn trong form thêm món */
 function renderMenuIngredientPick() {
   const group  = document.getElementById('menuGroup').value;
   const selId  = document.getElementById('menuIngredient').value;
   const list   = loadKey(KEY.INGREDIENTS, DEFAULT_INGREDIENTS)
-    .filter(g => g.active !== false && g.group === group);
+    .filter(g => g.active !== false && g.groupId === group);
   if (selId && !list.some(g => g.id === selId)) document.getElementById('menuIngredient').value = '';
   const box = document.getElementById('menuIngredientPick');
   if (!list.length) {
-    box.innerHTML = `<span style="font-size:12px;color:var(--text-muted)">Chưa có nguyên liệu thuộc nhóm "${group}" — hãy thêm ở tab Nguyên liệu.</span>`;
+    const gn = (mmGroupById(group) || {}).name || '';
+    box.innerHTML = `<span style="font-size:12px;color:var(--text-muted)">Chưa có nguyên liệu thuộc nhóm "${escHtml(gn)}" — hãy thêm ở tab Nguyên liệu.</span>`;
     return;
   }
   const cur = document.getElementById('menuIngredient').value;
   box.innerHTML = '<div style="display:flex;flex-wrap:wrap;gap:6px">' + list.map(g => `
     <button type="button" class="btn btn-sm ${g.id === cur ? 'btn-primary' : 'btn-secondary'}"
-      title="Hành tinh ${escHtml(g.planet)}" onclick="pickMenuIngredient('${g.id}')">${g.icon} ${escHtml(g.name)}${g.id === cur ? ' ✓' : ''}</button>`).join('') + '</div>';
+      title="${escHtml(g.name)}" onclick="pickMenuIngredient('${g.id}')">${g.icon} ${escHtml(g.name)}${g.id === cur ? ' ✓' : ''}</button>`).join('') + '</div>';
 }
 
 function pickMenuIngredient(id) {
@@ -598,10 +609,8 @@ function deleteMenuItem(id) {
 /* Tab — Nguyên liệu
    Danh mục nguyên liệu do BGH quản lý (thỉnh thoảng, không hằng ngày).
    `id` của nguyên liệu là foodId của nhật ký FAS. */
-const PLANET_ORDER = ['Rau củ', 'Đạm', 'Xanh lá', 'Trái cây'];
-const GROUP_ORDER  = ['Tinh bột', 'Đạm', 'Rau củ', 'Trái cây'];
-// DANH SÁCH ICON CHUNG cho 3 form: Thêm món thực đơn, Thêm/Sửa nguyên liệu, Thêm/Sửa dòng bảng dinh dưỡng chuẩn.
-// Muốn thêm/bớt icon: chỉ sửa ở đây, cả 3 form đổi theo. Ô nhập icon của form bảng chuẩn vẫn cho dán icon bất kỳ.
+// DANH SÁCH ICON CHUNG cho 3 form: Thêm món thực đơn, Thêm/Sửa nguyên liệu, Thêm/Sửa nhóm thực phẩm.
+// Muốn thêm/bớt icon: chỉ sửa ở đây, cả 3 form đổi theo.
 const MM_ICON_GROUPS = [
   { name: 'Tinh bột', icon: '🍚', list: ['🍚','🍙','🍘','🍞','🥖','🥐','🥯','🥨','🍜','🍝','🌽','🥔','🍠','🫓','🥞','🧇','🌾','🥣',
                                          '🍛','🍱','🥟','🥠','🍡','🌮','🌯','🥪','🍔','🍕','🌭','🍽️',
@@ -622,32 +631,134 @@ function renderIconPanel(panelId, pickFn) {
   return panel;
 }
 
+/* ── Nhóm thực phẩm (mỗi nhóm = 1 hành tinh) ── */
+/* Điền danh sách nhóm đang dùng vào một ô chọn; giữ lựa chọn cũ nếu còn, thêm nhóm đang sửa dù đã ẩn */
+function fillGroupSelect(selectId, keepId) {
+  const sel = document.getElementById(selectId);
+  const cur = keepId || sel.value;
+  const list = mmFoodGroups().filter(g => g.active !== false || g.id === keepId);
+  sel.innerHTML = list.map(g => `<option value="${escHtml(g.id)}">${escHtml(g.icon)} ${escHtml(g.name)}</option>`).join('');
+  if (cur && list.some(g => g.id === cur)) sel.value = cur;
+}
+
+function groupIngredientCount(id) {
+  return loadKey(KEY.INGREDIENTS, DEFAULT_INGREDIENTS).filter(g => g.groupId === id).length;
+}
+
+function renderFoodGroupsCard() {
+  const box = document.getElementById('foodGroupsBox');
+  const groups = mmFoodGroups(true);
+  box.innerHTML = `<div class="content-card" style="margin-bottom:16px;overflow:hidden">
+    <div class="content-card-header"><span class="content-card-title">🪐 Nhóm thực phẩm (mỗi nhóm là một hành tinh)</span></div>
+    <div style="overflow-x:auto"><table class="data-table"><thead><tr>
+      <th>Biểu tượng</th><th>Nhóm</th><th style="text-align:center">Số nguyên liệu</th><th style="text-align:center">Đang dùng</th><th></th>
+    </tr></thead><tbody>` + (groups.map(g => {
+      const n = groupIngredientCount(g.id);
+      const del = n ? `<button class="btn btn-sm btn-ghost btn-icon" title="${g.active === false ? 'Dùng lại' : 'Ẩn nhóm (nhóm đang có nguyên liệu nên không xóa được)'}" onclick="toggleGroup('${escHtml(g.id)}')">${g.active === false ? '✅' : '🚫'}</button>`
+                      : `<button class="btn btn-sm btn-ghost btn-icon" title="Xóa nhóm" onclick="deleteGroup('${escHtml(g.id)}')">🗑</button>`;
+      return `<tr style="${g.active === false ? 'opacity:.5' : ''}"><td style="font-size:20px">${escHtml(g.icon)}</td><td><strong>${escHtml(g.name)}</strong></td>
+        <td style="text-align:center">${n}</td><td style="text-align:center">${g.active === false ? '—' : '✓'}</td>
+        <td style="text-align:right"><button class="btn btn-sm btn-ghost btn-icon" title="Sửa" onclick="openEditGroup('${escHtml(g.id)}')">✏️</button>${del}</td></tr>`;
+    }).join('') || '<tr><td colspan="5" style="text-align:center;color:#aaa;padding:16px">Chưa có nhóm. Bấm "+ Thêm nhóm".</td></tr>') +
+    `</tbody></table></div></div>`;
+}
+
+function toggleGrpIconPanel() {
+  const panel = renderIconPanel('grpIconPanel', 'pickGrpIcon');
+  panel.style.display = panel.style.display === 'none' ? 'grid' : 'none';
+}
+function pickGrpIcon(ic) {
+  document.getElementById('grpIcon').value = ic;
+  document.getElementById('grpIconDisplay').textContent = ic;
+  document.getElementById('grpIconPanel').style.display = 'none';
+}
+
+function openAddGroup() {
+  document.getElementById('modalGroupTitle').textContent = '+ Thêm nhóm thực phẩm';
+  document.getElementById('grpEditId').value = '';
+  document.getElementById('grpName').value = '';
+  document.getElementById('grpIcon').value = '';
+  document.getElementById('grpIconDisplay').textContent = '🍽️';
+  document.getElementById('grpIconPanel').style.display = 'none';
+  openModal('modalGroup');
+}
+
+function openEditGroup(id) {
+  const g = mmGroupById(id);
+  if (!g) return;
+  document.getElementById('modalGroupTitle').textContent = 'Sửa nhóm thực phẩm';
+  document.getElementById('grpEditId').value = id;
+  document.getElementById('grpName').value = g.name;
+  document.getElementById('grpIcon').value = g.icon;
+  document.getElementById('grpIconDisplay').textContent = g.icon || '🍽️';
+  document.getElementById('grpIconPanel').style.display = 'none';
+  openModal('modalGroup');
+}
+
+function saveGroup() {
+  const editId = document.getElementById('grpEditId').value;
+  const name   = document.getElementById('grpName').value.trim();
+  const icon   = document.getElementById('grpIcon').value || '🍽️';
+  if (!name) { showToast('Vui lòng nhập tên nhóm!', 'error'); return; }
+  const list = mmFoodGroups(true);
+  const norm = t => normFood(t);
+  if (list.some(g => g.id !== editId && norm(g.name) === norm(name))) { showToast('Đã có nhóm tên này.', 'error'); return; }
+  if (editId) {
+    const g = list.find(x => x.id === editId);
+    if (!g) return;
+    Object.assign(g, { name, icon });
+  } else {
+    let id = 'g-' + (makeIngredientId(name, []) || 'nhom'), n = 2;
+    while (list.some(g => g.id === id)) id = 'g-' + makeIngredientId(name, []) + '-' + (n++);
+    list.push({ id, name, icon, order: Math.max(0, ...list.map(g => g.order || 0)) + 1, active: true });
+  }
+  saveKey(KEY.FOOD_GROUPS, list);
+  closeModal('modalGroup');
+  renderIngredientsTab();
+  showToast('Đã lưu nhóm!');
+}
+
+function toggleGroup(id) {
+  const list = mmFoodGroups(true);
+  const g = list.find(x => x.id === id);
+  if (!g) return;
+  g.active = g.active === false;
+  saveKey(KEY.FOOD_GROUPS, list);
+  renderIngredientsTab();
+}
+
+function deleteGroup(id) {
+  if (groupIngredientCount(id)) { showToast('Nhóm đang có nguyên liệu, chỉ có thể ẩn.', 'error'); return; }
+  const g = mmGroupById(id);
+  if (!g || !confirm(`Xóa nhóm "${g.name}"?`)) return;
+  saveKey(KEY.FOOD_GROUPS, mmFoodGroups(true).filter(x => x.id !== id));
+  renderIngredientsTab();
+  showToast('Đã xóa nhóm');
+}
+
 function ingredientInUse(id) {
   return loadKey(KEY.MENU, []).some(m => m.ingredientId === id)
       || loadKey(KEY.FAS_LOG, []).some(r => r.foodId === id);
 }
 
 function renderIngredientsTab() {
-  renderNutritionTable();
+  renderFoodGroupsCard();
   const list = loadKey(KEY.INGREDIENTS, DEFAULT_INGREDIENTS);
   const box  = document.getElementById('ingredientsList');
   if (!list.length) {
     box.innerHTML = '<div class="content-card"><div style="padding:24px;text-align:center;color:#888">Chưa có nguyên liệu. Bấm "+ Thêm nguyên liệu".</div></div>';
     return;
   }
-  const planets = PLANET_ORDER.concat([...new Set(list.map(g => g.planet))].filter(x => !PLANET_ORDER.includes(x)));
-  box.innerHTML = '<div class="content-card" style="overflow:hidden">' + planets.map(pl => {
-    const inPlanet = list.filter(g => g.planet === pl);
-    if (!inPlanet.length) return '';
-    const groups = GROUP_ORDER.concat([...new Set(inPlanet.map(g => g.group))].filter(x => !GROUP_ORDER.includes(x)));
-    return `<div style="padding:8px 16px;background:#F3F6F8;font-size:12px;font-weight:700;color:var(--text-muted)">🪐 Hành tinh ${escHtml(pl)}</div>` +
-      groups.map(gr => {
-        const items = inPlanet.filter(g => g.group === gr);
-        if (!items.length) return '';
-        return `<div style="padding:8px 16px 2px;font-size:11px;color:var(--text-muted)">Nhóm: ${escHtml(gr)}</div>
-          <div style="display:flex;flex-wrap:wrap;gap:8px;padding:4px 16px 12px">${items.map(ingChipHtml).join('')}</div>`;
-      }).join('');
-  }).join('') + '</div>';
+  const groups = mmFoodGroups(true);
+  const orphans = list.filter(g => !groups.some(x => x.id === g.groupId));
+  box.innerHTML = '<div class="content-card" style="overflow:hidden">' + groups.map(gr => {
+    const items = list.filter(g => g.groupId === gr.id);
+    if (!items.length) return '';
+    return `<div style="padding:8px 16px;background:#F3F6F8;font-size:12px;font-weight:700;color:var(--text-muted)">${escHtml(gr.icon)} Nhóm ${escHtml(gr.name)}${gr.active === false ? ' (ẩn)' : ''}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;padding:8px 16px 12px">${items.map(ingChipHtml).join('')}</div>`;
+  }).join('') + (orphans.length
+    ? `<div style="padding:8px 16px;background:#FFF8E6;font-size:12px;font-weight:700;color:#B7791F">⚠️ Chưa có nhóm — bấm ✏️ để chọn nhóm</div>
+       <div style="display:flex;flex-wrap:wrap;gap:8px;padding:8px 16px 12px">${orphans.map(ingChipHtml).join('')}</div>` : '') + '</div>';
 }
 
 function ingChipHtml(g) {
@@ -657,7 +768,7 @@ function ingChipHtml(g) {
     ? `<button class="btn btn-sm btn-ghost btn-icon" title="${off ? 'Dùng lại' : 'Ngừng dùng (đã có trong thực đơn/FAS nên không xóa được)'}" onclick="toggleIngredient('${g.id}')">${off ? '✅' : '🚫'}</button>`
     : `<button class="btn btn-sm btn-ghost btn-icon" title="Xóa" onclick="deleteIngredient('${g.id}')">🗑</button>`;
   return `<span style="display:inline-flex;align-items:center;gap:4px;border:1px solid var(--border);border-radius:10px;padding:2px 4px 2px 10px;font-size:12px;${off ? 'opacity:.5' : ''}">
-    ${g.icon} ${escHtml(g.name)}${g.alwaysUnlocked ? ' <span title="Mở khóa sẵn cho tất cả các bé">🔓</span>' : ''}${off ? ' <em style="font-size:10px">(ngừng dùng)</em>' : ''}
+    ${g.icon} ${escHtml(g.name)}${off ? ' <em style="font-size:10px">(ngừng dùng)</em>' : ''}
     <button class="btn btn-sm btn-ghost btn-icon" title="Sửa" onclick="openEditIngredient('${g.id}')">✏️</button>${del}</span>`;
 }
 
@@ -666,77 +777,22 @@ function toggleIngIconPanel() {
   panel.style.display = panel.style.display === 'none' ? 'grid' : 'none';
 }
 
-function toggleNutriIconPanel() {
-  const panel = renderIconPanel('nutriIconPanel', 'pickNutriIcon');
-  panel.style.display = panel.style.display === 'none' ? 'grid' : 'none';
-}
-
-function pickNutriIcon(ic) {
-  document.getElementById('nutriIcon').value = ic;
-  document.getElementById('nutriIconPanel').style.display = 'none';
-}
-
 function pickIngIcon(ic) {
   document.getElementById('ingIcon').value = ic;
   document.getElementById('ingIconDisplay').textContent = ic;
   document.getElementById('ingIconPanel').style.display = 'none';
 }
 
-const NUTRI_GROUPS = ['Tinh bột', 'Đạm', 'Rau củ', 'Trái cây'];
-
-function fillIngFromTableList() {
-  const rows = loadKey(KEY.NUTRITION, DEFAULT_NUTRITION_TABLE);
-  const have = loadKey(KEY.INGREDIENTS, DEFAULT_INGREDIENTS).map(g => g.id);
-  let html = '<option value="">— Nhập tay —</option>';
-  NUTRI_GROUPS.forEach(gr => {
-    const inGr = rows.filter(t => t.group === gr && !have.includes(t.id));
-    if (!inGr.length) return;
-    html += `<optgroup label="${escHtml(gr)}">` + inGr.map(t =>
-      `<option value="${t.id}">${escHtml(t.icon)} ${escHtml(t.name)}</option>`).join('') + '</optgroup>';
-  });
-  document.getElementById('ingFromTable').innerHTML = html;
-}
-
 function setIngFields(o) {
+  fillGroupSelect('ingGroup', o.groupId);
   document.getElementById('ingName').value    = o.name || '';
-  document.getElementById('ingGroup').value   = o.group || 'Tinh bột';
-  document.getElementById('ingPlanet').value  = o.planet || 'Rau củ';
   document.getElementById('ingIcon').value    = o.icon || '';
   document.getElementById('ingIconDisplay').textContent = o.icon || '🍽️';
-  document.getElementById('ingPortion').value = o.portion == null ? '' : o.portion;
-  document.getElementById('ingCarbs').value   = o.carbs   == null ? '' : o.carbs;
-  document.getElementById('ingProtein').value = o.protein == null ? '' : o.protein;
-  document.getElementById('ingFat').value     = o.fat     == null ? '' : o.fat;
-  document.getElementById('ingUnlocked').checked = !!o.alwaysUnlocked;
-  updateIngScore();
-}
-
-/* Đọc 4 ô số liệu; trả về null nếu thiếu hoặc không hợp lệ */
-function readMacroInputs(prefix) {
-  const get = id => document.getElementById(prefix + id).value;
-  const v = { portion: get('Portion'), carbs: get('Carbs'), protein: get('Protein'), fat: get('Fat') };
-  if (Object.values(v).some(x => x === '' || isNaN(Number(x)) || Number(x) < 0) || Number(v.portion) <= 0) return null;
-  return { portion: Number(v.portion), carbs: Number(v.carbs), protein: Number(v.protein), fat: Number(v.fat) };
-}
-
-function updateIngScore() {
-  const m = readMacroInputs('ing');
-  const sc = m ? mmIngredientScore(Object.assign({ group: document.getElementById('ingGroup').value }, m)) : null;
-  document.getElementById('ingScore').textContent = sc === null ? '—' : sc;
-}
-
-function pickFromNutritionTable(id) {
-  if (!id) return;
-  const t = loadKey(KEY.NUTRITION, DEFAULT_NUTRITION_TABLE).find(x => x.id === id);
-  if (!t) return;
-  setIngFields(Object.assign({}, t, { alwaysUnlocked: document.getElementById('ingUnlocked').checked }));
 }
 
 function openAddIngredient() {
   document.getElementById('modalIngredientTitle').textContent = '+ Thêm nguyên liệu';
   document.getElementById('ingEditId').value = '';
-  fillIngFromTableList();
-  document.getElementById('ingFromTableWrap').style.display = '';
   setIngFields({});
   document.getElementById('ingIconPanel').style.display = 'none';
   document.getElementById('ingEditWarn').style.display = 'none';
@@ -748,7 +804,6 @@ function openEditIngredient(id) {
   if (!g) return;
   document.getElementById('modalIngredientTitle').textContent = 'Sửa nguyên liệu';
   document.getElementById('ingEditId').value = id;
-  document.getElementById('ingFromTableWrap').style.display = 'none';
   setIngFields(g);
   document.getElementById('ingIconPanel').style.display = 'none';
   document.getElementById('ingEditWarn').style.display = ingredientInUse(id) ? 'block' : 'none';
@@ -767,13 +822,10 @@ function makeIngredientId(name, list) {
 function saveIngredient() {
   const editId = document.getElementById('ingEditId').value;
   const name   = document.getElementById('ingName').value.trim();
-  const group  = document.getElementById('ingGroup').value;
-  const planet = document.getElementById('ingPlanet').value;
-  const icon   = document.getElementById('ingIcon').value || groupIcon(group);
-  const alwaysUnlocked = document.getElementById('ingUnlocked').checked;
+  const groupId = document.getElementById('ingGroup').value;
+  const icon   = document.getElementById('ingIcon').value || groupIcon(groupId);
   if (!name) { showToast('Vui lòng nhập tên nguyên liệu!', 'error'); return; }
-  const macro = readMacroInputs('ing');
-  if (!macro) { showToast('Nhập đủ khẩu phần (lớn hơn 0), Carbs, Protein, Fat (0 nếu không có).', 'error'); return; }
+  if (!groupId) { showToast('Vui lòng chọn nhóm thực phẩm!', 'error'); return; }
 
   const list = loadKey(KEY.INGREDIENTS, DEFAULT_INGREDIENTS);
   const norm = t => t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').toLowerCase().replace(/\s+/g, ' ').trim();
@@ -784,22 +836,22 @@ function saveIngredient() {
   if (editId) {
     const g = list.find(x => x.id === editId);
     if (!g) return;
-    const changed = g.name !== name || g.group !== group || g.planet !== planet;
-    Object.assign(g, { name, group, planet, icon, alwaysUnlocked }, macro);
+    const changed = g.name !== name || g.groupId !== groupId;
+    Object.assign(g, { name, groupId, icon });
     saveKey(KEY.INGREDIENTS, list);
     if (changed) {
-      // Đồng bộ nhóm/hành tinh/tên vào thực đơn và nhật ký FAS (nối theo id, không mất lịch sử)
+      // Đồng bộ nhóm/tên vào thực đơn và nhật ký FAS (nối theo id, không mất lịch sử; lượt thử tính theo nhóm mới)
       const menu = loadKey(KEY.MENU, []);
-      menu.forEach(m => { if (m.ingredientId === editId) { m.group = group; m.planet = planet; } });
+      menu.forEach(m => { if (m.ingredientId === editId) m.groupId = groupId; });
       saveKey(KEY.MENU, menu);
       const fas = loadKey(KEY.FAS_LOG, []);
-      fas.forEach(r => { if (r.foodId === editId) { r.foodName = name; r.planet = planet; } });
+      fas.forEach(r => { if (r.foodId === editId) { r.foodName = name; r.groupId = groupId; } });
+      mmRenumberFasLog(fas);
       saveKey(KEY.FAS_LOG, fas);
     }
   } else {
-    const fromTable = document.getElementById('ingFromTable').value;
-    const id = fromTable && !list.some(g => g.id === fromTable) ? fromTable : makeIngredientId(name, list);
-    list.push(Object.assign({ id, name, icon, group, planet, alwaysUnlocked, active: true }, macro));
+    const id = makeIngredientId(name, list);
+    list.push({ id, name, icon, groupId, active: true });
     saveKey(KEY.INGREDIENTS, list);
   }
   closeModal('modalIngredient');
@@ -823,198 +875,6 @@ function deleteIngredient(id) {
   saveKey(KEY.INGREDIENTS, loadKey(KEY.INGREDIENTS, DEFAULT_INGREDIENTS).filter(x => x.id !== id));
   renderIngredientsTab();
   showToast('Đã xóa nguyên liệu');
-}
-
-/* ── Bảng dinh dưỡng chuẩn (danh sách để chọn khi thêm nguyên liệu) ── */
-/* ── Công thức tính điểm Cân bằng năng lượng (khay cơm) ── */
-const SF_MACROS = [['carbs', 'Tinh bột (Carbs)'], ['protein', 'Đạm (Protein)'], ['fat', 'Béo (Fat)']];
-function scoreFormulaHtml() {
-  const F = mmScoreFormula();
-  const inp = (id, v, w) => `<input type="number" class="form-control" id="${id}" value="${v}" step="any" min="0" style="width:${w || 70}px;padding:4px 6px">`;
-  return `<div class="content-card" style="margin-top:16px">
-    <div class="content-card-header">
-      <span class="content-card-title">⚖️ Công thức tính điểm Cân bằng năng lượng</span>
-      <div style="display:flex;gap:8px">
-        <button class="btn btn-primary btn-sm" onclick="saveScoreFormula()">💾 Lưu công thức</button>
-        <button class="btn btn-secondary btn-sm" onclick="resetScoreFormula()">Khôi phục mặc định</button>
-      </div>
-    </div>
-    <div style="padding:0 16px 14px">
-      <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">Áp dụng cho điểm khay cơm của học sinh (thang 100) và cột Thành phần dinh dưỡng ở Đề xuất Thực đơn. Năng lượng: 4 kcal/g Carbs, 4 kcal/g Đạm, 9 kcal/g Béo. Khoảng chuẩn mặc định chưa đối chiếu nguồn chính thức.</div>
-      <div style="display:grid;grid-template-columns:auto auto;gap:6px 14px;align-items:center;justify-content:start;font-size:13px">
-        <b>Chất</b><b>Khoảng chuẩn (% năng lượng)</b>
-        ${SF_MACROS.map(([k, lb]) => `<span>${lb}</span><span>${inp('sf_' + k + '_lo', F.targets[k][0])} – ${inp('sf_' + k + '_hi', F.targets[k][1])} %</span>`).join('')}
-      </div>
-      <div style="display:flex;flex-wrap:wrap;gap:14px 24px;margin-top:12px;font-size:13px;align-items:center">
-        <label>Mức trừ: lệch ngoài khoảng ${inp('sf_tol', F.tolerance)} điểm % thì chất đó về 0 điểm</label>
-        <label>Điểm mỗi nhóm có mặt (tối đa 4 nhóm) ${inp('sf_group', F.groupPts)}</label>
-        <label>Điểm tối đa mỗi chất ${inp('sf_macro', F.macroPts)}</label>
-      </div>
-      <div id="sfSummary" style="font-size:11px;color:var(--text-muted);margin-top:8px"></div>
-    </div>
-  </div>`;
-}
-function renderScoreFormula() {
-  const box = document.getElementById('scoreFormulaBox');
-  if (!box) return;
-  box.innerHTML = scoreFormulaHtml();
-  box.querySelectorAll('input').forEach(e => e.addEventListener('input', updateScoreFormulaSummary));
-  updateScoreFormulaSummary();
-}
-function readScoreFormulaForm() {
-  const v = id => parseFloat(document.getElementById(id).value);
-  const f = { targets: {}, tolerance: v('sf_tol'), groupPts: v('sf_group'), macroPts: v('sf_macro') };
-  SF_MACROS.forEach(([k]) => { f.targets[k] = [v('sf_' + k + '_lo'), v('sf_' + k + '_hi')]; });
-  return f;
-}
-function scoreFormulaError(f) {
-  const bad = x => typeof x !== 'number' || !isFinite(x);
-  for (const [k, lb] of SF_MACROS) {
-    const [lo, hi] = f.targets[k];
-    if (bad(lo) || bad(hi)) return `Khoảng chuẩn của ${lb} chưa nhập đủ.`;
-    if (lo < 0 || hi > 100) return `Khoảng chuẩn của ${lb} phải nằm trong 0–100 %.`;
-    if (lo > hi) return `Khoảng chuẩn của ${lb}: số thấp phải nhỏ hơn hoặc bằng số cao.`;
-  }
-  if (bad(f.tolerance) || f.tolerance <= 0) return 'Mức trừ (độ lệch tối đa) phải lớn hơn 0.';
-  if (bad(f.groupPts) || f.groupPts < 0) return 'Điểm mỗi nhóm không được âm.';
-  if (bad(f.macroPts) || f.macroPts < 0) return 'Điểm tối đa mỗi chất không được âm.';
-  if (4 * f.groupPts + 3 * f.macroPts <= 0) return 'Tổng điểm tối đa phải lớn hơn 0.';
-  return '';
-}
-function updateScoreFormulaSummary() {
-  const el = document.getElementById('sfSummary'); if (!el) return;
-  const f = readScoreFormulaForm();
-  const g = 4 * f.groupPts, m = 3 * f.macroPts, t = g + m;
-  el.textContent = (isFinite(t) && t > 0)
-    ? `Tổng điểm gốc: ${+g.toFixed(2)} (đủ nhóm) + ${+m.toFixed(2)} (cân bằng) = ${+t.toFixed(2)}, quy về thang 100 → đủ nhóm ${Math.round(100 * g / t)} điểm, cân bằng ${100 - Math.round(100 * g / t)} điểm.`
-    : '';
-}
-function saveScoreFormula() {
-  const f = readScoreFormulaForm(), err = scoreFormulaError(f);
-  if (err) { showToast(err, 'error'); return; }
-  saveKey(KEY.SCORE_FORMULA, f);
-  showToast('✅ Đã lưu công thức tính điểm');
-  renderScoreFormula(); renderProposalsIfOpen();
-}
-function resetScoreFormula() {
-  if (!confirm('Khôi phục công thức tính điểm về mặc định?')) return;
-  saveKey(KEY.SCORE_FORMULA, DEFAULT_SCORE_FORMULA);
-  showToast('Đã khôi phục công thức mặc định');
-  renderScoreFormula(); renderProposalsIfOpen();
-}
-function renderProposalsIfOpen() {
-  if (document.getElementById('proposalsTbody')) renderProposals();
-}
-
-function renderNutritionTable() {
-  const box = document.getElementById('nutritionTable');
-  if (!box) return;
-  const rows = loadKey(KEY.NUTRITION, DEFAULT_NUTRITION_TABLE);
-  const ord = g => { const i = NUTRI_GROUPS.indexOf(g); return i < 0 ? 99 : i; };
-  const sorted = rows.slice().sort((a, b) => ord(a.group) - ord(b.group));
-  const num = v => (v == null ? '—' : v);
-  box.innerHTML = `<div class="content-card" style="margin-top:16px">
-    <div class="content-card-header">
-      <span class="content-card-title">Bảng dinh dưỡng chuẩn</span>
-      <div style="display:flex;gap:8px">
-        <button class="btn btn-secondary btn-sm" onclick="openAddNutri()">+ Thêm dòng</button>
-        <button class="btn btn-secondary btn-sm" onclick="resetNutritionTable()">Khôi phục mặc định</button>
-      </div>
-    </div>
-    <div style="padding:0 16px 8px;font-size:11px;color:var(--text-muted)">Số liệu trên 100 g; khẩu phần là phần của một ô khay. Điểm (0–10) tự tính từ Carbs, Protein, Fat. Dấu * = số liệu tham khảo, cần đối chiếu Bảng thành phần thực phẩm Việt Nam.</div>
-    <div style="overflow-x:auto"><table class="data-table">
-      <thead><tr><th>Nhóm</th><th>Nguyên liệu</th><th>Khẩu phần</th><th>Carbs</th><th>Protein</th><th>Fat</th><th>Điểm</th><th></th></tr></thead>
-      <tbody>${sorted.map(t => {
-        const sc = mmIngredientScore(t), star = t.ref ? '*' : '';
-        return `<tr>
-          <td>${escHtml(t.group)}</td>
-          <td>${escHtml(t.icon)} ${escHtml(t.name)}</td>
-          <td>${num(t.portion)} g</td>
-          <td>${num(t.carbs)}${star}</td><td>${num(t.protein)}${star}</td><td>${num(t.fat)}${star}</td>
-          <td><b>${sc === null ? '—' : sc}</b></td>
-          <td style="white-space:nowrap">
-            <button class="btn btn-sm btn-ghost btn-icon" title="Sửa" onclick="openEditNutri('${t.id}')">✏️</button>
-            <button class="btn btn-sm btn-ghost btn-icon" title="Xóa dòng (khôi phục được bằng nút Khôi phục mặc định)" onclick="deleteNutri('${t.id}')">🗑</button>
-          </td></tr>`;
-      }).join('')}</tbody>
-    </table></div></div>`;
-  renderScoreFormula();
-}
-
-function setNutriFields(t) {
-  document.getElementById('nutriGroup').value   = t.group || 'Tinh bột';
-  document.getElementById('nutriPlanet').value  = t.planet || 'Rau củ';
-  document.getElementById('nutriName').value    = t.name || '';
-  document.getElementById('nutriIcon').value    = t.icon || '';
-  document.getElementById('nutriPortion').value = t.portion == null ? '' : t.portion;
-  document.getElementById('nutriCarbs').value   = t.carbs   == null ? '' : t.carbs;
-  document.getElementById('nutriProtein').value = t.protein == null ? '' : t.protein;
-  document.getElementById('nutriFat').value     = t.fat     == null ? '' : t.fat;
-  document.getElementById('nutriRef').checked   = !!t.ref;
-  document.getElementById('nutriIconPanel').style.display = 'none';
-}
-
-function openAddNutri() {
-  document.getElementById('modalNutriTitle').textContent = '+ Thêm dòng vào bảng chuẩn';
-  document.getElementById('nutriEditId').value = '';
-  setNutriFields({ ref: true });
-  openModal('modalNutri');
-}
-
-function openEditNutri(id) {
-  const t = loadKey(KEY.NUTRITION, DEFAULT_NUTRITION_TABLE).find(x => x.id === id);
-  if (!t) return;
-  document.getElementById('modalNutriTitle').textContent = 'Sửa dòng bảng chuẩn';
-  document.getElementById('nutriEditId').value = id;
-  setNutriFields(t);
-  openModal('modalNutri');
-}
-
-function saveNutri() {
-  const editId = document.getElementById('nutriEditId').value;
-  const name   = document.getElementById('nutriName').value.trim();
-  if (!name) { showToast('Vui lòng nhập tên nguyên liệu!', 'error'); return; }
-  const macro = readMacroInputs('nutri');
-  if (!macro) { showToast('Nhập đủ khẩu phần (lớn hơn 0), Carbs, Protein, Fat (0 nếu không có).', 'error'); return; }
-  const group = document.getElementById('nutriGroup').value;
-  const row = Object.assign({
-    group, name,
-    icon:   document.getElementById('nutriIcon').value.trim() || groupIcon(group),
-    planet: document.getElementById('nutriPlanet').value,
-    ref:    document.getElementById('nutriRef').checked,
-  }, macro);
-
-  const rows = loadKey(KEY.NUTRITION, DEFAULT_NUTRITION_TABLE).slice();
-  const norm = t => t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').toLowerCase().replace(/\s+/g, ' ').trim();
-  if (rows.some(t => t.id !== editId && norm(t.name) === norm(name))) {
-    showToast('Dòng này đã có trong bảng chuẩn!', 'error'); return;
-  }
-  if (editId) {
-    const t = rows.find(x => x.id === editId);
-    if (!t) return;
-    Object.assign(t, row);
-  } else {
-    rows.push(Object.assign({ id: makeIngredientId(name, rows) }, row));
-  }
-  saveKey(KEY.NUTRITION, rows);
-  closeModal('modalNutri');
-  renderNutritionTable();
-  showToast('Đã lưu bảng chuẩn!');
-}
-
-function deleteNutri(id) {
-  const rows = loadKey(KEY.NUTRITION, DEFAULT_NUTRITION_TABLE);
-  const t = rows.find(x => x.id === id);
-  if (!t || !confirm(`Xóa "${t.name}" khỏi bảng chuẩn? (Nguyên liệu đã thêm không bị ảnh hưởng.)`)) return;
-  saveKey(KEY.NUTRITION, rows.filter(x => x.id !== id));
-  renderNutritionTable();
-}
-
-function resetNutritionTable() {
-  if (!confirm('Khôi phục bảng dinh dưỡng chuẩn về mặc định? Các dòng đã thêm hoặc sửa trong bảng chuẩn sẽ mất (nguyên liệu đã thêm không bị ảnh hưởng).')) return;
-  saveKey(KEY.NUTRITION, DEFAULT_NUTRITION_TABLE);
-  renderNutritionTable();
-  showToast('Đã khôi phục bảng chuẩn mặc định');
 }
 
 /* Tab 2 — XP & Level */
@@ -1309,35 +1169,43 @@ function renderReport() {
   studentSel.innerHTML = '<option value="">— Tất cả học sinh —</option>' +
     accounts.map(a => `<option value="${escHtml(a.id)}">${escHtml(a.name)}</option>`).join('');
 
-  const foods = [...new Set(fasLog.map(f => f.foodName))];
   const foodSel = document.getElementById('filterFood');
-  foodSel.innerHTML = '<option value="">— Tất cả nguyên liệu —</option>' +
-    foods.map(f => `<option value="${f}">${f}</option>`).join('');
+  foodSel.innerHTML = '<option value="">— Tất cả nhóm —</option>' +
+    mmFoodGroups(true).map(g => `<option value="${escHtml(g.id)}">${escHtml(g.icon)} ${escHtml(g.name)}</option>`).join('');
+  document.getElementById('filterPlace').value = '';
 
-  renderFasTable(fasLog, accounts, '', '');
+  renderFasTable(fasLog, accounts, '', '', '');
+}
+
+/* Các dòng nhật ký gom theo (học sinh, nhóm thực phẩm), mỗi nhóm xếp theo thời gian.
+   Dòng cũ chưa gán được nhóm gom riêng theo nguyên liệu để không bị mất khỏi báo cáo. */
+function fasChainsOf(fasLog) {
+  const chains = {};
+  fasLog.forEach(r => {
+    const k = r.groupId ? r.studentId + '|' + r.groupId : r.studentId + '|x|' + (r.foodId || r.foodName);
+    if (!chains[k]) chains[k] = { studentId: r.studentId, groupId: r.groupId || null, foodName: r.foodName, rows: [] };
+    chains[k].rows.push(r);
+  });
+  Object.values(chains).forEach(c => c.rows.sort((a, b) => String(a.timestamp).localeCompare(String(b.timestamp))));
+  return Object.values(chains);
 }
 
 function renderFasStats(fasLog, accounts) {
-  // FAS trung bình gần nhất mỗi học sinh × nguyên liệu
-  const latestMap = {};
-  fasLog.forEach(r => {
-    const k = r.studentId + '_' + r.foodId;
-    if (!latestMap[k] || r.attempt > latestMap[k].attempt) latestMap[k] = r;
-  });
+  const chains = fasChainsOf(fasLog.filter(r => r.groupId));
 
-  const latests = Object.values(latestMap);
-  const avgFas  = latests.length ? (latests.reduce((s, r) => s + r.score, 0) / latests.length).toFixed(2) : '—';
+  // FAS trung bình: điểm lượt thử thật gần nhất của mỗi học sinh × nhóm ("Chưa thử" không tính)
+  const latests = chains.map(c => mmGroupFas(c.rows)).filter(v => v !== null);
+  const avgFas  = latests.length ? (latests.reduce((s, v) => s + v, 0) / latests.length).toFixed(2) : '—';
   const tryRate = fasLog.length ? Math.round((fasLog.filter(r => r.tryAgain).length / fasLog.length) * 100) : 0;
 
-  // FAG per student
+  // FAG của mỗi học sinh = tổng FAG của các nhóm (mỗi nhóm: FAS lượt thật cuối − lượt thật đầu, cả trường và nhà)
   const fagMap = {};
-  fasLog.forEach(r => {
-    if (!fagMap[r.studentId]) fagMap[r.studentId] = [];
-    fagMap[r.studentId].push(r.score);
+  chains.forEach(c => {
+    if (!c.rows.some(r => r.score >= 1)) return;
+    fagMap[c.studentId] = (fagMap[c.studentId] || 0) + (mmGroupFag(c.rows) || 0);
   });
 
-  const fagByStudent = Object.entries(fagMap).map(([id, scores]) => {
-    const fag = scores.length > 1 ? scores[scores.length-1] - scores[0] : 0;
+  const fagByStudent = Object.entries(fagMap).map(([id, fag]) => {
     const acc = accounts.find(a => a.id === id);
     return { name: acc?.name || id, fag: +fag.toFixed(2) };
   }).sort((a, b) => b.fag - a.fag);
@@ -1353,57 +1221,61 @@ function renderFasStats(fasLog, accounts) {
 function applyReportFilter() {
   const fasLog   = loadKey(KEY.FAS_LOG, DEFAULT_FAS_LOG);
   const accounts = auth.getAccounts().filter(a => a.role === 'student');
-  const stuFilter  = document.getElementById('filterStudent').value;
-  const foodFilter = document.getElementById('filterFood').value;
-  renderFasTable(fasLog, accounts, stuFilter, foodFilter);
+  renderFasTable(fasLog, accounts,
+    document.getElementById('filterStudent').value,
+    document.getElementById('filterFood').value,
+    document.getElementById('filterPlace').value);
 }
 
-function renderFasTable(fasLog, accounts, stuFilter, foodFilter) {
-  // Group by student + food
-  const groups = {};
-  fasLog.forEach(r => {
-    if (stuFilter  && r.studentId !== stuFilter)  return;
-    if (foodFilter && r.foodName  !== foodFilter)  return;
-    const k = r.studentId + '_' + r.foodId;
-    if (!groups[k]) groups[k] = { studentId: r.studentId, foodName: r.foodName, attempts: [] };
-    groups[k].attempts.push(r);
-  });
-
-  const rows = Object.values(groups).map(g => {
-    g.attempts.sort((a, b) => a.attempt - b.attempt);
-    const acc = accounts.find(a => a.id === g.studentId);
-    const scores = Array.from({ length: 4 }, (_, i) => g.attempts[i]?.score ?? '—');
-    const fag  = g.attempts.length > 1
-      ? (+(g.attempts[g.attempts.length-1].score - g.attempts[0].score)).toFixed(2)
-      : '—';
-    const tryCount = g.attempts.filter(a => a.tryAgain).length;
-    const fagColor = fag !== '—' && +fag > 0 ? 'color:var(--success)' : fag !== '—' && +fag < 0 ? 'color:var(--error)' : '';
-
-    return `
+/* Một dòng bảng = một học sinh × một nhóm: chuỗi FAS các lượt (0 = Chưa thử), FAG, số lượt thử ở trường / ở nhà.
+   Bộ lọc "Nơi thử" lọc các lượt trước khi tính chuỗi và FAG. */
+function renderFasTable(fasLog, accounts, stuFilter, groupFilter, placeFilter) {
+  const placeOf = r => (r.place === 'home' ? 'home' : 'school');
+  const rows = fasChainsOf(fasLog.filter(r => (!stuFilter || r.studentId === stuFilter) && (!placeFilter || placeOf(r) === placeFilter)))
+    .filter(c => !groupFilter || c.groupId === groupFilter)
+    .sort((a, b) => String(a.studentId).localeCompare(String(b.studentId)))
+    .map(c => {
+      const acc = accounts.find(a => a.id === c.studentId);
+      const grp = c.groupId ? mmGroupById(c.groupId) : null;
+      const label = grp ? `${escHtml(grp.icon)} ${escHtml(grp.name)}` : `<span style="color:var(--text-muted)">(chưa có nhóm) ${escHtml(c.foodName)}</span>`;
+      const tried = mmTriedRows(c.rows);
+      const fagN  = mmGroupFag(c.rows);
+      const fagColor = fagN !== null && fagN > 0 ? 'color:var(--success)' : fagN !== null && fagN < 0 ? 'color:var(--error)' : '';
+      const school = tried.filter(r => placeOf(r) === 'school').length;
+      const home   = tried.filter(r => placeOf(r) === 'home').length;
+      const tryCount = c.rows.filter(r => r.tryAgain).length;
+      return `
       <tr>
-        <td><strong>${escHtml(acc?.name || g.studentId)}</strong></td>
-        <td>${escHtml(g.foodName)}</td>
-        ${scores.map(s => `<td style="text-align:center">${s !== '—' ? `<strong>${s}</strong>` : '<span style="color:#ccc">—</span>'}</td>`).join('')}
-        <td style="text-align:center;font-weight:700;${fagColor}">${fag !== '—' ? (fag > 0 ? '+' : '') + fag : '—'}</td>
-        <td style="text-align:center">${tryCount}/${g.attempts.length}</td>
+        <td><strong>${escHtml(acc?.name || c.studentId)}</strong></td>
+        <td>${label}</td>
+        <td><strong>${escHtml(mmFasChainText(c.rows))}</strong></td>
+        <td style="text-align:center;font-weight:700;${fagColor}">${fagN !== null ? (fagN > 0 ? '+' : '') + fagN : '—'}</td>
+        <td style="text-align:center">${school}</td>
+        <td style="text-align:center">${home}</td>
+        <td style="text-align:center">${tryCount}/${c.rows.length}</td>
       </tr>`;
-  });
+    });
 
   document.getElementById('fasTableBody').innerHTML = rows.length
     ? rows.join('')
-    : '<tr><td colspan="9" style="text-align:center;color:#aaa;padding:24px">Không có dữ liệu</td></tr>';
+    : '<tr><td colspan="7" style="text-align:center;color:#aaa;padding:24px">Không có dữ liệu</td></tr>';
 }
+
+/* Ô CSV: luôn đặt trong dấu nháy kép và nhân đôi dấu nháy bên trong */
+function csvCell(v) { return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"'; }
 
 function exportCSV() {
   const fasLog = loadKey(KEY.FAS_LOG, DEFAULT_FAS_LOG);
   const accounts = auth.getAccounts();
-  const header = 'Học sinh,Nguyên liệu,Lần thử,FAS,TRY AGAIN,Thời gian';
+  const header = ['Học sinh', 'Nhóm', 'Nguyên liệu', 'Món', 'Nơi thử', 'Lần thử của nhóm', 'FAS', 'TRY AGAIN', 'Thời gian'].map(csvCell).join(',');
   const rows = fasLog.map(r => {
     const acc = accounts.find(a => a.id === r.studentId);
-    return [acc?.name || r.studentId, r.foodName, r.attempt, r.score, r.tryAgain ? 'Có' : 'Không', r.timestamp].join(',');
+    const grp = r.groupId ? mmGroupById(r.groupId) : null;
+    return [acc?.name || r.studentId, grp ? grp.name : '', r.foodName, r.dishName || '', r.place === 'home' ? 'Nhà' : 'Trường',
+            r.attempt == null ? 'Chưa thử' : r.attempt, r.score, r.tryAgain ? 'Có' : 'Không', r.timestamp].map(csvCell).join(',');
   });
   const csv = [header, ...rows].join('\n');
-  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
   a.href = url; a.download = 'fas_report.csv'; a.click();

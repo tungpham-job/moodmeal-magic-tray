@@ -42,8 +42,8 @@ const DEFAULT_XP_CONFIG = {
 /* ── Seed: Badges ────────────────────────────── */
 const DEFAULT_BADGES = [
   { id: 'b01', icon: '🌱', name: 'Người mới',     desc: 'Đăng nhập lần đầu',                    auto: true,  active: true },
-  { id: 'b02', icon: '🥕', name: 'Bạn Rau củ',    desc: 'FAS rau củ ≥ 3.0',                    auto: true,  active: true },
-  { id: 'b03', icon: '🥦', name: 'Người xanh',    desc: 'Thử ≥ 3 loại rau xanh',               auto: true,  active: true },
+  { id: 'b02', icon: '🥬', name: 'Bạn Rau',       desc: 'FAS nhóm Rau ≥ 3.0',                  auto: true,  active: true },
+  { id: 'b03', icon: '🥦', name: 'Người xanh',    desc: 'Thử ≥ 3 nguyên liệu nhóm Rau',        auto: true,  active: true },
   { id: 'b04', icon: '👨‍🍳', name: 'Đại bếp nhí',  desc: 'Khay cơm được PH xác nhận ≥ 5 lần', auto: false, active: true },
   { id: 'b05', icon: '⭐', name: 'Sao dinh dưỡng', desc: 'FAG tổng ≥ 5.0',                     auto: false, active: true },
 ];
@@ -92,9 +92,54 @@ const DEFAULT_SCORE_FORMULA = {
   macroPts: 25,
 };
 
+/* ── Seed: Nhóm thực phẩm (mỗi nhóm = 1 hành tinh) ───────────
+   FAS / FAG được tính THEO NHÓM: các nguyên liệu cùng nhóm là một đối tượng.
+   BGH thêm/sửa/ẩn ở Thiết lập → Nguyên liệu; nhóm đang có nguyên liệu thì không xóa được. */
+const DEFAULT_FOOD_GROUPS = [
+  { id:'g-tinh-bot', name:'Tinh bột', icon:'🍚', order:1, active:true },
+  { id:'g-thit',     name:'Thịt',     icon:'🥩', order:2, active:true },
+  { id:'g-hai-san',  name:'Hải sản',  icon:'🐟', order:3, active:true },
+  { id:'g-trung',    name:'Trứng',    icon:'🥚', order:4, active:true },
+  { id:'g-dau',      name:'Đậu',      icon:'🫘', order:5, active:true },
+  { id:'g-rau',      name:'Rau',      icon:'🥬', order:6, active:true },
+  { id:'g-cu',       name:'Củ',       icon:'🥕', order:7, active:true },
+  { id:'g-rau-qua',  name:'Rau quả',  icon:'🍆', order:8, active:true },
+  { id:'g-trai-cay', name:'Trái cây', icon:'🍌', order:9, active:true },
+];
+
+/* Nhóm của từng nguyên liệu mặc định (nguyên liệu BGH tự thêm sau sẽ chọn nhóm trong biểu mẫu). */
+const MM_INGREDIENT_GROUP = {
+  'com-trang':'g-tinh-bot', 'bun':'g-tinh-bot', 'pho':'g-tinh-bot', 'mi':'g-tinh-bot', 'banh-mi':'g-tinh-bot',
+  'thit-heo':'g-thit', 'thit-ga':'g-thit', 'thit-bo':'g-thit',
+  'ca':'g-hai-san', 'tom':'g-hai-san', 'muc':'g-hai-san', 'cua':'g-hai-san',
+  'trung':'g-trung', 'trung-vit':'g-trung', 'trung-cut':'g-trung',
+  'dau-hu':'g-dau', 'dau-xanh':'g-dau', 'dau-den':'g-dau',
+  'rau-den':'g-rau', 'rau-lang':'g-rau', 'rau-muong':'g-rau', 'bap-cai':'g-rau', 'bong-cai':'g-rau',
+  'khoai-lang':'g-cu', 'khoai-tay':'g-cu', 'ca-rot':'g-cu',
+  'bi':'g-rau-qua', 'bau':'g-rau-qua', 'ca-tim':'g-rau-qua', 'ca-chua':'g-rau-qua',
+  'chuoi':'g-trai-cay', 'cam':'g-trai-cay', 'tao':'g-trai-cay', 'dua-hau':'g-trai-cay',
+};
+
+/* Nguyên liệu bổ sung (ngoài 10 nguyên liệu cũ lấy từ bảng dinh dưỡng). */
+const MM_EXTRA_INGREDIENTS = [
+  { id:'bun',       name:'Bún',          icon:'🍜' }, { id:'pho',       name:'Phở',          icon:'🍜' },
+  { id:'mi',        name:'Mì',           icon:'🍝' }, { id:'banh-mi',   name:'Bánh mì',      icon:'🥖' },
+  { id:'thit-ga',   name:'Thịt gà',      icon:'🍗' }, { id:'thit-bo',   name:'Thịt bò',      icon:'🥩' },
+  { id:'tom',       name:'Tôm',          icon:'🦐' }, { id:'muc',       name:'Mực',          icon:'🦑' },
+  { id:'cua',       name:'Cua',          icon:'🦀' }, { id:'trung-vit', name:'Trứng vịt',    icon:'🥚' },
+  { id:'trung-cut', name:'Trứng cút',    icon:'🥚' }, { id:'dau-hu',    name:'Đậu hũ',       icon:'🫘' },
+  { id:'dau-xanh',  name:'Đậu xanh',     icon:'🫘' }, { id:'dau-den',   name:'Đậu đen',      icon:'🫘' },
+  { id:'rau-den',   name:'Rau dền',      icon:'🥬' }, { id:'rau-lang',  name:'Rau lang',     icon:'🥬' },
+  { id:'bap-cai',   name:'Bắp cải',      icon:'🥬' }, { id:'khoai-lang',name:'Khoai lang',   icon:'🍠' },
+  { id:'khoai-tay', name:'Khoai tây',    icon:'🥔' }, { id:'bi',        name:'Bí',           icon:'🎃' },
+  { id:'ca-tim',    name:'Cà tím',       icon:'🍆' }, { id:'cam',       name:'Cam',          icon:'🍊' },
+  { id:'tao',       name:'Táo',          icon:'🍎' }, { id:'dua-hau',   name:'Dưa hấu',      icon:'🍉' },
+].map(x => ({ id:x.id, name:x.name, icon:x.icon, groupId:MM_INGREDIENT_GROUP[x.id], active:true }));
+
 const DEFAULT_INGREDIENTS = DEFAULT_NUTRITION_TABLE
   .filter(t => MM_DEFAULT_INGREDIENT_IDS.indexOf(t.id) >= 0)
-  .map(t => mmIngredientFromTable(t, MM_DEFAULT_UNLOCKED.indexOf(t.id) >= 0));
+  .map(t => Object.assign(mmIngredientFromTable(t, MM_DEFAULT_UNLOCKED.indexOf(t.id) >= 0), { groupId: MM_INGREDIENT_GROUP[t.id] }))
+  .concat(MM_EXTRA_INGREDIENTS);
 
 /* ═════════════ PHẦN B — DỮ LIỆU MẪU (DEMO) ═════════════ */
 
@@ -192,14 +237,14 @@ const DEFAULT_CRITERIA = [
 
 /* ── Seed: Daily menu ────────────────────────── */
 const DEFAULT_MENU = [
-  { id:'m01', date:'2026-10-20', name:'Cơm trắng',        ingredientId:'com-trang', group:'Tinh bột', planet:'Đạm',    isNew: false },
-  { id:'m02', date:'2026-10-20', name:'Thịt kho trứng',   ingredientId:'thit-heo',  group:'Đạm',      planet:'Đạm',    isNew: false },
-  { id:'m03', date:'2026-10-20', name:'Rau muống xào tỏi',ingredientId:'rau-muong', group:'Rau củ',   planet:'Rau củ', isNew: false },
-  { id:'m04', date:'2026-10-20', name:'Canh chua',         ingredientId:'ca-chua',   group:'Rau củ',  planet:'Rau củ', isNew: false },
-  { id:'m05', date:'2026-10-21', name:'Cơm trắng',         ingredientId:'com-trang', group:'Tinh bột', planet:'Đạm',    isNew: false },
-  { id:'m06', date:'2026-10-21', name:'Cá kho tộ',         ingredientId:'ca',        group:'Đạm',      planet:'Đạm',    isNew: false },
-  { id:'m07', date:'2026-10-21', name:'Bông cải xanh xào', ingredientId:'bong-cai',  group:'Rau củ',   planet:'Xanh lá',isNew: true  },
-  { id:'m08', date:'2026-10-21', name:'Canh bầu',          ingredientId:'bau',       group:'Rau củ',  planet:'Rau củ', isNew: true  },
+  { id:'m01', date:'2026-10-20', name:'Cơm trắng',        ingredientId:'com-trang', groupId:'g-tinh-bot', group:'Tinh bột', planet:'Đạm',    isNew: false },
+  { id:'m02', date:'2026-10-20', name:'Thịt kho trứng',   ingredientId:'thit-heo', groupId:'g-thit',  group:'Đạm',      planet:'Đạm',    isNew: false },
+  { id:'m03', date:'2026-10-20', name:'Rau muống xào tỏi',ingredientId:'rau-muong', groupId:'g-rau', group:'Rau củ',   planet:'Rau củ', isNew: false },
+  { id:'m04', date:'2026-10-20', name:'Canh chua',         ingredientId:'ca-chua', groupId:'g-rau-qua',   group:'Rau củ',  planet:'Rau củ', isNew: false },
+  { id:'m05', date:'2026-10-21', name:'Cơm trắng',         ingredientId:'com-trang', groupId:'g-tinh-bot', group:'Tinh bột', planet:'Đạm',    isNew: false },
+  { id:'m06', date:'2026-10-21', name:'Cá kho tộ',         ingredientId:'ca', groupId:'g-hai-san',        group:'Đạm',      planet:'Đạm',    isNew: false },
+  { id:'m07', date:'2026-10-21', name:'Bông cải xanh xào', ingredientId:'bong-cai', groupId:'g-rau',  group:'Rau củ',   planet:'Xanh lá',isNew: true  },
+  { id:'m08', date:'2026-10-21', name:'Canh bầu',          ingredientId:'bau', groupId:'g-rau-qua',       group:'Rau củ',  planet:'Rau củ', isNew: true  },
 ];
 
 /* Thực đơn mẫu + món demo "Trứng chiên" cho ngày hôm nay.
@@ -207,22 +252,22 @@ const DEFAULT_MENU = [
 function mmDemoMenuWithToday() {
   const today = toLocalDateStr(new (window.MM_RealDate || Date)());
   return DEFAULT_MENU.concat([
-    { id: 'm-demo-trung-chien', date: today, name: 'Trứng chiên', ingredientId: 'trung',
+    { id: 'm-demo-trung-chien', date: today, name: 'Trứng chiên', ingredientId: 'trung', groupId: 'g-trung',
       icon: '🥚', group: 'Đạm', planet: 'Đạm', isNew: true },
   ]);
 }
 
 /* ── Seed: FAS log (demo) ────────────────────── */
 const DEFAULT_FAS_LOG = [
-  { studentId:'phambaotruc', foodId:'bong-cai', foodName:'Bông cải xanh', attempt:1, score:1, rating:1, tryAgain:true,  timestamp:'2026-10-07T12:00:00' },
-  { studentId:'phambaotruc', foodId:'bong-cai', foodName:'Bông cải xanh', attempt:2, score:2, rating:2, tryAgain:true,  timestamp:'2026-10-09T12:00:00' },
-  { studentId:'phambaotruc', foodId:'bong-cai', foodName:'Bông cải xanh', attempt:3, score:2, rating:2, tryAgain:true,  timestamp:'2026-10-14T12:00:00' },
-  { studentId:'phambaotruc', foodId:'bong-cai', foodName:'Bông cải xanh', attempt:4, score:3, rating:3, tryAgain:false, timestamp:'2026-10-21T12:00:00' },
-  { studentId:'nguyenminhan', foodId:'ca-rot',   foodName:'Cà rốt',        attempt:1, score:1, rating:1, tryAgain:true,  timestamp:'2026-10-08T12:00:00' },
-  { studentId:'nguyenminhan', foodId:'ca-rot',   foodName:'Cà rốt',        attempt:2, score:2, rating:2, tryAgain:true,  timestamp:'2026-10-15T12:00:00' },
-  { studentId:'nguyenminhan', foodId:'ca-rot',   foodName:'Cà rốt',        attempt:3, score:2, rating:2, tryAgain:false, timestamp:'2026-10-22T12:00:00' },
-  { studentId:'tranthanhkhoa', foodId:'rau-muong', foodName:'Rau muống',   attempt:1, score:3, rating:3, tryAgain:false, timestamp:'2026-10-10T12:00:00' },
-  { studentId:'tranthanhkhoa', foodId:'rau-muong', foodName:'Rau muống',   attempt:2, score:4, rating:4, tryAgain:false, timestamp:'2026-10-17T12:00:00' },
+  { studentId:'phambaotruc', foodId:'bong-cai', groupId:'g-rau', place:'school', foodName:'Bông cải xanh', attempt:1, score:1, rating:1, tryAgain:true,  timestamp:'2026-10-07T12:00:00' },
+  { studentId:'phambaotruc', foodId:'bong-cai', groupId:'g-rau', place:'school', foodName:'Bông cải xanh', attempt:2, score:2, rating:2, tryAgain:true,  timestamp:'2026-10-09T12:00:00' },
+  { studentId:'phambaotruc', foodId:'bong-cai', groupId:'g-rau', place:'school', foodName:'Bông cải xanh', attempt:3, score:2, rating:2, tryAgain:true,  timestamp:'2026-10-14T12:00:00' },
+  { studentId:'phambaotruc', foodId:'bong-cai', groupId:'g-rau', place:'school', foodName:'Bông cải xanh', attempt:4, score:3, rating:3, tryAgain:false, timestamp:'2026-10-21T12:00:00' },
+  { studentId:'nguyenminhan', foodId:'ca-rot', groupId:'g-cu', place:'school',   foodName:'Cà rốt',        attempt:1, score:1, rating:1, tryAgain:true,  timestamp:'2026-10-08T12:00:00' },
+  { studentId:'nguyenminhan', foodId:'ca-rot', groupId:'g-cu', place:'school',   foodName:'Cà rốt',        attempt:2, score:2, rating:2, tryAgain:true,  timestamp:'2026-10-15T12:00:00' },
+  { studentId:'nguyenminhan', foodId:'ca-rot', groupId:'g-cu', place:'school',   foodName:'Cà rốt',        attempt:3, score:2, rating:2, tryAgain:false, timestamp:'2026-10-22T12:00:00' },
+  { studentId:'tranthanhkhoa', foodId:'rau-muong', groupId:'g-rau', place:'school', foodName:'Rau muống',   attempt:1, score:3, rating:3, tryAgain:false, timestamp:'2026-10-10T12:00:00' },
+  { studentId:'tranthanhkhoa', foodId:'rau-muong', groupId:'g-rau', place:'school', foodName:'Rau muống',   attempt:2, score:4, rating:4, tryAgain:false, timestamp:'2026-10-17T12:00:00' },
 ];
 
 /* ── Seed: Tray log (demo) ───────────────────── */
@@ -286,10 +331,12 @@ const LEGACY_FOOD_PLANET = {
         nguyên liệu có khẩu phần + Carbs/Protein/Fat + alwaysUnlocked, thêm bảng chuẩn
         mm_nutrition_table, bỏ cột "NL mở khóa" của Level.
    v3 = khay đã gửi: ô nhóm cũ 'canh' đổi thành ô Trái cây 🍌 Chuối (mã nhóm khay: tinBot · dam · rauCu · traiCay).
+   v4 = nhóm thực phẩm (mm_food_groups): nguyên liệu và thực đơn có groupId; nhật ký FAS có groupId + place ('school'|'home'),
+        lượt thử (attempt) đánh số lại THEO NHÓM của từng học sinh (lượt cũ giữ ở legacyAttempt); điểm 0 = "Chưa thử" (attempt = null).
    Dữ liệu cũ chưa có số phiên bản được coi là v0; các hàm nâng cấp chạy lần lượt tới bản hiện tại.
    Muốn đổi cấu trúc: tăng số này và thêm MM_MIGRATIONS[n] = function () {…}
    — hàm nâng dữ liệu từ bản n-1 lên bản n. */
-const MM_SCHEMA_VERSION = 3;
+const MM_SCHEMA_VERSION = 4;
 const MM_MIGRATIONS = {
   2: function () {
     const K = MM_KEYS;
@@ -333,6 +380,56 @@ const MM_MIGRATIONS = {
     });
     store.set(MM_KEYS.TRAY_LOG, log);
   },
+  4: function () {
+    const K = MM_KEYS;
+    if (!store.has(K.FOOD_GROUPS)) store.set(K.FOOD_GROUPS, DEFAULT_FOOD_GROUPS);
+
+    const bd = store.get(K.BADGES, null);
+    if (Array.isArray(bd)) {
+      bd.forEach(x => {
+        if (x.id === 'b02') Object.assign(x, { icon: '🥬', name: 'Bạn Rau', desc: 'FAS nhóm Rau ≥ 3.0' });
+        if (x.id === 'b03') Object.assign(x, { desc: 'Thử ≥ 3 nguyên liệu nhóm Rau' });
+      });
+      store.set(K.BADGES, bd);
+    }
+
+    const LEGACY_GROUP = { 'Tinh bột': 'g-tinh-bot', 'Trái cây': 'g-trai-cay' };
+    let ings = store.get(K.INGREDIENTS, null);
+    if (Array.isArray(ings)) {
+      ings.forEach(g => {
+        if (!g.groupId) g.groupId = MM_INGREDIENT_GROUP[g.id] || LEGACY_GROUP[g.group] || null;
+      });
+      MM_EXTRA_INGREDIENTS.forEach(x => { if (!ings.some(g => g.id === x.id)) ings.push(Object.assign({}, x)); });
+      store.set(K.INGREDIENTS, ings);
+    } else ings = [];
+    const groupOfIng = id => { const g = ings.find(x => x.id === id); return (g && g.groupId) || MM_INGREDIENT_GROUP[id] || null; };
+
+    const menu = store.get(K.MENU, null);
+    if (Array.isArray(menu)) {
+      menu.forEach(m => { if (!m.groupId) m.groupId = groupOfIng(m.ingredientId); });
+      store.set(K.MENU, menu);
+    }
+
+    const log = store.get(K.FAS_LOG, null);
+    if (Array.isArray(log)) {
+      log.forEach(r => {
+        if (!r.groupId) r.groupId = groupOfIng(r.foodId);
+        if (!r.place) r.place = 'school';
+        if (r.legacyAttempt === undefined) r.legacyAttempt = r.attempt;
+      });
+      const chains = {};
+      log.forEach(r => {
+        if (!r.groupId || !(r.score >= 1)) return;
+        (chains[r.studentId + '|' + r.groupId] = chains[r.studentId + '|' + r.groupId] || []).push(r);
+      });
+      Object.keys(chains).forEach(k => {
+        chains[k].sort((a, b) => String(a.timestamp).localeCompare(String(b.timestamp)));
+        chains[k].forEach((r, i) => { r.attempt = i + 1; });
+      });
+      log.forEach(r => { if (r.groupId && r.score === 0) r.attempt = null; });
+      store.set(K.FAS_LOG, log);
+    }
+  },
 };
 
 /* Kế hoạch dữ liệu khởi tạo: [khóa, hàm trả về giá trị].
@@ -342,6 +439,7 @@ function mmSeedPlan() {
   const demo = !(typeof MM_CONFIG !== 'undefined' && MM_CONFIG.DEMO_MODE === false);
   return [
     [K.XP_CONFIG,   () => DEFAULT_XP_CONFIG],
+    [K.FOOD_GROUPS, () => DEFAULT_FOOD_GROUPS],
     [K.NUTRITION,   () => DEFAULT_NUTRITION_TABLE],
     [K.SCORE_FORMULA, () => DEFAULT_SCORE_FORMULA],
     [K.BADGES,      () => DEFAULT_BADGES],

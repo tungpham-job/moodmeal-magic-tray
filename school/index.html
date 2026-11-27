@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏫</text></svg>">
   <title>Ban Giám Hiệu — MOODMEAL MAGIC TRAY</title>
-  <link rel="stylesheet" href="../css/base.css?v=20261118s">
-  <link rel="stylesheet" href="../css/school.css?v=20261118s">
+  <link rel="stylesheet" href="../css/base.css?v=20261127a">
+  <link rel="stylesheet" href="../css/school.css?v=20261127a">
 </head>
 <body class="page-school">
 <div class="school-layout">
@@ -122,11 +122,11 @@
         <div class="tab-panel" id="tab-ingredients">
           <div style="display:flex;gap:8px;margin-bottom:16px">
             <button class="btn btn-primary" onclick="openAddIngredient()">+ Thêm nguyên liệu</button>
+            <button class="btn btn-secondary" onclick="openAddGroup()">+ Thêm nhóm</button>
             <button class="btn btn-secondary" style="margin-left:auto" onclick="refreshTab('ingredients')">↻ Làm mới</button>
           </div>
+          <div id="foodGroupsBox"></div>
           <div id="ingredientsList"></div>
-          <div id="nutritionTable"></div>
-          <div id="scoreFormulaBox"></div>
         </div>
 
         <!-- Tab: XP & Level -->
@@ -242,13 +242,18 @@
         <!-- Filters + table -->
         <div class="content-card">
           <div class="content-card-header">
-            <span class="content-card-title">Bảng FAS chi tiết</span>
+            <span class="content-card-title">Bảng FAS chi tiết theo nhóm</span>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
               <select class="form-control" id="filterStudent" style="width:180px;padding:6px 10px;font-size:12px" onchange="applyReportFilter()">
                 <option value="">— Tất cả học sinh —</option>
               </select>
               <select class="form-control" id="filterFood" style="width:160px;padding:6px 10px;font-size:12px" onchange="applyReportFilter()">
-                <option value="">— Tất cả nguyên liệu —</option>
+                <option value="">— Tất cả nhóm —</option>
+              </select>
+              <select class="form-control" id="filterPlace" style="width:150px;padding:6px 10px;font-size:12px" onchange="applyReportFilter()">
+                <option value="">Trường + Nhà</option>
+                <option value="school">Chỉ ở trường</option>
+                <option value="home">Chỉ ở nhà</option>
               </select>
               <button class="btn btn-secondary btn-sm" onclick="exportCSV()">📥 Xuất CSV</button>
               <button class="btn btn-secondary btn-sm" onclick="window.print()">🖨️ In</button>
@@ -259,12 +264,11 @@
               <thead>
                 <tr>
                   <th>Học sinh</th>
-                  <th>Nguyên liệu</th>
-                  <th style="text-align:center">Lần 1</th>
-                  <th style="text-align:center">Lần 2</th>
-                  <th style="text-align:center">Lần 3</th>
-                  <th style="text-align:center">Lần 4</th>
+                  <th>Nhóm</th>
+                  <th>Chuỗi lượt thử (FAS)</th>
                   <th style="text-align:center">FAG</th>
+                  <th style="text-align:center">Trường</th>
+                  <th style="text-align:center">Nhà</th>
                   <th style="text-align:center">TRY AGAIN</th>
                 </tr>
               </thead>
@@ -424,18 +428,13 @@
         <input class="form-control" type="date" id="menuDate">
       </div>
 
-      <!-- Hàng 2: Nhóm dinh dưỡng (chọn trước; hành tinh lấy theo nguyên liệu) -->
+      <!-- Hàng 2: Nhóm thực phẩm (chọn trước; mỗi nhóm là một hành tinh) -->
       <div class="form-group-s">
-        <label class="form-label-s">Nhóm dinh dưỡng</label>
-        <select class="form-control" id="menuGroup" onchange="renderMenuIngredientPick()">
-          <option>Tinh bột</option>
-          <option>Đạm</option>
-          <option>Rau củ</option>
-          <option>Trái cây</option>
-        </select>
+        <label class="form-label-s">Nhóm thực phẩm</label>
+        <select class="form-control" id="menuGroup" onchange="renderMenuIngredientPick()"></select>
       </div>
 
-      <!-- Hàng 3: Nguyên liệu chính (chọn 1, theo nhóm + hành tinh đã chọn) -->
+      <!-- Hàng 3: Nguyên liệu chính (chọn 1, theo nhóm đã chọn) -->
       <div class="form-group-s">
         <label class="form-label-s">Nguyên liệu chính * <span style="font-weight:400;color:var(--text-muted)">(chọn 1 — dùng để theo dõi FAS)</span></label>
         <input type="hidden" id="menuIngredient">
@@ -519,23 +518,9 @@
     </div>
     <div class="modal-body">
       <input type="hidden" id="ingEditId">
-      <div class="form-group-s" id="ingFromTableWrap">
-        <label class="form-label-s">Chọn từ bảng dinh dưỡng chuẩn</label>
-        <select class="form-control" id="ingFromTable" onchange="pickFromNutritionTable(this.value)"></select>
-      </div>
-      <div class="form-row">
-        <div class="form-group-s">
-          <label class="form-label-s">Nhóm dinh dưỡng</label>
-          <select class="form-control" id="ingGroup" onchange="updateIngScore()">
-            <option>Tinh bột</option><option>Đạm</option><option>Rau củ</option><option>Trái cây</option>
-          </select>
-        </div>
-        <div class="form-group-s">
-          <label class="form-label-s">Hành tinh</label>
-          <select class="form-control" id="ingPlanet">
-            <option>Rau củ</option><option>Đạm</option><option>Xanh lá</option><option>Trái cây</option>
-          </select>
-        </div>
+      <div class="form-group-s">
+        <label class="form-label-s">Nhóm thực phẩm</label>
+        <select class="form-control" id="ingGroup"></select>
       </div>
       <div class="form-group-s">
         <label class="form-label-s">Tên nguyên liệu *</label>
@@ -549,21 +534,8 @@
         </div>
         <div id="ingIconPanel" style="display:none;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:8px;padding:10px;max-height:260px;overflow-y:auto;background:#F8FAFB;border:1.5px solid var(--border-light);border-radius:var(--radius-md)"></div>
       </div>
-      <div class="form-group-s">
-        <label class="form-label-s">Khẩu phần (g) · Carbs · Protein · Fat (g trên 100 g)</label>
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
-          <input class="form-control" type="number" min="1" step="1"   id="ingPortion" placeholder="Khẩu phần" oninput="updateIngScore()">
-          <input class="form-control" type="number" min="0" step="0.1" id="ingCarbs"   placeholder="Carbs"     oninput="updateIngScore()">
-          <input class="form-control" type="number" min="0" step="0.1" id="ingProtein" placeholder="Protein"   oninput="updateIngScore()">
-          <input class="form-control" type="number" min="0" step="0.1" id="ingFat"     placeholder="Fat"       oninput="updateIngScore()">
-        </div>
-        <div style="font-size:12px;color:var(--text-muted);margin-top:6px">Điểm dinh dưỡng (tự tính): <b id="ingScore">—</b> / 10</div>
-      </div>
-      <label style="display:flex;align-items:center;gap:8px;font-size:13px;margin:4px 0 10px;cursor:pointer">
-        <input type="checkbox" id="ingUnlocked"> <span>Mở khóa sẵn — có sẵn cho tất cả các bé, không cần thử trước</span>
-      </label>
       <div id="ingEditWarn" style="display:none;font-size:11px;color:#B7791F;background:#FFF8E6;border-radius:8px;padding:8px 10px">
-        ⚠️ Nguyên liệu này đã dùng trong thực đơn / FAS. Đổi nhóm hoặc hành tinh sẽ áp dụng cho cả dữ liệu cũ.
+        ⚠️ Nguyên liệu này đã dùng trong thực đơn / FAS. Đổi nhóm sẽ áp dụng cho cả dữ liệu cũ (lượt thử tính lại theo nhóm mới).
       </div>
     </div>
     <div class="modal-footer">
@@ -573,60 +545,32 @@
   </div>
 </div>
 
-<!-- Modal: Thêm/Sửa dòng bảng dinh dưỡng chuẩn -->
-<div class="modal-overlay" id="modalNutri">
-  <div class="modal-box" style="max-width:460px">
+<!-- Modal: Thêm/Sửa nhóm thực phẩm -->
+<div class="modal-overlay" id="modalGroup">
+  <div class="modal-box" style="max-width:420px">
     <div class="modal-header">
-      <span class="modal-title" id="modalNutriTitle">+ Thêm dòng vào bảng chuẩn</span>
-      <button class="modal-close" onclick="closeModal('modalNutri')">×</button>
+      <span class="modal-title" id="modalGroupTitle">+ Thêm nhóm thực phẩm</span>
+      <button class="modal-close" onclick="closeModal('modalGroup')">×</button>
     </div>
     <div class="modal-body">
-      <input type="hidden" id="nutriEditId">
-      <div class="form-row">
-        <div class="form-group-s">
-          <label class="form-label-s">Nhóm dinh dưỡng</label>
-          <select class="form-control" id="nutriGroup">
-            <option>Tinh bột</option><option>Đạm</option><option>Rau củ</option><option>Trái cây</option>
-          </select>
-        </div>
-        <div class="form-group-s">
-          <label class="form-label-s">Hành tinh</label>
-          <select class="form-control" id="nutriPlanet">
-            <option>Rau củ</option><option>Đạm</option><option>Xanh lá</option><option>Trái cây</option>
-          </select>
-        </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group-s">
-          <label class="form-label-s">Tên nguyên liệu *</label>
-          <input class="form-control" id="nutriName" placeholder="vd: Đậu phụ">
-        </div>
-        <div class="form-group-s">
-          <label class="form-label-s">Icon (emoji) — dán hoặc chọn</label>
-          <div style="display:flex;gap:6px">
-            <input class="form-control" id="nutriIcon" maxlength="8" placeholder="🍽️ dán icon vào đây">
-            <button type="button" class="btn btn-secondary" onclick="toggleNutriIconPanel()" title="Chọn từ danh sách icon mẫu">😀 Chọn</button>
-          </div>
-        </div>
-      </div>
-      <div id="nutriIconPanel" style="display:none;grid-template-columns:repeat(7,1fr);gap:4px;margin:-4px 0 12px;padding:10px;max-height:260px;overflow-y:auto;background:#F8FAFB;border:1.5px solid var(--border-light);border-radius:var(--radius-md)"></div>
+      <input type="hidden" id="grpEditId">
       <div class="form-group-s">
-        <label class="form-label-s">Khẩu phần (g) · Carbs · Protein · Fat (g trên 100 g)</label>
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
-          <input class="form-control" type="number" min="1" step="1"   id="nutriPortion" placeholder="Khẩu phần">
-          <input class="form-control" type="number" min="0" step="0.1" id="nutriCarbs"   placeholder="Carbs">
-          <input class="form-control" type="number" min="0" step="0.1" id="nutriProtein" placeholder="Protein">
-          <input class="form-control" type="number" min="0" step="0.1" id="nutriFat"     placeholder="Fat">
+        <label class="form-label-s">Tên nhóm *</label>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input class="form-control" id="grpName" placeholder="vd: Đậu" style="flex:1" maxlength="30">
+          <button type="button" onclick="toggleGrpIconPanel()" title="Chọn icon"
+            style="flex-shrink:0;width:42px;height:38px;border:1.5px solid var(--border);border-radius:var(--radius-md);background:var(--white);font-size:20px;cursor:pointer">
+            <span id="grpIconDisplay">🍽️</span>
+          </button>
+          <input type="hidden" id="grpIcon">
         </div>
+        <div id="grpIconPanel" style="display:none;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:8px;padding:10px;max-height:260px;overflow-y:auto;background:#F8FAFB;border:1.5px solid var(--border-light);border-radius:var(--radius-md)"></div>
       </div>
-      <label style="display:flex;align-items:center;gap:8px;font-size:13px;margin:4px 0 10px;cursor:pointer">
-        <input type="checkbox" id="nutriRef"> <span>Số liệu tham khảo (hiện dấu *), cần đối chiếu nguồn chính thức</span>
-      </label>
-      <div style="font-size:11px;color:var(--text-muted)">Sửa bảng chuẩn không đổi các nguyên liệu đã thêm trước đó (mỗi nguyên liệu giữ số liệu riêng).</div>
+      <div style="font-size:11px;color:var(--text-muted)">Mỗi nhóm là một hành tinh của học sinh. FAS và FAG được tính theo nhóm.</div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeModal('modalNutri')">Hủy</button>
-      <button class="btn btn-primary" onclick="saveNutri()">Lưu</button>
+      <button class="btn btn-secondary" onclick="closeModal('modalGroup')">Hủy</button>
+      <button class="btn btn-primary" onclick="saveGroup()">Lưu nhóm</button>
     </div>
   </div>
 </div>
@@ -808,14 +752,14 @@
 </div>
 
 <!-- ══ SCRIPTS ══ -->
-<script src="../js/config.js?v=20261118s"></script>
-<script src="../js/seed.js?v=20261118s"></script>
-<script src="../js/utils.js?v=20261118s"></script>
-<script src="../js/store.js?v=20261118s"></script>
-<script src="../js/auth.js?v=20261118s"></script>
-<script src="../js/xp.js?v=20261118s"></script>
-<script src="../js/badges.js?v=20261118s"></script>
-<script src="js/school.js?v=20261118s"></script>
+<script src="../js/config.js?v=20261127a"></script>
+<script src="../js/seed.js?v=20261127a"></script>
+<script src="../js/utils.js?v=20261127a"></script>
+<script src="../js/store.js?v=20261127a"></script>
+<script src="../js/auth.js?v=20261127a"></script>
+<script src="../js/xp.js?v=20261127a"></script>
+<script src="../js/badges.js?v=20261127a"></script>
+<script src="js/school.js?v=20261127a"></script>
 <script>
   /* Filter accounts table by search */
   function filterAccountsTable(q) {
