@@ -12,7 +12,11 @@ window.addEventListener('load', function () {
       {id:'tranthanhkhoa', pass:'hs003', role:'student', name:'Trần Thanh Khoa', linkedId:'phthanhkhoa', avatar:'🧒', className:'3A4'},
       {id:'phminhan', pass:'ph002', role:'parent', name:'Phụ huynh Minh An', linkedId:'nguyenminhan', avatar:'👩'},
       {id:'phthanhkhoa', pass:'ph003', role:'parent', name:'Phụ huynh Thanh Khoa', linkedId:'tranthanhkhoa', avatar:'👩'});
-    var fas = JSON.parse(localStorage.getItem('mm_fas_log') || '[]');
+    /* gỡ kịch bản demo mới của Bảo Trúc (mmSetDemoPlan), trả về trạng thái demo cũ: XP 605, FAS 4 dòng, không yêu cầu chờ, không lịch sử 4 tuần */
+    acc.forEach(function (a) { if (a.id === 'phambaotruc') a.xp = 605; });
+    localStorage.removeItem('mm_home_requests');
+    var cst = JSON.parse(localStorage.getItem('mm_char_state') || '{}'); delete cst.phambaotruc; localStorage.setItem('mm_char_state', JSON.stringify(cst));
+    var fas = JSON.parse(localStorage.getItem('mm_fas_log') || '[]').filter(function (f) { return f.studentId !== 'phambaotruc'; });
     var r = function (s, f, g, n, a, sc, t, ts) { return {studentId:s, foodId:f, groupId:g, place:'school', foodName:n, attempt:a, score:sc, rating:sc, tryAgain:t, timestamp:ts}; };
     fas.push(
       r('nguyenminhan','ca-rot','g-cu','Cà rốt',1,1,true,'2026-10-08T12:00:00'),
@@ -28,7 +32,7 @@ window.addEventListener('load', function () {
     localStorage.setItem('mm_accounts', JSON.stringify(acc));
     localStorage.setItem('mm_fas_log', JSON.stringify(fas));
     /* thực đơn hôm nay như bộ demo cũ: "Trứng chiên" (MỚI) đứng đầu + 2 món (có 1 món Rau) */
-    var menu = JSON.parse(localStorage.getItem('mm_daily_menu') || '[]');
+    var menu = JSON.parse(localStorage.getItem('mm_daily_menu') || '[]').filter(function (m) { return String(m.id).indexOf('m-big-') !== 0; });
     var today = toLocalDateStr(new (window.MM_RealDate || Date)());
     var td = menu.filter(function (m) { return m.date === today; });
     var rest = menu.filter(function (m) { return m.date !== today; });

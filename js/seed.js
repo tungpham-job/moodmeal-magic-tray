@@ -22,8 +22,10 @@
    • mmSetDemoData() — dữ liệu DEMO (ghi thêm lên trên mặc định): tài khoản Bảo Trúc + phụ huynh, thực đơn
      tuần này + tuần sau (+ hôm nay nếu rơi vào cuối tuần), đưa "Ngày hôm nay" về ngày thật.
      Dữ liệu demo cả khối (150 bạn, 4 tuần trước) nằm ở js/demo_big.js: mmSetDemoBigData().
-   • mmSeedAll(opts) — hàm gọi từ auth.js: luôn mmSetDefaultData; thêm mmSetDemoData khi DEMO_MODE bật và là
-     máy mới (chưa có tài khoản) hoặc đặt lại (force).
+   • mmSetDemoPlan() (js/demo_plan.js) — kịch bản demo của Phạm Bảo Trúc: lịch sử 4 tuần, yêu cầu "Muốn" chờ ba mẹ,
+     XP sát mốc lên Level, thực đơn hôm nay chưa đánh giá có món MỚI.
+   • mmSeedAll(opts) — hàm gọi từ auth.js: luôn mmSetDefaultData; thêm mmSetDemoData + mmSetDemoPlan khi DEMO_MODE
+     bật và là máy mới (chưa có tài khoản) hoặc đặt lại (force).
 
    PHẦN A — Mặc định hệ thống (dữ liệu + cấu hình ban đầu)
    PHẦN B — Dữ liệu demo (tài khoản, thực đơn) + mmSetDemoData()
@@ -150,8 +152,7 @@ const DEMO_ACCOUNTS = [
     linkedId: 'phbaotruc',
     avatar: '🧒',
     characterId: 'gao',
-    className: '5A12',
-    xp: 605
+    className: '5A12'     // xp: do mmSetDemoPlan() đặt (js/demo_plan.js)
   },
   {
     id: 'phbaotruc',
@@ -212,14 +213,14 @@ function mmDemoMenu() {
 }
 
 /* THIẾT LẬP DỮ LIỆU DEMO — ghi thêm lên trên dữ liệu mặc định (gọi sau mmSetDefaultData):
-   tài khoản Bảo Trúc + phụ huynh, thực đơn demo, đưa "Ngày hôm nay" về ngày thật. */
+   tài khoản Bảo Trúc + phụ huynh, thực đơn demo (chỉ khi thực đơn đang rỗng), đưa "Ngày hôm nay" về ngày thật. */
 function mmSetDemoData() {
   const K = MM_KEYS;
   try {
     const accounts = store.get(K.ACCOUNTS, []);
     DEMO_ACCOUNTS.forEach(d => { if (!accounts.some(a => a.id === d.id)) accounts.push(Object.assign({}, d)); });
     store.set(K.ACCOUNTS, accounts);
-    store.set(K.MENU, mmDemoMenu());
+    if (!store.get(K.MENU, []).length) store.set(K.MENU, mmDemoMenu());   // không ghi đè thực đơn BGH đã nhập
     store.remove(K.DEMO_DATE);
   } catch (e) {
     console.warn('Không thiết lập được dữ liệu demo', e);
@@ -397,9 +398,13 @@ function mmSetDefaultData(opts) {
 
 /* HÀM KHỞI TẠO (gọi từ js/auth.js trên mọi trang): luôn thiết lập dữ liệu mặc định; thêm dữ liệu demo khi
    MM_CONFIG.DEMO_MODE bật và là máy mới hoặc đặt lại (force). Nút "Đặt lại dữ liệu demo" gọi
-   mmSeedAll({force:true}) rồi mmSetDemoBigData() (js/demo_big.js). */
+   mmSeedAll({force:true}) rồi mmSetDemoBigData() (js/demo_big.js).
+   Kịch bản demo của Bảo Trúc: mmSetDemoPlan() trong js/demo_plan.js (gọi sau mmSetDemoData). */
 function mmSeedAll(opts) {
   const demo = !(typeof MM_CONFIG !== 'undefined' && MM_CONFIG.DEMO_MODE === false);
   const r = mmSetDefaultData(opts);
-  if (demo && r && r.fresh) mmSetDemoData();
+  if (demo && r && r.fresh) {
+    mmSetDemoData();
+    if (typeof mmSetDemoPlan === 'function') mmSetDemoPlan();   // kịch bản demo của Bảo Trúc (js/demo_plan.js)
+  }
 }

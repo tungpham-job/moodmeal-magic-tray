@@ -43,7 +43,7 @@ def run(browser, base):
     from collections import Counter
     cc = Counter(a['className'] for a in stu)
     check('5 lớp, mỗi lớp 30 bạn (5A12 gồm Bảo Trúc)', dict(cc) == {'3A2': 30, '4A5': 30, '4A6': 30, '5A11': 30, '5A12': 30}, dict(cc))
-    check('giữ admin, Bảo Trúc (5A12, xp 605) và phụ huynh; không có Minh An/Thanh Khoa (seed gốc đã bỏ)', {'admin', 'phambaotruc', 'phbaotruc'} <= {a['id'] for a in acc} and next(a for a in acc if a['id'] == 'phambaotruc')['xp'] == 605 and not any(a['id'] in ('nguyenminhan', 'tranthanhkhoa', 'phminhan', 'phthanhkhoa') for a in acc), [a['id'] for a in acc if a['role'] != 'student'])
+    check('giữ admin, Bảo Trúc (5A12, xp 590 do kịch bản) và phụ huynh; không có Minh An/Thanh Khoa (seed gốc đã bỏ)', {'admin', 'phambaotruc', 'phbaotruc'} <= {a['id'] for a in acc} and next(a for a in acc if a['id'] == 'phambaotruc')['xp'] == 590 and not any(a['id'] in ('nguyenminhan', 'tranthanhkhoa', 'phminhan', 'phthanhkhoa') for a in acc), [a['id'] for a in acc if a['role'] != 'student'])
     check('bé mới không có phụ huynh, có xp', all(a['linkedId'] is None and isinstance(a['xp'], int) for a in stu if a['id'].startswith('hs-')))
     # thực đơn
     today = pg.evaluate("toLocalDateStr(new (window.MM_RealDate||Date)())")
@@ -56,6 +56,8 @@ def run(browser, base):
     check('mỗi ngày 3 nhóm khác nhau', not bad)
     td = [m for m in menu if m['date'] == today]
     check('thực đơn hôm nay: đúng 3 món, 3 nhóm khác nhau, có 1 món Rau; không còn "Trứng chiên" tự thêm', len(td) == 3 and len({m['groupId'] for m in td}) == 3 and sum(1 for m in td if m['groupId'] == 'g-rau') == 1 and not any(m['name'] == 'Trứng chiên' for m in td), td)
+    rq = ls(pg, 'mm_home_requests') or []
+    check('kịch bản Bảo Trúc vẫn còn sau đặt lại: 1 yêu cầu "Muốn" đang chờ, Level đã thấy ghi nhận', len(rq) == 1 and rq[0]['status'] == 'pending' and rq[0]['studentId'] == 'phambaotruc' and ls(pg, 'mm_char_state')['phambaotruc']['seenLevelIdx'] == 2, rq)
     # FAS
     mine = list(fas)   # gồm cả Bảo Trúc (seed gốc không còn FAS riêng)
     check('có nhật ký FAS cho cả 150 bạn (gồm Bảo Trúc, sinh theo tuần như các bạn khác)', len({r['studentId'] for r in mine}) == 150 and sum(1 for r in mine if r['studentId'] == 'phambaotruc') > 20 and 4000 < len(mine) < 9500, len(mine))
@@ -92,6 +94,11 @@ def run(browser, base):
     before = pg.evaluate("localStorage.getItem('mm_accounts')"); msgs.clear()
     pg.click('#btnReset'); pg.wait_for_timeout(1200)
     check('CSV sai: báo rõ dòng lỗi và KHÔNG xóa dữ liệu hiện có', any('students.csv dòng 151' in m and 'kiểu' in m for m in msgs) and pg.evaluate("localStorage.getItem('mm_accounts')") == before, msgs)
+    pg.unroute('**/demo/students.csv')
+    pg.route('**/demo/students.csv', lambda r: r.fulfill(status=200, content_type='text/csv; charset=utf-8', body=csv_txt + 'phambaotruc,Bạn Trùng,5A11,x,binh\n'))
+    before = pg.evaluate("localStorage.getItem('mm_accounts')"); msgs.clear()
+    pg.click('#btnReset'); pg.wait_for_timeout(1200)
+    check('CSV có id trùng tài khoản có sẵn (phambaotruc): báo rõ dòng và KHÔNG xóa dữ liệu', any('students.csv dòng 151' in m and 'trùng tài khoản có sẵn' in m for m in msgs) and pg.evaluate("localStorage.getItem('mm_accounts')") == before, msgs)
     pg.unroute('**/demo/students.csv')
     pg.route('**/demo/students.csv', lambda r: r.abort())
     before = pg.evaluate("localStorage.getItem('mm_accounts')"); msgs.clear(); pg.click('#btnReset'); pg.wait_for_timeout(1500)
