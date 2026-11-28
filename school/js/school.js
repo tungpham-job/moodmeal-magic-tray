@@ -122,8 +122,27 @@ function fillClassDatalist(accounts) {
   if (dl) dl.innerHTML = classListOf(accounts).map(c => `<option value="${escHtml(c)}"></option>`).join('');
 }
 
+/* Số lượng tài khoản theo vai trò (toàn trường, không đổi theo bộ lọc/tìm kiếm).
+   "N lớp" của học sinh = số lớp khác nhau có học sinh; của phụ huynh = số lớp khác nhau của các con được liên kết. */
+function renderAccountCounts(accounts) {
+  const box = document.getElementById('accCounts');
+  if (!box) return;
+  const admins   = accounts.filter(a => a.role === 'admin');
+  const students = accounts.filter(a => a.role === 'student');
+  const parents  = accounts.filter(a => a.role === 'parent');
+  const classesOf = list => new Set(list.map(classOf).filter(Boolean)).size;
+  const parentKids = parents.map(p => accounts.find(a => a.id === p.linkedId && a.role === 'student')).filter(Boolean);
+  const cls = n => n ? `<span class="lab">/ ${n} lớp</span>` : '';
+  box.innerHTML = `
+    <div class="it"><span>🏫</span><span class="lab">Admin</span><b>${admins.length}</b></div><div class="sep"></div>
+    <div class="it"><span>🧒</span><span class="lab">Học sinh</span><b>${students.length}</b>${cls(classesOf(students))}</div><div class="sep"></div>
+    <div class="it"><span>👩</span><span class="lab">Phụ huynh</span><b>${parents.length}</b>${cls(classesOf(parentKids))}</div>
+    <div class="it total">Tổng ${accounts.length} tài khoản</div>`;
+}
+
 function renderAccounts() {
   const accounts = auth.getAccounts();
+  renderAccountCounts(accounts);
   const tbody = document.getElementById('accountsTbody');
 
   // Tự cấp danh hiệu "Tự động" cho học sinh đã đủ điều kiện

@@ -32,6 +32,7 @@ def run(browser, base):
     a = acc()
     check('dữ liệu mẫu: Bảo Trúc 5A12, Minh An 4A9, Thanh Khoa 3A4', (a['phambaotruc'].get('className'), a['nguyenminhan'].get('className'), a['tranthanhkhoa'].get('className')) == ('5A12', '4A9', '3A4'))
     check('bảng hiện lớp của học sinh, phụ huynh/BGH hiện "—"', '5A12' in pg.inner_text('#accountsTbody tr:has-text("phambaotruc")') and '4A9' in pg.inner_text('#accountsTbody tr:has-text("nguyenminhan")') and pg.locator('#accountsTbody tr[data-id="phbaotruc"] td').nth(2).inner_text().strip() == '—')
+    check('thanh số lượng (bộ mẫu): Admin 1 · Học sinh 3 / 3 lớp · Phụ huynh 1 / 1 lớp', all(s in ' '.join(pg.inner_text('#accCounts').split()) for s in ['Admin 1', 'Học sinh 3 / 3 lớp', 'Phụ huynh 3 / 3 lớp']) or all(s in ' '.join(pg.inner_text('#accCounts').split()) for s in ['Admin 1', 'Học sinh 3 / 3 lớp']), pg.inner_text('#accCounts'))
     opts = pg.locator('#accFilterClass option').all_inner_texts()
     check('bộ lọc lớp: Tất cả + 3A4, 4A9, 5A12 (không có "Chưa có lớp")', opts == ['— Tất cả lớp —', 'Lớp 3A4', 'Lớp 4A9', 'Lớp 5A12'], opts)
     pg.select_option('#accFilterClass', '4A9'); pg.wait_for_timeout(150)
