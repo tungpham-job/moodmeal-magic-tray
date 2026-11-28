@@ -55,8 +55,6 @@
 .cp-opt.picked { border-color:#2E9E5B; background:var(--green-pale); }
 .cp-opt .char-art { width:62px; height:62px; margin:2px auto 0; }
 .cp-opt b { display:block; color:#1A1A1A; } .cp-opt span { display:block; font-size:9px; color:var(--text-muted); line-height:1.2; padding:0 2px; }
-.cp-go { display:block; width:calc(100% - 24px); margin:12px 12px 0; background:var(--green-dark); color:#fff; border:none; border-radius:12px; padding:11px; font-weight:700; font-size:14px; font-family:inherit; cursor:pointer; }
-.cp-go:disabled { opacity:.45; cursor:not-allowed; }
 .cp-note { font-size:10.5px; color:var(--text-muted); text-align:center; margin-top:8px; padding:0 16px; }
 .cp-dim { position:absolute; inset:0; background:rgba(0,0,0,.45); display:none; }
 .cp-dim.show { display:block; }

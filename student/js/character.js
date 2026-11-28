@@ -122,12 +122,11 @@
         <div class="cp-grid">${list.map(c => `
           <div class="cp-opt${change && c.id === cur.id ? ' cur' : ''}${isLocked(c) ? ' locked' : ''}" data-id="${escHtml(c.id)}">${isLocked(c) ? '<i class="cp-lock">🔒</i>' : ''}<div class="char-art">${mmCharArt(c, aIdx)}</div>
             <b>${escHtml(nm(c))}</b>${change ? `<small>Dòng ${escHtml(c.name)}</small>` : ''}${change && c.id === cur.id ? '<em>Đang đồng hành</em>' : isLocked(c) ? '<em class="cp-lk">Tạm khóa</em>' : `<span>${escHtml(c.desc || '')}</span>`}</div>`).join('')}</div>
-        <button class="cp-go" id="cpGo" disabled>✓ Chọn bạn này</button>
         ${noteHtml()}
         ${change || !openCount ? '<button type="button" class="cp-cancel" id="cpCancel">← Quay lại Trang chủ</button>' : ''}
       </div>
-      <div class="cp-toast" id="cpToast" style="display:none"></div>
       </div>
+      <div class="cp-toast" id="cpToast" style="display:none"></div>
       <div class="cp-dim" id="cpDim"></div>
       <div class="cp-sheet" id="cpSheet">
         <div class="cp-sheet-av char-art" id="cpAv"></div>
@@ -136,7 +135,7 @@
         <div class="cp-sheet-btns"><button class="cp-back" id="cpBack">Chọn lại</button><button class="cp-ok" id="cpOk">✓ Xác nhận</button></div>
       </div>`;
     frame.appendChild(ov);
-    const go = ov.querySelector('#cpGo'), dim = ov.querySelector('#cpDim'), sheet = ov.querySelector('#cpSheet');
+    const dim = ov.querySelector('#cpDim'), sheet = ov.querySelector('#cpSheet');
     const openSheet = on => { dim.classList.toggle('show', on); sheet.classList.toggle('show', on); };
     let toastTimer = null;
     ov.querySelectorAll('.cp-opt').forEach(o => o.addEventListener('click', () => {
@@ -147,19 +146,18 @@
         return;
       }
       if (change && o.dataset.id === cur.id) return;           /* bạn đang đồng hành: không có gì để đổi */
+      /* bấm vào nhân vật → hiện luôn hộp xác nhận (không cần nút "Chọn bạn này") */
       picked = o.dataset.id;
       ov.querySelectorAll('.cp-opt').forEach(x => x.classList.toggle('picked', x === o));
-      go.disabled = false;
-    }));
-    go.addEventListener('click', () => {
       const c = list.find(x => x.id === picked); if (!c) return;
       ov.querySelector('#cpAv').innerHTML = mmCharArt(c, aIdx);
       ov.querySelector('#cpSheetT').textContent = change ? `Đổi sang ${nm(c)} nhé?` : `Chọn bạn ${c.name} nhé?`;
       openSheet(true);
-    });
-    ov.querySelector('#cpBack').addEventListener('click', () => openSheet(false));
+    }));
+    const unpick = () => { picked = null; ov.querySelectorAll('.cp-opt').forEach(x => x.classList.remove('picked')); };
+    ov.querySelector('#cpBack').addEventListener('click', () => { openSheet(false); unpick(); });
     const cancel = ov.querySelector('#cpCancel'); if (cancel) cancel.addEventListener('click', () => { ov.remove(); if (!change) renderEmpty(); });
-    dim.addEventListener('click', () => openSheet(false));
+    dim.addEventListener('click', () => { openSheet(false); unpick(); });
     ov.querySelector('#cpOk').addEventListener('click', () => {
       const c = list.find(x => x.id === picked); if (!c) return;
       const accs = store.get(MM_KEYS.ACCOUNTS, []), acc = accs.find(a => a.id === sid);
