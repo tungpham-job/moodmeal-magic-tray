@@ -40,6 +40,26 @@ document.addEventListener('DOMContentLoaded', () => {
 /* ══════════════════════════════════════════════
    NAVIGATION
 ══════════════════════════════════════════════ */
+/* Đo chiều cao các khối cố định để xếp chồng (CSS: .sticky-tools / .sticky-card) */
+function mmStickyLayout() {
+  const root = document.documentElement.style;
+  const hdr = document.querySelector('.main-header');
+  root.setProperty('--st-h', (hdr ? hdr.offsetHeight : 70) + 'px');
+  const panel = document.querySelector('.module-panel.active');
+  const tools = panel && panel.querySelector('.sticky-tools');
+  const chdr  = panel && panel.querySelector('.sticky-card .content-card-header');
+  root.setProperty('--st-tools', (tools ? tools.offsetHeight : 0) + 'px');
+  root.setProperty('--st-chdr',  (chdr ? chdr.offsetHeight : 0) + 'px');
+}
+window.addEventListener('resize', mmStickyLayout);
+window.addEventListener('load', () => {
+  mmStickyLayout();
+  if (window.ResizeObserver) {
+    const ro = new ResizeObserver(mmStickyLayout);
+    document.querySelectorAll('.main-header, .sticky-tools, .sticky-card .content-card-header').forEach(el => ro.observe(el));
+  }
+});
+
 function switchModule(name) {
   // Cập nhật nav links
   document.querySelectorAll('.nav-link[data-module]').forEach(el => {
@@ -71,6 +91,8 @@ function switchModule(name) {
     report:    renderReport,
   };
   if (renderers[name]) renderers[name]();
+  mmStickyLayout();
+  window.scrollTo(0, 0);
 }
 
 /* ══════════════════════════════════════════════
