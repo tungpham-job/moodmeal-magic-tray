@@ -20,7 +20,8 @@ def run(browser, base):
     pg = ctx.new_page(); errs = []
     pg.on('pageerror', lambda e: errs.append(str(e)))
     pg.on('console', lambda m: m.type == 'error' and errs.append(m.text))
-    pg.on('dialog', lambda d: d.accept())
+    msgs = []
+    pg.on('dialog', lambda d: (msgs.append(d.message), d.accept()))
     pg.goto(base + '/index.html'); pg.wait_for_timeout(500)
 
     print('A. Nút Đặt lại thường vẫn nhẹ')
@@ -72,6 +73,25 @@ def run(browser, base):
     pg.click('#btnResetBig'); pg.wait_for_timeout(2500)
     check('đặt lại lần 2 ra đúng cùng dữ liệu', json.dumps(ls(pg, 'mm_fas_log'), sort_keys=True) == snap)
 
+    print('B2. Đọc CSV trực tiếp (không cần build)')
+    csv_txt = (ROOT / 'demo' / 'students.csv').read_text(encoding='utf-8-sig')
+    pg.route('**/demo/students.csv', lambda r: r.fulfill(status=200, content_type='text/csv; charset=utf-8', body=csv_txt + 'hs-test-01,"Trần, Thử Nghiệm",5A11,abc123,ken\n'))
+    pg.click('#btnResetBig'); pg.wait_for_timeout(2500)
+    acc2 = ls(pg, 'mm_accounts')
+    t1 = next((a for a in acc2 if a['id'] == 'hs-test-01'), None)
+    check('sửa CSV (thêm 1 bạn, tên có dấu phẩy) → nạp đúng, không cần chạy build', t1 and t1['name'] == 'Trần, Thử Nghiệm' and t1['pass'] == 'abc123' and len([a for a in acc2 if a['role'] == 'student']) == 151, t1)
+    pg.unroute('**/demo/students.csv')
+    pg.route('**/demo/students.csv', lambda r: r.fulfill(status=200, content_type='text/csv; charset=utf-8', body=csv_txt + 'hs-loi-01,Bạn Lỗi,5A11,x,khongco\n'))
+    before = pg.evaluate("localStorage.getItem('mm_accounts')"); msgs.clear()
+    pg.click('#btnResetBig'); pg.wait_for_timeout(1200)
+    check('CSV sai: báo rõ dòng lỗi và KHÔNG xóa dữ liệu hiện có', any('students.csv dòng 151' in m and 'kiểu' in m for m in msgs) and pg.evaluate("localStorage.getItem('mm_accounts')") == before, msgs)
+    pg.unroute('**/demo/students.csv')
+    pg.route('**/demo/students.csv', lambda r: r.abort())
+    msgs.clear(); pg.click('#btnResetBig'); pg.wait_for_timeout(2500)
+    check('không đọc được CSV (như mở file trực tiếp): dùng bản dự phòng demo_data.js và báo', any('dự phòng' in m for m in msgs) and len([a for a in ls(pg, 'mm_accounts') if a['role'] == 'student']) == 150, msgs)
+    pg.unroute('**/demo/students.csv')
+    pg.click('#btnResetBig'); pg.wait_for_timeout(2500)
+
     print('C. Dùng thử ở các giao diện')
     pg.fill('#username', 'admin'); pg.fill('#password', 'admin2026'); pg.click('#btnSubmit'); pg.wait_for_timeout(1200)
     pg.click('[data-module=accounts]'); pg.wait_for_timeout(800)
@@ -84,6 +104,7 @@ def run(browser, base):
     pg.goto(base + '/index.html'); pg.evaluate("sessionStorage.clear()"); pg.reload(); pg.wait_for_timeout(400)
     pg.fill('#username', 'hs-5a11-01'); pg.fill('#password', 'hs2026'); pg.click('#btnSubmit'); pg.wait_for_timeout(1500)
     check('bé mới đăng nhập được vào Trang chủ học sinh', '/student/' in pg.url, pg.url)
+    errs = [e for e in errs if 'ERR_FAILED' not in e]   # lỗi mạng cố ý ở bước chặn CSV
     check('không lỗi JS', not errs, errs[:3])
 
 def main():

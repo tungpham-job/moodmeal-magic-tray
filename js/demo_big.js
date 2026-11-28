@@ -1,7 +1,8 @@
 /* ════════════════════════════════════════════════════════════
    Dữ liệu demo CẢ KHỐI (150 học sinh) — chỉ trang đăng nhập dùng.
    Nút "Đặt lại + dữ liệu cả khối" gọi mmBigDemoApply() SAU mmSeedAll({force:true}).
-   Nguồn: demo/students.csv (+ demo/fas_manual.csv) → js/demo_data.js (tools/build_demo_data.py).
+   Nguồn: demo/students.csv (+ demo/fas_manual.csv) được ĐỌC TRỰC TIẾP khi bấm nút (mmBigLoadData, bằng fetch).
+   Khi mở file trực tiếp (file://) trình duyệt chặn fetch → dùng bản dự phòng js/demo_data.js (tạo bằng tools/build_demo_data.py).
    Ngày tính theo TUẦN HIỆN TẠI của máy: thực đơn 4 tuần trước + các ngày đã qua của tuần này.
    Điểm FAS sinh theo "kiểu bé" bằng số ngẫu nhiên cố định hạt giống → mỗi lần đặt lại ra cùng một bộ dữ liệu.
    ════════════════════════════════════════════════════════════ */
@@ -112,9 +113,60 @@ function mmBigStudent(stu, menu, overrides) {
   return { rows, xp };
 }
 
+/* Đọc CSV (hỗ trợ BOM, dấu ngoặc kép, dấu phẩy trong ô) → mảng các dòng */
+function mmParseCsv(text) {
+  text = text.replace(/^\uFEFF/, '');
+  const rows = []; let row = [], cell = '', q = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) {
+      if (c === '"') { if (text[i + 1] === '"') { cell += '"'; i++; } else q = false; } else cell += c;
+    } else if (c === '"') q = true;
+    else if (c === ',') { row.push(cell); cell = ''; }
+    else if (c === '\n' || c === '\r') { if (c === '\r' && text[i + 1] === '\n') i++; row.push(cell); cell = ''; rows.push(row); row = []; }
+    else cell += c;
+  }
+  if (cell !== '' || row.length) { row.push(cell); rows.push(row); }
+  return rows.filter(r => r.some(x => x.trim() !== ''));
+}
+
+/* Đọc và kiểm tra demo/students.csv + demo/fas_manual.csv. Trả về {students, overrides, source}; ném lỗi nêu rõ dòng sai. */
+async function mmBigLoadData() {
+  let studentsTxt, manualTxt = '';
+  try {
+    const r = await fetch('demo/students.csv', { cache: 'no-store' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    studentsTxt = await r.text();
+    try { const m = await fetch('demo/fas_manual.csv', { cache: 'no-store' }); if (m.ok) manualTxt = await m.text(); } catch (e) { /* file tùy chọn */ }
+  } catch (e) {
+    if (typeof MM_DEMO_STUDENTS === 'undefined') throw new Error('Không đọc được demo/students.csv (' + e.message + ') và không có bản dự phòng js/demo_data.js');
+    return { students: MM_DEMO_STUDENTS, overrides: (typeof MM_DEMO_OVERRIDES !== 'undefined' ? MM_DEMO_OVERRIDES : []), source: 'js/demo_data.js (dự phòng — mở file trực tiếp nên không đọc được CSV)' };
+  }
+  const errs = [], students = [], seen = new Set();
+  mmParseCsv(studentsTxt).slice(1).forEach((c, i) => {
+    const [id, name, cls, pw, kieu] = [0, 1, 2, 3, 4].map(k => (c[k] || '').trim());
+    const line = 'students.csv dòng ' + (i + 2);
+    if (!(id && name && cls && pw)) { errs.push(line + ': thiếu id / họ_tên / lớp / mật_khẩu'); return; }
+    if (seen.has(id)) { errs.push(line + ': id "' + id + '" bị trùng'); return; }
+    if (['de', 'binh', 'ken'].indexOf(kieu.toLowerCase()) < 0) { errs.push(line + ': kiểu phải là de, binh hoặc ken (đang là "' + kieu + '")'); return; }
+    seen.add(id);
+    students.push([id, name, cls.replace(/\s+/g, '').toUpperCase(), pw, kieu.toLowerCase()]);
+  });
+  const overrides = [];
+  if (manualTxt) mmParseCsv(manualTxt).slice(1).forEach((c, i) => {
+    const sid = (c[0] || '').trim(), w = parseInt(c[1], 10), d = parseInt(c[2], 10), ing = (c[3] || '').trim(), sc = parseInt(c[4], 10);
+    if (!(seen.has(sid) && w >= -4 && w <= 0 && d >= 2 && d <= 6 && ing && sc >= 0 && sc <= 4))
+      errs.push('fas_manual.csv dòng ' + (i + 2) + ': dữ liệu không hợp lệ (id phải có trong students.csv, tuần -4…0, thứ 2–6, điểm 0–4)');
+    else overrides.push([sid, w, d, ing, sc]);
+  });
+  if (!students.length) errs.push('students.csv không có học sinh nào');
+  if (errs.length) throw new Error(errs.slice(0, 8).join('\n') + (errs.length > 8 ? '\n… và ' + (errs.length - 8) + ' lỗi khác' : ''));
+  return { students, overrides, source: 'demo/students.csv' };
+}
+
 /* Ghi dữ liệu cả khối vào localStorage (sau mmSeedAll({force:true})). Trả về thống kê hoặc ném lỗi. */
-function mmBigDemoApply() {
-  if (typeof MM_DEMO_STUDENTS === 'undefined') throw new Error('Thiếu js/demo_data.js — chạy tools/build_demo_data.py');
+function mmBigDemoApply(data) {
+  const STUDENTS = data.students;
   const K = MM_KEYS;
   const real = new (window.MM_RealDate || Date)();
   const monday = new Date(real.getFullYear(), real.getMonth(), real.getDate());
@@ -130,7 +182,7 @@ function mmBigDemoApply() {
 
   /* Ghi đè thủ công (tuần −4…0, thứ 2–6) → quy ra ngày thật */
   const ovBy = {};
-  (typeof MM_DEMO_OVERRIDES !== 'undefined' ? MM_DEMO_OVERRIDES : []).forEach(([sid, w, d, ing, sc]) => {
+  data.overrides.forEach(([sid, w, d, ing, sc]) => {
     const day = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + w * 7 + (d - 2));
     (ovBy[sid] = ovBy[sid] || []).push({ date: toLocalDateStr(day), ing, score: sc });
   });
@@ -141,7 +193,7 @@ function mmBigDemoApply() {
   let fas = store.get(K.FAS_LOG, []).filter(r => dropIds.indexOf(r.studentId) === -1);
   const avatars = ['🧒', '👦', '👧'];
   let nRows = 0;
-  MM_DEMO_STUDENTS.forEach((stu, i) => {
+  STUDENTS.forEach((stu, i) => {
     const [id, name, cls, pass] = stu;
     const res = mmBigStudent(stu, histMenu, ovBy[id] || []);
     accounts.push({ id, pass, role: 'student', name, linkedId: null, avatar: avatars[i % 3], className: cls, xp: res.xp });
@@ -152,6 +204,6 @@ function mmBigDemoApply() {
 
   if (!store.set(K.MENU, menu) || !store.set(K.ACCOUNTS, accounts) || !store.set(K.FAS_LOG, fas))
     throw new Error('Trình duyệt hết dung lượng localStorage — giảm số học sinh hoặc số tuần.');
-  return { students: MM_DEMO_STUDENTS.length, menuDays: new Set(past.map(m => m.date)).size, fasRows: nRows,
+  return { students: STUDENTS.length, source: data.source, menuDays: new Set(past.map(m => m.date)).size, fasRows: nRows,
     chars: JSON.stringify(fas).length + JSON.stringify(accounts).length + JSON.stringify(menu).length };
 }
