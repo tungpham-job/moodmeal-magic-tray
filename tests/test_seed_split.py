@@ -78,6 +78,11 @@ def run(browser, base):
     n_fas, n_menu = len(fas), len(menu)
     pg.evaluate("mmSetDemoPlan()")
     check('chạy lại mmSetDemoPlan không nhân đôi (FAS, thực đơn, yêu cầu)', len(ls(pg, 'mm_fas_log')) == n_fas and len(ls(pg, 'mm_daily_menu')) == n_menu and len(ls(pg, 'mm_home_requests')) == 1)
+    for dt in ['2026-11-30', '2026-12-02', '2026-12-05']:      # thứ Hai, thứ Tư (hay trùng nhóm), thứ Bảy
+        pg2, _ = page_at(browser, base, dt + 'T09:00:00')
+        r = ls(pg2, 'mm_home_requests')[0]; m2 = ls(pg2, 'mm_daily_menu')
+        tg = [m['groupId'] for m in m2 if m['date'] == dt]
+        check(f'{dt}: nhóm của yêu cầu chờ không trùng nhóm món hôm nay (bấm "Muốn" ở món hôm nay không bị báo "đã hẹn rồi"), hạn còn 7 ngày', r['groupId'] not in tg and r['expiresAt'][:10] == pg2.evaluate("(d=>{const x=new Date(d+'T09:00:00');x.setDate(x.getDate()+7);return toLocalDateStr(x)})('" + dt + "')"), (r['groupId'], tg, r['expiresAt']))
     # phụ huynh xác nhận ngay → +20 XP → Trúc lên Level 4
     pg.fill('#username', 'phbaotruc'); pg.fill('#password', 'ph001'); pg.click('#btnSubmit'); pg.wait_for_timeout(800)
     check('đăng nhập phụ huynh: thấy ngay yêu cầu chờ xác nhận', pg.locator('#requestsBox .req-card').count() == 1, pg.url)

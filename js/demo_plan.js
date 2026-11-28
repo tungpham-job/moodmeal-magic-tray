@@ -4,7 +4,7 @@
    Nạp trên MỌI trang, ngay sau seed.js (trước utils.js/auth.js) để máy mở lần đầu ở trang nào cũng có kịch bản.
    • mmSetDemoPlan() — gọi bởi mmSeedAll() sau mmSetDefaultData() + mmSetDemoData() (máy mới hoặc đặt lại), chỉ khi DEMO_MODE bật.
        1. Lịch sử 4 tuần của Bảo Trúc: thực đơn 4 tuần trước (mã m-big-…) + nhật ký FAS sinh theo "kiểu bé" (hạt giống cố định).
-       2. Một yêu cầu "Muốn" đang chờ ba mẹ xác nhận (đăng nhập phụ huynh Bảo Trúc là xác nhận được ngay).
+       2. Một yêu cầu "Muốn" đang chờ ba mẹ xác nhận (đăng nhập phụ huynh Bảo Trúc là xác nhận được ngay); nhóm của món không trùng nhóm nào của thực đơn hôm nay, hạn 7 ngày kể từ lúc đặt lại.
        3. XP sát mốc lên Level cao nhất (cách mốc một lượt đánh giá) + ghi "Level đã thấy" để hoạt ảnh tiến hóa chiếu khi lên Level.
        4. Thực đơn hôm nay: chưa có lượt đánh giá nào của Trúc, có món MỚI và 1 món Rau.
    • Bộ sinh (mmRng, mmBigPastMenu, mmBigStudent…) cũng được js/demo_big.js dùng cho 149 bạn từ CSV.
@@ -138,10 +138,12 @@ function mmSetDemoPlan() {
       .sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : 0);
     const rows = mmBigStudent([truc.id, truc.name, truc.className, truc.pass, 'binh'], histMenu).rows;
 
-    /* 2. Yêu cầu "Muốn" đang chờ ba mẹ: món đầu của ngày có thực đơn gần nhất trước hôm nay, Trúc "Chưa thử" và muốn thử lại ở nhà */
+    /* 2. Yêu cầu "Muốn" đang chờ ba mẹ: một món gần đây Trúc "Chưa thử" và muốn thử lại ở nhà */
     let requests = store.get(K.HOME_REQUESTS, []).filter(r => r.id !== 'rq-demo-truc');
-    const lastDate = histMenu.length ? histMenu[histMenu.length - 1].date : null;
-    const dish = lastDate ? histMenu.find(m => m.date === lastDate) : null;
+    /* Chọn món gần nhất mà NHÓM không trùng nhóm nào của thực đơn hôm nay (trùng thì bấm "Muốn" ở món hôm nay sẽ báo "đã hẹn nhóm này rồi") */
+    const todayGroups = menu.filter(m => m.date === today).map(m => m.groupId);
+    const cands = histMenu.slice().reverse();
+    const dish = cands.find(m => todayGroups.indexOf(m.groupId) < 0) || cands[0] || null;
     if (dish) {
       const idx = rows.findIndex(r => r.timestamp.slice(0, 10) === dish.date && r.foodId === dish.ingredientId);
       if (idx >= 0) rows.splice(idx, 1);
@@ -151,7 +153,7 @@ function mmSetDemoPlan() {
         place: 'school', attempt: null, score: 0, rating: 0, tryAgain: true, notTried: true, timestamp: dish.date + 'T12:20:00' });
       requests.push({ id: 'rq-demo-truc', studentId: truc.id, groupId: dish.groupId, foodId: dish.ingredientId, dishName: dish.name,
         icon: (ing && ing.icon) || '🍽️', createdAt: at.toISOString(),
-        expiresAt: new Date(at.getFullYear(), at.getMonth(), at.getDate() + MM_REQ_EXPIRE_DAYS, 23, 59, 59, 999).toISOString(),
+        expiresAt: new Date(real.getFullYear(), real.getMonth(), real.getDate() + MM_REQ_EXPIRE_DAYS, 23, 59, 59, 999).toISOString(),   // còn đủ 7 ngày kể từ lúc đặt lại
         status: 'pending', respondedAt: null, ratedAt: null });
     }
 
