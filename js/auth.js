@@ -38,7 +38,7 @@
   window.Date = DemoDate;
 })();
 
-/* ── 1. Tài khoản mẫu: xem SEED_ACCOUNTS trong js/seed.js (nạp TRƯỚC file này) ── */
+/* ── 1. Tài khoản mẫu: xem DEFAULT_ACCOUNTS trong js/seed.js (nạp TRƯỚC file này) ── */
 const STORAGE_KEY_ACCOUNTS = MM_KEYS.ACCOUNTS;
 const STORAGE_KEY_SESSION  = MM_KEYS.SESSION;
 const STORAGE_KEY_FLASH    = MM_KEYS.FLASH;   // thông báo hiện ở trang đăng nhập sau khi bị đăng xuất
@@ -61,7 +61,7 @@ const auth = {
 
   /* Lấy danh sách accounts từ localStorage */
   getAccounts() {
-    return store.get(STORAGE_KEY_ACCOUNTS, SEED_ACCOUNTS);
+    return store.get(STORAGE_KEY_ACCOUNTS, DEFAULT_ACCOUNTS);
   },
 
   /* Lưu danh sách accounts (dùng cho School khi CRUD) */

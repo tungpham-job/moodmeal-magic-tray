@@ -1,6 +1,6 @@
 /* ════════════════════════════════════════════════════════════
    Dữ liệu demo CẢ KHỐI (150 học sinh) — chỉ trang đăng nhập dùng.
-   Nút "Đặt lại + dữ liệu cả khối" gọi mmBigDemoApply() SAU mmSeedAll({force:true}).
+   Nút "Đặt lại + dữ liệu cả khối" gọi mmSetDemoBigData() SAU mmSeedAll({force:true}) (= mặc định + demo cơ bản).
    Nguồn: demo/students.csv được ĐỌC TRỰC TIẾP khi bấm nút (mmBigLoadData, bằng fetch) → cần mở qua máy chủ web (không mở file://).
    Ngày tính theo TUẦN HIỆN TẠI của máy: thực đơn 4 tuần trước + các ngày đã qua của tuần này.
    Điểm FAS sinh theo "kiểu bé" bằng số ngẫu nhiên cố định hạt giống → mỗi lần đặt lại ra cùng một bộ dữ liệu.
@@ -153,8 +153,8 @@ async function mmBigLoadData() {
   return { students, source: 'demo/students.csv' };
 }
 
-/* Ghi dữ liệu cả khối vào localStorage (sau mmSeedAll({force:true})). Trả về thống kê hoặc ném lỗi. */
-function mmBigDemoApply(data) {
+/* Ghi dữ liệu cả khối vào localStorage (sau mmSeedAll({force:true}) = mmSetDefaultData + mmSetDemoData). Trả về thống kê hoặc ném lỗi. */
+function mmSetDemoBigData(data) {
   const STUDENTS = data.students;
   const K = MM_KEYS;
   const real = new (window.MM_RealDate || Date)();
@@ -169,7 +169,7 @@ function mmBigDemoApply(data) {
     .filter(m => m.ingredientId && m.groupId)
     .sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : 0);
 
-  /* Tài khoản: giữ nguyên dữ liệu gốc do mmSeedAll tạo (admin, Bảo Trúc, phụ huynh) rồi thêm học sinh từ CSV.
+  /* Tài khoản: giữ nguyên dữ liệu do mmSeedAll tạo (admin, Bảo Trúc, phụ huynh) rồi thêm học sinh từ CSV.
      Bảo Trúc (XP 605 cố định trong seed) cũng được sinh lịch sử FAS 4–5 tuần như các bạn khác (kiểu bé "binh"). */
   const accounts = store.get(K.ACCOUNTS, []);
   let fas = store.get(K.FAS_LOG, []);

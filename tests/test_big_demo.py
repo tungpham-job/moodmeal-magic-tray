@@ -54,7 +54,8 @@ def run(browser, base):
         gs = [m['groupId'] for m in menu if m['date'] == d]
         if len(gs) != 3 or len(set(gs)) != 3: bad = True
     check('mỗi ngày 3 nhóm khác nhau', not bad)
-    check('thực đơn hôm nay vẫn có "Trứng chiên" (món MỚI)', any(m['date'] == today and m['name'] == 'Trứng chiên' and m['isNew'] for m in menu))
+    td = [m for m in menu if m['date'] == today]
+    check('thực đơn hôm nay: đúng 3 món, 3 nhóm khác nhau, có 1 món Rau; không còn "Trứng chiên" tự thêm', len(td) == 3 and len({m['groupId'] for m in td}) == 3 and sum(1 for m in td if m['groupId'] == 'g-rau') == 1 and not any(m['name'] == 'Trứng chiên' for m in td), td)
     # FAS
     mine = list(fas)   # gồm cả Bảo Trúc (seed gốc không còn FAS riêng)
     check('có nhật ký FAS cho cả 150 bạn (gồm Bảo Trúc, sinh theo tuần như các bạn khác)', len({r['studentId'] for r in mine}) == 150 and sum(1 for r in mine if r['studentId'] == 'phambaotruc') > 20 and 4000 < len(mine) < 9500, len(mine))

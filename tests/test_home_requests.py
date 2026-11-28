@@ -7,6 +7,8 @@ Thoát mã 0 nếu mọi bước đạt, mã 1 nếu có bước lỗi. Dùng tr
 import json, socket, subprocess, sys, time
 from pathlib import Path
 from playwright.sync_api import sync_playwright
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from legacy_fixture import add_legacy
 
 ROOT = Path(__file__).resolve().parent.parent
 res = []
@@ -24,7 +26,7 @@ def login(ctx, base, user, pw):
     return pg, errs
 
 def run(browser, base):
-    ctx = browser.new_context(viewport={'width': 430, 'height': 900})
+    ctx = browser.new_context(viewport={'width': 430, 'height': 900}); add_legacy(ctx)
     st, errs_s = login(ctx, base, 'phambaotruc', 'hs001')
     ls = lambda k: json.loads(st.evaluate(f"localStorage.getItem('{k}')") or 'null')
     st.goto(base + '/student/screen2.html'); st.wait_for_timeout(600)

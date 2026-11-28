@@ -11,13 +11,23 @@
      làm giá trị dự phòng.
    • Khi chạy thật, BGH sửa cấu hình thì giá trị mới nằm trong localStorage; seed chỉ được
      ghi khi khóa chưa tồn tại (lần mở đầu) hoặc khi bấm "Đặt lại dữ liệu demo".
-   • Muốn thêm dữ liệu mẫu mới: thêm hằng số ở đây + một dòng trong mmSeedPlan() bên dưới.
+   • Muốn thêm dữ liệu MẶC ĐỊNH mới: thêm hằng số ở Phần A + một dòng trong mmSeedPlan() (Phần C).
+     Muốn thêm dữ liệu DEMO mới: thêm hằng số ở Phần B + ghi trong mmSetDemoData().
    • Đổi CẤU TRÚC dữ liệu: tăng MM_SCHEMA_VERSION và thêm hàm nâng cấp vào MM_MIGRATIONS.
    • Cờ MM_CONFIG.DEMO_MODE (js/config.js): false → chỉ tạo mặc định hệ thống + tài khoản admin.
 
-   PHẦN A — Mặc định hệ thống (cấu hình ban đầu)
-   PHẦN B — Dữ liệu mẫu cho demo
-   PHẦN C — Hàm khởi tạo mmSeedAll()
+   Hai loại thiết lập TÁCH RIÊNG:
+   • mmSetDefaultData(opts) — dữ liệu MẶC ĐỊNH của hệ thống (cần cả khi chạy thật): cấu hình XP, nhóm thực phẩm,
+     huy hiệu, nguyên liệu, tài khoản admin. Thực đơn và nhật ký FAS bắt đầu rỗng.
+   • mmSetDemoData() — dữ liệu DEMO (ghi thêm lên trên mặc định): tài khoản Bảo Trúc + phụ huynh, thực đơn
+     tuần này + tuần sau (+ hôm nay nếu rơi vào cuối tuần), đưa "Ngày hôm nay" về ngày thật.
+     Dữ liệu demo cả khối (150 bạn, 4 tuần trước) nằm ở js/demo_big.js: mmSetDemoBigData().
+   • mmSeedAll(opts) — hàm gọi từ auth.js: luôn mmSetDefaultData; thêm mmSetDemoData khi DEMO_MODE bật và là
+     máy mới (chưa có tài khoản) hoặc đặt lại (force).
+
+   PHẦN A — Mặc định hệ thống (dữ liệu + cấu hình ban đầu)
+   PHẦN B — Dữ liệu demo (tài khoản, thực đơn) + mmSetDemoData()
+   PHẦN C — Cấu trúc dữ liệu, mmSetDefaultData(), mmSeedAll()
 ═══════════════════════════════════════════════════════════════ */
 
 /* ═════════════ PHẦN A — MẶC ĐỊNH HỆ THỐNG ═════════════ */
@@ -103,9 +113,7 @@ const DEFAULT_INGREDIENTS = MM_DEFAULT_INGREDIENT_LIST;
 const MM_EXTRA_INGREDIENTS = MM_DEFAULT_INGREDIENT_LIST.filter(x =>
   ['com-trang','thit-heo','trung','ca','rau-muong','ca-rot','ca-chua','bau','bong-cai','chuoi'].indexOf(x.id) < 0);
 
-/* ═════════════ PHẦN B — DỮ LIỆU MẪU (DEMO) ═════════════ */
-
-/* ── Seed: Tài khoản mẫu (Demo) ──────────────── */
+/* ── Seed: Tài khoản mặc định (admin) ────────── */
 /*
    Production: thay bằng API call đến api.gs
    Demo: dữ liệu lưu localStorage key "mm_accounts"
@@ -119,7 +127,7 @@ const MM_EXTRA_INGREDIENTS = MM_DEFAULT_INGREDIENT_LIST.filter(x =>
      avatar:   string   — emoji đại diện
    }
 */
-const SEED_ACCOUNTS = [
+const DEFAULT_ACCOUNTS = [
   {
     id: 'admin',
     pass: 'admin2026',
@@ -128,6 +136,12 @@ const SEED_ACCOUNTS = [
     linkedId: null,
     avatar: '🏫'
   },
+];
+
+/* ═════════════ PHẦN B — DỮ LIỆU DEMO ═════════════ */
+
+/* ── Demo: tài khoản Phạm Bảo Trúc + phụ huynh ── */
+const DEMO_ACCOUNTS = [
   {
     id: 'phambaotruc',
     pass: 'hs001',
@@ -175,10 +189,9 @@ const MM_DEMO_WEEKS = [
     ['Mì xào rau củ','mi'], ['Đậu đen hầm','dau-den','n'], ['Rau dền luộc','rau-den'] ],
 ];
 
-/* Thực đơn demo 2 tuần + món "Trứng chiên" (món MỚI) cho ngày hôm nay.
-   Dùng ngày thật của máy: đặt lại cũng đưa ngày giả lập về ngày thật. Hôm nay luôn có đúng
-   3 món (có 1 món Rau): "Trứng chiên" + 2 món khác nhóm (lấy từ thực đơn của hôm nay, ngày cuối tuần lấy của thứ Hai). */
-function mmDemoMenuWithToday() {
+/* Thực đơn demo: 2 tuần (T2–T6 tuần này + tuần sau) theo ngày thật của máy. Hôm nay luôn có đúng 3 món
+   (có 1 món Rau): ngày trong tuần lấy từ bảng; thứ Bảy/Chủ nhật lấy 3 món của thứ Hai gán vào ngày hôm nay. */
+function mmDemoMenu() {
   const realNow = new (window.MM_RealDate || Date)();
   const today = toLocalDateStr(realNow);
   const ing = id => MM_DEFAULT_INGREDIENT_LIST.find(x => x.id === id);
@@ -192,19 +205,25 @@ function mmDemoMenuWithToday() {
   const out = [];
   MM_DEMO_WEEKS.forEach((dishes, k) => {
     const day = new Date(mon); day.setDate(mon.getDate() + Math.floor(k / 5) * 7 + (k % 5));
-    const date = toLocalDateStr(day);
-    if (date === today) return;                       // hôm nay xử lý riêng bên dưới
-    dishes.forEach((d, i) => out.push(mk(date, d, i)));
+    dishes.forEach((d, i) => out.push(mk(toLocalDateStr(day), d, i)));
   });
-  const idx = (realNow.getDay() + 6) % 7;               // 0 = thứ Hai … 6 = Chủ nhật
-  const noEgg = MM_DEMO_WEEKS[idx < 5 ? idx : 0].filter(d => MM_INGREDIENT_GROUP[d[1]] !== 'g-trung');
-  const base = noEgg.slice(0, 2);
-  if (!base.some(d => MM_INGREDIENT_GROUP[d[1]] === 'g-rau')) base[1] = noEgg.find(d => MM_INGREDIENT_GROUP[d[1]] === 'g-rau');   // luôn có 1 món Rau
-  /* "Trứng chiên" (món MỚI) đứng đầu danh sách của hôm nay, rồi 2 món nền không "MỚI" */
-  out.push({ id: 'm-demo-trung-chien', date: today, name: 'Trứng chiên', ingredientId: 'trung', groupId: 'g-trung',
-    icon: '🥚', isNew: true });
-  base.forEach((d, i) => out.push(mk(today, [d[0], d[1]], i)));
+  if (!out.some(m => m.date === today)) MM_DEMO_WEEKS[0].forEach((d, i) => out.push(mk(today, d, i)));   // cuối tuần
   return out;
+}
+
+/* THIẾT LẬP DỮ LIỆU DEMO — ghi thêm lên trên dữ liệu mặc định (gọi sau mmSetDefaultData):
+   tài khoản Bảo Trúc + phụ huynh, thực đơn demo, đưa "Ngày hôm nay" về ngày thật. */
+function mmSetDemoData() {
+  const K = MM_KEYS;
+  try {
+    const accounts = store.get(K.ACCOUNTS, []);
+    DEMO_ACCOUNTS.forEach(d => { if (!accounts.some(a => a.id === d.id)) accounts.push(Object.assign({}, d)); });
+    store.set(K.ACCOUNTS, accounts);
+    store.set(K.MENU, mmDemoMenu());
+    store.remove(K.DEMO_DATE);
+  } catch (e) {
+    console.warn('Không thiết lập được dữ liệu demo', e);
+  }
 }
 
 /* ═════════════ PHẦN C — KHỞI TẠO ═════════════ */
@@ -326,43 +345,41 @@ const MM_MIGRATIONS = {
   },
 };
 
-/* Kế hoạch dữ liệu khởi tạo: [khóa, hàm trả về giá trị].
-   DEMO_MODE = false → chỉ phần mặc định hệ thống + tài khoản admin, danh sách còn lại để trống. */
+/* Kế hoạch dữ liệu MẶC ĐỊNH: [khóa, hàm trả về giá trị]. Tài khoản chỉ có admin; nhật ký FAS rỗng. */
 function mmSeedPlan() {
   const K = MM_KEYS;
-  const demo = !(typeof MM_CONFIG !== 'undefined' && MM_CONFIG.DEMO_MODE === false);
   return [
     [K.XP_CONFIG,   () => DEFAULT_XP_CONFIG],
     [K.FOOD_GROUPS, () => DEFAULT_FOOD_GROUPS],
     [K.BADGES,      () => DEFAULT_BADGES],
-    [K.ACCOUNTS,    () => (demo ? SEED_ACCOUNTS : SEED_ACCOUNTS.filter(a => a.role === 'admin'))],
+    [K.ACCOUNTS,    () => DEFAULT_ACCOUNTS],
     [K.FAS_LOG,     () => []],
   ];
 }
 
-/* HÀM DUY NHẤT thiết lập dữ liệu mặc định/mẫu (gọi từ js/auth.js trên mọi trang).
-   • mmSeedAll()              — ghi các khóa còn THIẾU, rồi nâng cấp cấu trúc nếu cần.
-   • mmSeedAll({force:true})  — ghi lại TẤT CẢ (nút "Đặt lại dữ liệu demo").
-   Nguyên liệu và thực đơn đi cặp: thiếu một trong hai thì ghi lại cả hai
-   (demo: kèm món "Trứng chiên" cho hôm nay). */
-function mmSeedAll(opts) {
+/* THIẾT LẬP DỮ LIỆU MẶC ĐỊNH (cần cả khi chạy thật).
+   • mmSetDefaultData()            — ghi các khóa còn THIẾU, rồi nâng cấp cấu trúc nếu cần.
+   • mmSetDefaultData({force:true}) — ghi lại TẤT CẢ.
+   Nguyên liệu và thực đơn đi cặp: thiếu một trong hai thì ghi lại cả hai (thực đơn bắt đầu rỗng).
+   Trả về { fresh } — true khi là máy mới (chưa có tài khoản) hoặc ghi lại (force). */
+function mmSetDefaultData(opts) {
   const force = !!(opts && opts.force);
   const K = MM_KEYS;
-  const demo = !(typeof MM_CONFIG !== 'undefined' && MM_CONFIG.DEMO_MODE === false);
   try {
     const stored = store.get(K.SCHEMA, null);
     if (!force && typeof stored === 'number' && stored > MM_SCHEMA_VERSION) {
       console.warn('Dữ liệu trong trình duyệt mới hơn code (v' + stored + ' > v' + MM_SCHEMA_VERSION +
                    '): không thay đổi. Hãy tải lại trang bằng Ctrl+F5.');
-      return;
+      return { fresh: false };
     }
     const plan = mmSeedPlan();
     const hadData = plan.some(([key]) => store.has(key)) || store.has(K.MENU) || store.has(K.INGREDIENTS);
+    const fresh = force || !store.has(K.ACCOUNTS);
 
     plan.forEach(([key, make]) => { if (force || !store.has(key)) store.set(key, make()); });
     if (force || !store.has(K.INGREDIENTS) || !store.has(K.MENU)) {
       store.set(K.INGREDIENTS, DEFAULT_INGREDIENTS);
-      store.set(K.MENU, demo ? mmDemoMenuWithToday() : []);
+      store.set(K.MENU, []);
     }
 
     // Nâng cấp cấu trúc: máy mới/đặt lại đã ở bản hiện tại; dữ liệu cũ chưa có số phiên bản = v0
@@ -371,7 +388,18 @@ function mmSeedAll(opts) {
       if (typeof MM_MIGRATIONS[v] === 'function') MM_MIGRATIONS[v]();
     }
     store.set(K.SCHEMA, MM_SCHEMA_VERSION);
+    return { fresh };
   } catch (e) {
-    console.warn('Không khởi tạo được dữ liệu mẫu', e);
+    console.warn('Không khởi tạo được dữ liệu mặc định', e);
+    return { fresh: false };
   }
+}
+
+/* HÀM KHỞI TẠO (gọi từ js/auth.js trên mọi trang): luôn thiết lập dữ liệu mặc định; thêm dữ liệu demo khi
+   MM_CONFIG.DEMO_MODE bật và là máy mới hoặc đặt lại (force). Nút "Đặt lại dữ liệu demo" gọi
+   mmSeedAll({force:true}) rồi mmSetDemoBigData() (js/demo_big.js). */
+function mmSeedAll(opts) {
+  const demo = !(typeof MM_CONFIG !== 'undefined' && MM_CONFIG.DEMO_MODE === false);
+  const r = mmSetDefaultData(opts);
+  if (demo && r && r.fresh) mmSetDemoData();
 }

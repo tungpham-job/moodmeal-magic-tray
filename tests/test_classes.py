@@ -96,6 +96,15 @@ def run(browser, base):
     check('lớp chưa có dữ liệu FAS: bảng báo "Không có dữ liệu"', 'Không có dữ liệu' in pg.inner_text('#fasTableBody'))
     pg.select_option('#filterClass', ''); pg.wait_for_timeout(300)
     check('bỏ lọc lớp: đủ 3 dòng như cũ', pg.locator('#fasTableBody tr').count() == 3)
+    # Cần hỗ trợ: bạn điểm cao ngay từ đầu (FAS 4 → 4, FAG 0) KHÔNG được đưa vào, bạn FAS thấp thì có
+    pg.evaluate("""()=>{const a=JSON.parse(localStorage.getItem('mm_accounts')); a.push({id:'hs-cao',pass:'x',role:'student',name:'Bé Điểm Cao',linkedId:null,avatar:'🧒',className:'4A9',xp:0});
+      localStorage.setItem('mm_accounts',JSON.stringify(a));
+      const L=JSON.parse(localStorage.getItem('mm_fas_log'));
+      [[1,'2026-11-02'],[2,'2026-11-09']].forEach(([n,d])=>L.push({studentId:'hs-cao',foodId:'rau-muong',foodName:'Rau muống',groupId:'g-rau',place:'school',attempt:n,score:4,rating:4,tryAgain:false,timestamp:d+'T12:00:00'}));
+      localStorage.setItem('mm_fas_log',JSON.stringify(L));}""")
+    pg.reload(); pg.wait_for_timeout(600); pg.click('[data-module=report]'); pg.wait_for_timeout(500)
+    bot = pg.inner_text('#statBottom3')
+    check('Cần hỗ trợ: bạn FAS cao ngay từ đầu (4 → 4, FAG 0) không bị đưa vào; bạn FAS thấp vẫn có', 'Bé Điểm Cao' not in bot and 'Nguyễn Minh An' in bot, bot)
     with pg.expect_download() as dl:
         pg.click('button:has-text("Xuất CSV")')
     txt = Path(dl.value.path()).read_text(encoding='utf-8-sig').splitlines()

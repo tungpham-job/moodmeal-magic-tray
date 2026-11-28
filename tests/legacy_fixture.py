@@ -1,4 +1,4 @@
-"""Dữ liệu mẫu CŨ cho test (không còn trong seed gốc): 4 dòng FAS Bông cải xanh của Bảo Trúc + học sinh mẫu cũ (Nguyễn Minh An 4A9, Trần Thanh Khoa 3A4) — không còn trong dữ liệu gốc (js/seed.js).
+"""Dữ liệu mẫu CŨ cho test (không còn trong seed gốc): 4 dòng FAS Bông cải xanh của Bảo Trúc + học sinh mẫu cũ + thực đơn hôm nay có "Trứng chiên" (Nguyễn Minh An 4A9, Trần Thanh Khoa 3A4) — không còn trong dữ liệu gốc (js/seed.js).
 Các bộ test cần thêm học sinh thì gọi add_legacy(ctx) ngay sau khi tạo context: sau khi trang tải xong (seed đã chạy),
 đoạn script thêm 2 bé + phụ huynh + FAS cũ vào localStorage một lần duy nhất (cờ mm_legacy_fx)."""
 
@@ -27,6 +27,16 @@ window.addEventListener('load', function () {
     fas.sort(function (a, b) { return a.timestamp < b.timestamp ? -1 : a.timestamp > b.timestamp ? 1 : 0; });
     localStorage.setItem('mm_accounts', JSON.stringify(acc));
     localStorage.setItem('mm_fas_log', JSON.stringify(fas));
+    /* thực đơn hôm nay như bộ demo cũ: "Trứng chiên" (MỚI) đứng đầu + 2 món (có 1 món Rau) */
+    var menu = JSON.parse(localStorage.getItem('mm_daily_menu') || '[]');
+    var today = toLocalDateStr(new (window.MM_RealDate || Date)());
+    var td = menu.filter(function (m) { return m.date === today; });
+    var rest = menu.filter(function (m) { return m.date !== today; });
+    var rau = td.find(function (m) { return m.groupId === 'g-rau'; });
+    var other = td.find(function (m) { return m !== rau && m.groupId !== 'g-trung'; });
+    rest.push({id:'m-fx-trung', date:today, name:'Trứng chiên', ingredientId:'trung', groupId:'g-trung', icon:'🥚', isNew:true});
+    [other, rau].forEach(function (m) { if (m) rest.push(m); });
+    localStorage.setItem('mm_daily_menu', JSON.stringify(rest));
     localStorage.setItem('mm_legacy_fx', '1');
   } catch (e) {}
 });

@@ -19,7 +19,7 @@ const KEY = {
 function loadKey(key, fallback) { return store.get(key, fallback); }
 function saveKey(key, data)     { store.set(key, data); }
 
-/* Dữ liệu mặc định / mẫu (DEFAULT_*) nằm ở js/seed.js; hàm mmSeedAll() ghi vào localStorage khi chưa có. */
+/* Dữ liệu mặc định (DEFAULT_*) và demo (DEMO_*) nằm ở js/seed.js; mmSeedAll() = mmSetDefaultData() + mmSetDemoData() (khi demo) ghi vào localStorage khi chưa có. */
 
 /* ══════════════════════════════════════════════
    SESSION & INIT
@@ -1529,6 +1529,8 @@ function fasChainsOf(fasLog) {
   return Object.values(chains);
 }
 
+const MM_NEED_HELP_FAS = 3;   // ngưỡng FAS hiện tại: từ mức này trở lên thì không xếp vào "Cần hỗ trợ thêm"
+
 function renderFasStats(fasLog, accounts) {
   const chains = fasChainsOf(fasLog.filter(r => r.groupId));
 
@@ -1538,23 +1540,27 @@ function renderFasStats(fasLog, accounts) {
   const tryRate = fasLog.length ? Math.round((fasLog.filter(r => r.tryAgain).length / fasLog.length) * 100) : 0;
 
   // FAG của mỗi học sinh = tổng FAG của các nhóm (mỗi nhóm: FAS lượt thật cuối − lượt thật đầu, cả trường và nhà)
-  const fagMap = {};
+  const fagMap = {}, fasSum = {}, fasN = {};
   chains.forEach(c => {
     if (!c.rows.some(r => r.score >= 1)) return;
     fagMap[c.studentId] = (fagMap[c.studentId] || 0) + (mmGroupFag(c.rows) || 0);
+    const f = mmGroupFas(c.rows);                       // FAS hiện tại của nhóm (lượt thật gần nhất)
+    if (f !== null) { fasSum[c.studentId] = (fasSum[c.studentId] || 0) + f; fasN[c.studentId] = (fasN[c.studentId] || 0) + 1; }
   });
 
   const fagByStudent = Object.entries(fagMap).map(([id, fag]) => {
     const acc = accounts.find(a => a.id === id);
     const cls = classOf(acc);
-    return { name: (acc?.name || id) + (cls ? ` (${cls})` : ''), fag: +fag.toFixed(2) };
+    return { name: (acc?.name || id) + (cls ? ` (${cls})` : ''), fag: +fag.toFixed(2), fas: fasN[id] ? fasSum[id] / fasN[id] : null };
   }).sort((a, b) => b.fag - a.fag);
 
   document.getElementById('statAvgFas').textContent = avgFas;
   document.getElementById('statTryRate').textContent = tryRate + '%';
   document.getElementById('statTop3').innerHTML = fagByStudent.slice(0, 3)
     .map(s => `<div style="font-size:12px">🏆 ${escHtml(s.name)} <strong>+${s.fag}</strong></div>`).join('') || '—';
-  document.getElementById('statBottom3').innerHTML = fagByStudent.slice(-3).reverse()
+  /* Cần hỗ trợ: chỉ xét bạn có FAS hiện tại (trung bình các nhóm) < 3.0, lấy 3 bạn FAG thấp nhất — bạn điểm cao ngay từ đầu (FAG ≈ 0) không bị đưa vào */
+  const needHelp = fagByStudent.filter(s => s.fas !== null && s.fas < MM_NEED_HELP_FAS).slice(-3).reverse();
+  document.getElementById('statBottom3').innerHTML = needHelp
     .map(s => `<div style="font-size:12px">📌 ${escHtml(s.name)} <strong>${s.fag >= 0 ? '+' : ''}${s.fag}</strong></div>`).join('') || '—';
 }
 
