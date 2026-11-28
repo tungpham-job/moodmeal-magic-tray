@@ -10,7 +10,7 @@
 ═══════════════════════════════════════════════ */
 
 const XP_LOG_KEY      = MM_KEYS.XP_LOG;
-/* XP nền của học sinh mẫu (DEFAULT_XP_BASE) và cấu hình mặc định (DEFAULT_XP_CONFIG): xem js/seed.js */
+/* XP nền = trường `xp` của tài khoản (không có thì 0); cấu hình mặc định (DEFAULT_XP_CONFIG): xem js/seed.js */
 
 function xpRead(key, fallback) { return store.get(key, fallback); }
 
@@ -33,7 +33,7 @@ function xpAmount(actionId) {
 /* ── XP của học sinh ──────────────────────────── */
 function getXpBase(studentId) {
   const acc = xpRead(MM_KEYS.ACCOUNTS, []).find(a => a.id === studentId);
-  return acc && typeof acc.xp === 'number' ? acc.xp : DEFAULT_XP_BASE;
+  return acc && typeof acc.xp === 'number' ? acc.xp : 0;
 }
 
 /* Tổng XP đã cộng trong sổ cho học sinh */

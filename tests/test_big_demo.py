@@ -56,8 +56,8 @@ def run(browser, base):
     check('mỗi ngày 3 nhóm khác nhau', not bad)
     check('thực đơn hôm nay vẫn có "Trứng chiên" (món MỚI)', any(m['date'] == today and m['name'] == 'Trứng chiên' and m['isNew'] for m in menu))
     # FAS
-    mine = [r for r in fas if r['studentId'].startswith('hs-')]
-    check('có nhật ký FAS cho cả 149 bạn', len({r['studentId'] for r in mine}) == 149 and 4000 < len(mine) < 9500, len(mine))
+    mine = list(fas)   # gồm cả Bảo Trúc (seed gốc không còn FAS riêng)
+    check('có nhật ký FAS cho cả 150 bạn (gồm Bảo Trúc, sinh theo tuần như các bạn khác)', len({r['studentId'] for r in mine}) == 150 and sum(1 for r in mine if r['studentId'] == 'phambaotruc') > 20 and 4000 < len(mine) < 9500, len(mine))
     check('mọi lượt đều trước hôm nay, trong 5 tuần gần nhất', all(r['timestamp'][:10] < today for r in mine))
     ok = True; seq = {}
     for r in sorted(mine, key=lambda r: r['timestamp']):
@@ -93,8 +93,8 @@ def run(browser, base):
     check('CSV sai: báo rõ dòng lỗi và KHÔNG xóa dữ liệu hiện có', any('students.csv dòng 151' in m and 'kiểu' in m for m in msgs) and pg.evaluate("localStorage.getItem('mm_accounts')") == before, msgs)
     pg.unroute('**/demo/students.csv')
     pg.route('**/demo/students.csv', lambda r: r.abort())
-    msgs.clear(); pg.click('#btnReset'); pg.wait_for_timeout(2500)
-    check('không đọc được CSV (như mở file trực tiếp): dùng bản dự phòng demo_data.js và báo', any('dự phòng' in m for m in msgs) and len([a for a in ls(pg, 'mm_accounts') if a['role'] == 'student']) == 150, msgs)
+    before = pg.evaluate("localStorage.getItem('mm_accounts')"); msgs.clear(); pg.click('#btnReset'); pg.wait_for_timeout(1500)
+    check('không đọc được CSV (mở file trực tiếp): báo cần máy chủ web và KHÔNG xóa dữ liệu hiện có', any('máy chủ web' in m for m in msgs) and pg.evaluate("localStorage.getItem('mm_accounts')") == before, msgs)
     pg.unroute('**/demo/students.csv')
     pg.click('#btnReset'); pg.wait_for_timeout(2500)
 

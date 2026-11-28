@@ -1,8 +1,7 @@
 /* ════════════════════════════════════════════════════════════
    Dữ liệu demo CẢ KHỐI (150 học sinh) — chỉ trang đăng nhập dùng.
    Nút "Đặt lại + dữ liệu cả khối" gọi mmBigDemoApply() SAU mmSeedAll({force:true}).
-   Nguồn: demo/students.csv (+ demo/fas_manual.csv) được ĐỌC TRỰC TIẾP khi bấm nút (mmBigLoadData, bằng fetch).
-   Khi mở file trực tiếp (file://) trình duyệt chặn fetch → dùng bản dự phòng js/demo_data.js (tạo bằng tools/build_demo_data.py).
+   Nguồn: demo/students.csv được ĐỌC TRỰC TIẾP khi bấm nút (mmBigLoadData, bằng fetch) → cần mở qua máy chủ web (không mở file://).
    Ngày tính theo TUẦN HIỆN TẠI của máy: thực đơn 4 tuần trước + các ngày đã qua của tuần này.
    Điểm FAS sinh theo "kiểu bé" bằng số ngẫu nhiên cố định hạt giống → mỗi lần đặt lại ra cùng một bộ dữ liệu.
    ════════════════════════════════════════════════════════════ */
@@ -21,6 +20,7 @@ function mmRng(seedStr) {
 }
 
 const MM_BIG_WEEKS_BACK = 4;          // số tuần ĐẦY ĐỦ trước tuần hiện tại
+const MM_BIG_TRUC_ID = 'phambaotruc';   // tài khoản demo có sẵn trong seed: sinh FAS nhưng giữ XP
 const MM_BIG_PER_DAY = 3;             // món mỗi ngày
 const MM_BIG_GAP = 2;                 // một nhóm chỉ lặp lại sau ≥ 2 ngày
 const MM_BIG_COOK = {                 // cách nấu để tên món tự nhiên hơn (nhóm → các kiểu)
@@ -75,7 +75,7 @@ const MM_BIG_GROUP_BIAS = {
 function mmBigGauss(rnd) { return (rnd() + rnd() + rnd() - 1.5) * 1.15; }   // gần chuẩn, độ lệch ≈ 1
 
 /* Sinh nhật ký FAS + XP cho 1 học sinh; trả về {rows, xp} */
-function mmBigStudent(stu, menu, overrides) {
+function mmBigStudent(stu, menu) {
   const [id, , , , kieu] = stu;
   const t = MM_BIG_TYPE[kieu] || MM_BIG_TYPE.binh;
   const rnd = mmRng('fas-' + id);
@@ -91,9 +91,7 @@ function mmBigStudent(stu, menu, overrides) {
     if (rnd() < 0.2) return;                                              // không đánh giá món này
     const g = m.groupId, k = triedCount[g] || 0;
     let score;
-    const ov = overrides.find(o => o.date === m.date && o.ing === m.ingredientId);
-    if (ov) score = ov.score;
-    else if (rnd() < t.none) score = 0;
+    if (rnd() < t.none) score = 0;
     else {
       const mu = t.base + offset + groupAff[g] + 0.2 * Math.min(k, 5);
       score = Math.max(1, Math.min(4, Math.round(mu + mmBigGauss(rnd) * 0.7)));
@@ -130,17 +128,15 @@ function mmParseCsv(text) {
   return rows.filter(r => r.some(x => x.trim() !== ''));
 }
 
-/* Đọc và kiểm tra demo/students.csv + demo/fas_manual.csv. Trả về {students, overrides, source}; ném lỗi nêu rõ dòng sai. */
+/* Đọc và kiểm tra demo/students.csv. Trả về {students, source}; ném lỗi nêu rõ dòng sai. */
 async function mmBigLoadData() {
-  let studentsTxt, manualTxt = '';
+  let studentsTxt;
   try {
     const r = await fetch('demo/students.csv', { cache: 'no-store' });
     if (!r.ok) throw new Error('HTTP ' + r.status);
     studentsTxt = await r.text();
-    try { const m = await fetch('demo/fas_manual.csv', { cache: 'no-store' }); if (m.ok) manualTxt = await m.text(); } catch (e) { /* file tùy chọn */ }
   } catch (e) {
-    if (typeof MM_DEMO_STUDENTS === 'undefined') throw new Error('Không đọc được demo/students.csv (' + e.message + ') và không có bản dự phòng js/demo_data.js');
-    return { students: MM_DEMO_STUDENTS, overrides: (typeof MM_DEMO_OVERRIDES !== 'undefined' ? MM_DEMO_OVERRIDES : []), source: 'js/demo_data.js (dự phòng — mở file trực tiếp nên không đọc được CSV)' };
+    throw new Error('Không đọc được demo/students.csv (' + e.message + ').\nHãy mở trang qua máy chủ web (http://…), không mở file trực tiếp (file://).');
   }
   const errs = [], students = [], seen = new Set();
   mmParseCsv(studentsTxt).slice(1).forEach((c, i) => {
@@ -152,16 +148,9 @@ async function mmBigLoadData() {
     seen.add(id);
     students.push([id, name, cls.replace(/\s+/g, '').toUpperCase(), pw, kieu.toLowerCase()]);
   });
-  const overrides = [];
-  if (manualTxt) mmParseCsv(manualTxt).slice(1).forEach((c, i) => {
-    const sid = (c[0] || '').trim(), w = parseInt(c[1], 10), d = parseInt(c[2], 10), ing = (c[3] || '').trim(), sc = parseInt(c[4], 10);
-    if (!(seen.has(sid) && w >= -4 && w <= 0 && d >= 2 && d <= 6 && ing && sc >= 0 && sc <= 4))
-      errs.push('fas_manual.csv dòng ' + (i + 2) + ': dữ liệu không hợp lệ (id phải có trong students.csv, tuần -4…0, thứ 2–6, điểm 0–4)');
-    else overrides.push([sid, w, d, ing, sc]);
-  });
   if (!students.length) errs.push('students.csv không có học sinh nào');
   if (errs.length) throw new Error(errs.slice(0, 8).join('\n') + (errs.length > 8 ? '\n… và ' + (errs.length - 8) + ' lỗi khác' : ''));
-  return { students, overrides, source: 'demo/students.csv' };
+  return { students, source: 'demo/students.csv' };
 }
 
 /* Ghi dữ liệu cả khối vào localStorage (sau mmSeedAll({force:true})). Trả về thống kê hoặc ném lỗi. */
@@ -180,21 +169,17 @@ function mmBigDemoApply(data) {
     .filter(m => m.ingredientId && m.groupId)
     .sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : 0);
 
-  /* Ghi đè thủ công (tuần −4…0, thứ 2–6) → quy ra ngày thật */
-  const ovBy = {};
-  data.overrides.forEach(([sid, w, d, ing, sc]) => {
-    const day = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + w * 7 + (d - 2));
-    (ovBy[sid] = ovBy[sid] || []).push({ date: toLocalDateStr(day), ing, score: sc });
-  });
-
-  /* Tài khoản: giữ nguyên dữ liệu gốc do mmSeedAll tạo (admin, Bảo Trúc, phụ huynh) rồi thêm học sinh từ CSV */
+  /* Tài khoản: giữ nguyên dữ liệu gốc do mmSeedAll tạo (admin, Bảo Trúc, phụ huynh) rồi thêm học sinh từ CSV.
+     Bảo Trúc (XP 605 cố định trong seed) cũng được sinh lịch sử FAS 4–5 tuần như các bạn khác (kiểu bé "binh"). */
   const accounts = store.get(K.ACCOUNTS, []);
   let fas = store.get(K.FAS_LOG, []);
   const avatars = ['🧒', '👦', '👧'];
   let nRows = 0;
+  const truc = accounts.find(a => a.id === MM_BIG_TRUC_ID);
+  if (truc) { const r0 = mmBigStudent([truc.id, truc.name, truc.className, truc.pass, 'binh'], histMenu); fas = fas.concat(r0.rows); nRows += r0.rows.length; }
   STUDENTS.forEach((stu, i) => {
     const [id, name, cls, pass] = stu;
-    const res = mmBigStudent(stu, histMenu, ovBy[id] || []);
+    const res = mmBigStudent(stu, histMenu);
     accounts.push({ id, pass, role: 'student', name, linkedId: null, avatar: avatars[i % 3], className: cls, xp: res.xp });
     fas = fas.concat(res.rows);
     nRows += res.rows.length;

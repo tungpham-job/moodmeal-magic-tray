@@ -18,7 +18,8 @@ def check(name, ok, detail=''):
     print(('  [ĐẠT] ' if ok else '  [LỖI] ') + name + (f'  → {detail}' if detail and not ok else ''))
 
 def student_part(browser, base):
-    page = browser.new_context(viewport={'width': 430, 'height': 900}).new_page()
+    ctx1 = browser.new_context(viewport={'width': 430, 'height': 900}); add_legacy(ctx1)
+    page = ctx1.new_page()
     errs = []
     page.on('pageerror', lambda e: errs.append(str(e)))
     page.on('console', lambda m: m.type == 'error' and errs.append(m.text))
@@ -91,7 +92,8 @@ def student_part(browser, base):
     check('không lỗi JS (Học sinh)', not errs, errs)
 
     # Đánh giá thật lần đầu của nhóm Trứng: ngày khác để vượt khóa "mỗi ngày một lần"
-    page2 = browser.new_context(viewport={'width': 430, 'height': 900}).new_page()
+    ctx2 = browser.new_context(viewport={'width': 430, 'height': 900}); add_legacy(ctx2)
+    page2 = ctx2.new_page()
     page2.goto(base + '/index.html'); page2.fill('#username', 'phambaotruc'); page2.fill('#password', 'hs001'); page2.click('#btnSubmit'); page2.wait_for_timeout(700)
     page2.goto(base + '/student/screen2.html'); page2.wait_for_timeout(600)
     page2.click('#hd-0'); page2.wait_for_timeout(250)

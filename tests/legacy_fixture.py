@@ -1,4 +1,4 @@
-"""Học sinh mẫu cũ (Nguyễn Minh An 4A9, Trần Thanh Khoa 3A4) — không còn trong dữ liệu gốc (js/seed.js).
+"""Dữ liệu mẫu CŨ cho test (không còn trong seed gốc): 4 dòng FAS Bông cải xanh của Bảo Trúc + học sinh mẫu cũ (Nguyễn Minh An 4A9, Trần Thanh Khoa 3A4) — không còn trong dữ liệu gốc (js/seed.js).
 Các bộ test cần thêm học sinh thì gọi add_legacy(ctx) ngay sau khi tạo context: sau khi trang tải xong (seed đã chạy),
 đoạn script thêm 2 bé + phụ huynh + FAS cũ vào localStorage một lần duy nhất (cờ mm_legacy_fx)."""
 
@@ -19,7 +19,11 @@ window.addEventListener('load', function () {
       r('nguyenminhan','ca-rot','g-cu','Cà rốt',2,2,true,'2026-10-15T12:00:00'),
       r('nguyenminhan','ca-rot','g-cu','Cà rốt',3,2,false,'2026-10-22T12:00:00'),
       r('tranthanhkhoa','rau-muong','g-rau','Rau muống',1,3,false,'2026-10-10T12:00:00'),
-      r('tranthanhkhoa','rau-muong','g-rau','Rau muống',2,4,false,'2026-10-17T12:00:00'));
+      r('tranthanhkhoa','rau-muong','g-rau','Rau muống',2,4,false,'2026-10-17T12:00:00'),
+      r('phambaotruc','bong-cai','g-rau','Bông cải xanh',1,1,true,'2026-10-07T12:00:00'),
+      r('phambaotruc','bong-cai','g-rau','Bông cải xanh',2,2,true,'2026-10-09T12:00:00'),
+      r('phambaotruc','bong-cai','g-rau','Bông cải xanh',3,2,true,'2026-10-14T12:00:00'),
+      r('phambaotruc','bong-cai','g-rau','Bông cải xanh',4,3,false,'2026-10-21T12:00:00'));
     fas.sort(function (a, b) { return a.timestamp < b.timestamp ? -1 : a.timestamp > b.timestamp ? 1 : 0; });
     localStorage.setItem('mm_accounts', JSON.stringify(acc));
     localStorage.setItem('mm_fas_log', JSON.stringify(fas));

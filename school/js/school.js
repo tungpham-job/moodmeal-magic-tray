@@ -1484,7 +1484,7 @@ function resetCharacters() {
    MODULE ③ — BÁO CÁO FAS
 ══════════════════════════════════════════════ */
 function renderReport() {
-  const fasLog  = loadKey(KEY.FAS_LOG, DEFAULT_FAS_LOG);
+  const fasLog  = loadKey(KEY.FAS_LOG, []);
   const accounts = auth.getAccounts().filter(a => a.role === 'student');
 
   // Stats cards
@@ -1559,7 +1559,7 @@ function renderFasStats(fasLog, accounts) {
 }
 
 function applyReportFilter() {
-  const fasLog   = loadKey(KEY.FAS_LOG, DEFAULT_FAS_LOG);
+  const fasLog   = loadKey(KEY.FAS_LOG, []);
   const accounts = auth.getAccounts().filter(a => a.role === 'student');
   /* Lớp đang chọn: thống kê phía trên và bảng chi tiết chỉ tính học sinh của lớp đó */
   const cls = document.getElementById('filterClass').value;
@@ -1629,7 +1629,7 @@ function renderFasTable(fasLog, accounts, stuFilter, groupFilter, placeFilter) {
 function csvCell(v) { return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"'; }
 
 function exportCSV() {
-  const fasLog = loadKey(KEY.FAS_LOG, DEFAULT_FAS_LOG);
+  const fasLog = loadKey(KEY.FAS_LOG, []);
   const accounts = auth.getAccounts();
   const header = ['Học sinh', 'Lớp', 'Nhóm', 'Nguyên liệu', 'Món', 'Nơi thử', 'Lần thử của nhóm', 'FAS', 'TRY AGAIN', 'Thời gian'].map(csvCell).join(',');
   const rows = fasLog.map(r => {

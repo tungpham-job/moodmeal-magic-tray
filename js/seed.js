@@ -149,9 +149,6 @@ const SEED_ACCOUNTS = [
   },
 ];
 
-/* XP nền của học sinh mẫu: các lần cộng XP sau này cộng dồn lên số này */
-const DEFAULT_XP_BASE = 185;
-
 /* Thực đơn demo cho tuần này và tuần sau (thứ Hai–thứ Sáu, theo ngày thật của máy):
    mỗi ngày 3 món thuộc 3 nhóm khác nhau, trong đó luôn có 1 món nhóm Rau (để thử chấm điểm FAS); món có cờ `n` là món "MỚI" của ngày đó.
    Nhóm lấy từ nguyên liệu (MM_INGREDIENT_GROUP). 10 ngày = 2 tuần × 5 ngày. */
@@ -209,14 +206,6 @@ function mmDemoMenuWithToday() {
   base.forEach((d, i) => out.push(mk(today, [d[0], d[1]], i)));
   return out;
 }
-
-/* ── Seed: FAS log (demo) ────────────────────── */
-const DEFAULT_FAS_LOG = [
-  { studentId:'phambaotruc', foodId:'bong-cai', groupId:'g-rau', place:'school', foodName:'Bông cải xanh', attempt:1, score:1, rating:1, tryAgain:true,  timestamp:'2026-10-07T12:00:00' },
-  { studentId:'phambaotruc', foodId:'bong-cai', groupId:'g-rau', place:'school', foodName:'Bông cải xanh', attempt:2, score:2, rating:2, tryAgain:true,  timestamp:'2026-10-09T12:00:00' },
-  { studentId:'phambaotruc', foodId:'bong-cai', groupId:'g-rau', place:'school', foodName:'Bông cải xanh', attempt:3, score:2, rating:2, tryAgain:true,  timestamp:'2026-10-14T12:00:00' },
-  { studentId:'phambaotruc', foodId:'bong-cai', groupId:'g-rau', place:'school', foodName:'Bông cải xanh', attempt:4, score:3, rating:3, tryAgain:false, timestamp:'2026-10-21T12:00:00' },
-];
 
 /* ═════════════ PHẦN C — KHỞI TẠO ═════════════ */
 
@@ -347,7 +336,7 @@ function mmSeedPlan() {
     [K.FOOD_GROUPS, () => DEFAULT_FOOD_GROUPS],
     [K.BADGES,      () => DEFAULT_BADGES],
     [K.ACCOUNTS,    () => (demo ? SEED_ACCOUNTS : SEED_ACCOUNTS.filter(a => a.role === 'admin'))],
-    [K.FAS_LOG,     () => (demo ? DEFAULT_FAS_LOG : [])],
+    [K.FAS_LOG,     () => []],
   ];
 }
 
