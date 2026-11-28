@@ -500,7 +500,7 @@ let menuView   = 'week';      // 'week' | 'month'
 let menuAnchor = new Date();  // một ngày bất kỳ trong tuần/tháng đang xem
 
 function renderMenuTab() {
-  const menu     = loadKey(KEY.MENU, DEFAULT_MENU);
+  const menu     = loadKey(KEY.MENU, []);
   const grid     = document.getElementById('weekGrid');
   const todayStr = toLocalDateStr(new Date());
   const dayNames = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];

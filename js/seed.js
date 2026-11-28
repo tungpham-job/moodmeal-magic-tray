@@ -152,18 +152,6 @@ const SEED_ACCOUNTS = [
 /* XP nền của học sinh mẫu: các lần cộng XP sau này cộng dồn lên số này */
 const DEFAULT_XP_BASE = 185;
 
-/* ── Seed: Daily menu ────────────────────────── */
-const DEFAULT_MENU = [
-  { id:'m01', date:'2026-10-20', name:'Cơm trắng',        ingredientId:'com-trang', groupId:'g-tinh-bot', isNew: false },
-  { id:'m02', date:'2026-10-20', name:'Thịt kho trứng',   ingredientId:'thit-heo', groupId:'g-thit', isNew: false },
-  { id:'m03', date:'2026-10-20', name:'Rau muống xào tỏi',ingredientId:'rau-muong', groupId:'g-rau', isNew: false },
-  { id:'m04', date:'2026-10-20', name:'Canh chua',         ingredientId:'ca-chua', groupId:'g-rau-qua', isNew: false },
-  { id:'m05', date:'2026-10-21', name:'Cơm trắng',         ingredientId:'com-trang', groupId:'g-tinh-bot', isNew: false },
-  { id:'m06', date:'2026-10-21', name:'Cá kho tộ',         ingredientId:'ca', groupId:'g-hai-san', isNew: false },
-  { id:'m07', date:'2026-10-21', name:'Bông cải xanh xào', ingredientId:'bong-cai', groupId:'g-rau', isNew: true  },
-  { id:'m08', date:'2026-10-21', name:'Canh bầu',          ingredientId:'bau', groupId:'g-rau-qua', isNew: true  },
-];
-
 /* Thực đơn demo cho tuần này và tuần sau (thứ Hai–thứ Sáu, theo ngày thật của máy):
    mỗi ngày 3 món thuộc 3 nhóm khác nhau, trong đó luôn có 1 món nhóm Rau (để thử chấm điểm FAS); món có cờ `n` là món "MỚI" của ngày đó.
    Nhóm lấy từ nguyên liệu (MM_INGREDIENT_GROUP). 10 ngày = 2 tuần × 5 ngày. */
@@ -190,7 +178,7 @@ const MM_DEMO_WEEKS = [
     ['Mì xào rau củ','mi'], ['Đậu đen hầm','dau-den','n'], ['Rau dền luộc','rau-den'] ],
 ];
 
-/* Thực đơn mẫu + thực đơn demo 2 tuần + món "Trứng chiên" (món MỚI) cho ngày hôm nay.
+/* Thực đơn demo 2 tuần + món "Trứng chiên" (món MỚI) cho ngày hôm nay.
    Dùng ngày thật của máy: đặt lại cũng đưa ngày giả lập về ngày thật. Hôm nay luôn có đúng
    3 món (có 1 món Rau): "Trứng chiên" + 2 món khác nhóm (lấy từ thực đơn của hôm nay, ngày cuối tuần lấy của thứ Hai). */
 function mmDemoMenuWithToday() {
@@ -204,7 +192,7 @@ function mmDemoMenuWithToday() {
   /* thứ Hai của tuần này */
   const mon = new Date(realNow.getFullYear(), realNow.getMonth(), realNow.getDate());
   mon.setDate(mon.getDate() - ((mon.getDay() + 6) % 7));
-  const out = DEFAULT_MENU.slice();
+  const out = [];
   MM_DEMO_WEEKS.forEach((dishes, k) => {
     const day = new Date(mon); day.setDate(mon.getDate() + Math.floor(k / 5) * 7 + (k % 5));
     const date = toLocalDateStr(day);
