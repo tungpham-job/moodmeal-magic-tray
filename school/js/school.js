@@ -1511,7 +1511,8 @@ function renderFasStats(fasLog, accounts) {
 
   const fagByStudent = Object.entries(fagMap).map(([id, fag]) => {
     const acc = accounts.find(a => a.id === id);
-    return { name: acc?.name || id, fag: +fag.toFixed(2) };
+    const cls = classOf(acc);
+    return { name: (acc?.name || id) + (cls ? ` (${cls})` : ''), fag: +fag.toFixed(2) };
   }).sort((a, b) => b.fag - a.fag);
 
   document.getElementById('statAvgFas').textContent = avgFas;

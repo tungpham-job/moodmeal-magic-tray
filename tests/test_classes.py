@@ -86,6 +86,7 @@ def run(browser, base):
     pg.select_option('#filterClass', '4A9'); pg.wait_for_timeout(300)
     check('lọc lớp 4A9: bảng chỉ còn Minh An', pg.locator('#fasTableBody tr').count() == 1 and 'Nguyễn Minh An' in pg.inner_text('#fasTableBody'))
     check('thống kê theo lớp: Top 3 / Cần hỗ trợ chỉ có Minh An; FAS trung bình = 2.00 (chuỗi 1→2→2)', 'Nguyễn Minh An' in pg.inner_text('#statTop3') and 'Bảo Trúc' not in pg.inner_text('#statTop3') + pg.inner_text('#statBottom3') and pg.inner_text('#statAvgFas') == '2.00' and avg_all != '2.00', (pg.inner_text('#statAvgFas'), avg_all))
+    check('Top 3 / Cần hỗ trợ ghi lớp trong ngoặc: "Nguyễn Minh An (4A9)"', 'Nguyễn Minh An (4A9)' in pg.inner_text('#statTop3') + pg.inner_text('#statBottom3'), pg.inner_text('#statTop3') + pg.inner_text('#statBottom3'))
     check('ô học sinh thu theo lớp', pg.locator('#filterStudent option').all_inner_texts() == ['— Tất cả học sinh —', 'Nguyễn Minh An'], pg.locator('#filterStudent option').all_inner_texts())
     pg.select_option('#filterClass', '4B2'); pg.wait_for_timeout(300)
     check('lớp chưa có dữ liệu FAS: bảng báo "Không có dữ liệu"', 'Không có dữ liệu' in pg.inner_text('#fasTableBody'))
