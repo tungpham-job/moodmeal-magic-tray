@@ -7,6 +7,8 @@ Thoát mã 0 nếu mọi bước đạt, mã 1 nếu có bước lỗi. Dùng tr
 import json, socket, subprocess, sys, time
 from pathlib import Path
 from playwright.sync_api import sync_playwright
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from legacy_fixture import add_legacy
 
 ROOT = Path(__file__).resolve().parent.parent
 res = []
@@ -103,7 +105,8 @@ def student_part(browser, base):
     check('hành tinh Trứng mở khóa (1/3)', 'unlocked' in (page2.locator('.planet-card').nth(3).get_attribute('class') or '') and '1 / 3' in page2.locator('.planet-card').nth(3).inner_text())
 
 def admin_part(browser, base):
-    page = browser.new_context(viewport={'width': 1300, 'height': 900}).new_page()
+    ctx = browser.new_context(viewport={'width': 1300, 'height': 900}); add_legacy(ctx)
+    page = ctx.new_page()
     errs = []
     page.on('pageerror', lambda e: errs.append(str(e)))
     page.on('console', lambda m: m.type == 'error' and errs.append(m.text))

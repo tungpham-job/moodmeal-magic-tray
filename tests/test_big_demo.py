@@ -27,7 +27,9 @@ def run(browser, base):
     print('A. Nút Đặt lại thường vẫn nhẹ')
     pg.click('#btnReset'); pg.wait_for_timeout(1200)
     acc = ls(pg, 'mm_accounts')
-    check('đặt lại thường: 3 bé mẫu như cũ (không có bé hs-…)', not any(a['id'].startswith('hs-') for a in acc) and any(a['id'] == 'nguyenminhan' for a in acc))
+    check('đặt lại thường: chỉ 3 tài khoản gốc (admin, Bảo Trúc, phụ huynh), không có bé hs-… và không có Minh An/Thanh Khoa', sorted(a['id'] for a in acc) == ['admin', 'phambaotruc', 'phbaotruc'], [a['id'] for a in acc])
+    fas0 = ls(pg, 'mm_fas_log')
+    check('đặt lại thường: FAS gốc chỉ còn 4 dòng của Bảo Trúc', len(fas0) == 4 and all(r['studentId'] == 'phambaotruc' for r in fas0), len(fas0))
 
     print('B. Đặt lại + dữ liệu cả khối')
     pg.click('#btnResetBig'); pg.wait_for_timeout(2500)
@@ -37,7 +39,7 @@ def run(browser, base):
     from collections import Counter
     cc = Counter(a['className'] for a in stu)
     check('5 lớp, mỗi lớp 30 bạn (5A12 gồm Bảo Trúc)', dict(cc) == {'3A2': 30, '4A5': 30, '4A6': 30, '5A11': 30, '5A12': 30}, dict(cc))
-    check('giữ admin, Bảo Trúc (5A12, xp 605) và phụ huynh; bỏ Minh An/Thanh Khoa', {'admin', 'phambaotruc', 'phbaotruc'} <= {a['id'] for a in acc} and next(a for a in acc if a['id'] == 'phambaotruc')['xp'] == 605 and not any(a['id'] in ('nguyenminhan', 'tranthanhkhoa', 'phminhan', 'phthanhkhoa') for a in acc), [a['id'] for a in acc if a['role'] != 'student'])
+    check('giữ admin, Bảo Trúc (5A12, xp 605) và phụ huynh; không có Minh An/Thanh Khoa (seed gốc đã bỏ)', {'admin', 'phambaotruc', 'phbaotruc'} <= {a['id'] for a in acc} and next(a for a in acc if a['id'] == 'phambaotruc')['xp'] == 605 and not any(a['id'] in ('nguyenminhan', 'tranthanhkhoa', 'phminhan', 'phthanhkhoa') for a in acc), [a['id'] for a in acc if a['role'] != 'student'])
     check('bé mới không có phụ huynh, có xp', all(a['linkedId'] is None and isinstance(a['xp'], int) for a in stu if a['id'].startswith('hs-')))
     # thực đơn
     today = pg.evaluate("toLocalDateStr(new (window.MM_RealDate||Date)())")

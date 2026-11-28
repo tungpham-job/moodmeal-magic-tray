@@ -1,0 +1,32 @@
+"""Học sinh mẫu cũ (Nguyễn Minh An 4A9, Trần Thanh Khoa 3A4) — không còn trong dữ liệu gốc (js/seed.js).
+Các bộ test cần thêm học sinh thì gọi add_legacy(ctx) ngay sau khi tạo context: sau khi trang tải xong (seed đã chạy),
+đoạn script thêm 2 bé + phụ huynh + FAS cũ vào localStorage một lần duy nhất (cờ mm_legacy_fx)."""
+
+SCRIPT = """
+window.addEventListener('load', function () {
+  try {
+    if (localStorage.getItem('mm_legacy_fx') || !localStorage.getItem('mm_accounts')) return;
+    var acc = JSON.parse(localStorage.getItem('mm_accounts'));
+    acc.push(
+      {id:'nguyenminhan', pass:'hs002', role:'student', name:'Nguyễn Minh An', linkedId:'phminhan', avatar:'🧒', className:'4A9'},
+      {id:'tranthanhkhoa', pass:'hs003', role:'student', name:'Trần Thanh Khoa', linkedId:'phthanhkhoa', avatar:'🧒', className:'3A4'},
+      {id:'phminhan', pass:'ph002', role:'parent', name:'Phụ huynh Minh An', linkedId:'nguyenminhan', avatar:'👩'},
+      {id:'phthanhkhoa', pass:'ph003', role:'parent', name:'Phụ huynh Thanh Khoa', linkedId:'tranthanhkhoa', avatar:'👩'});
+    var fas = JSON.parse(localStorage.getItem('mm_fas_log') || '[]');
+    var r = function (s, f, g, n, a, sc, t, ts) { return {studentId:s, foodId:f, groupId:g, place:'school', foodName:n, attempt:a, score:sc, rating:sc, tryAgain:t, timestamp:ts}; };
+    fas.push(
+      r('nguyenminhan','ca-rot','g-cu','Cà rốt',1,1,true,'2026-10-08T12:00:00'),
+      r('nguyenminhan','ca-rot','g-cu','Cà rốt',2,2,true,'2026-10-15T12:00:00'),
+      r('nguyenminhan','ca-rot','g-cu','Cà rốt',3,2,false,'2026-10-22T12:00:00'),
+      r('tranthanhkhoa','rau-muong','g-rau','Rau muống',1,3,false,'2026-10-10T12:00:00'),
+      r('tranthanhkhoa','rau-muong','g-rau','Rau muống',2,4,false,'2026-10-17T12:00:00'));
+    fas.sort(function (a, b) { return a.timestamp < b.timestamp ? -1 : a.timestamp > b.timestamp ? 1 : 0; });
+    localStorage.setItem('mm_accounts', JSON.stringify(acc));
+    localStorage.setItem('mm_fas_log', JSON.stringify(fas));
+    localStorage.setItem('mm_legacy_fx', '1');
+  } catch (e) {}
+});
+"""
+
+def add_legacy(ctx):
+    ctx.add_init_script(SCRIPT)

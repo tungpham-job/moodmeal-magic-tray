@@ -140,24 +140,6 @@ const SEED_ACCOUNTS = [
     xp: 605
   },
   {
-    id: 'nguyenminhan',
-    pass: 'hs002',
-    role: 'student',
-    name: 'Nguyễn Minh An',
-    linkedId: 'phminhan',
-    avatar: '🧒',
-    className: '4A9'
-  },
-  {
-    id: 'tranthanhkhoa',
-    pass: 'hs003',
-    role: 'student',
-    name: 'Trần Thanh Khoa',
-    linkedId: 'phthanhkhoa',
-    avatar: '🧒',
-    className: '3A4'
-  },
-  {
     id: 'phbaotruc',
     pass: 'ph001',
     role: 'parent',
@@ -165,22 +147,6 @@ const SEED_ACCOUNTS = [
     linkedId: 'phambaotruc',
     avatar: '👩'
   },
-  {
-    id: 'phminhan',
-    pass: 'ph002',
-    role: 'parent',
-    name: 'Phụ huynh Minh An',
-    linkedId: 'nguyenminhan',
-    avatar: '👨'
-  },
-  {
-    id: 'phthanhkhoa',
-    pass: 'ph003',
-    role: 'parent',
-    name: 'Phụ huynh Thanh Khoa',
-    linkedId: 'tranthanhkhoa',
-    avatar: '👩'
-  }
 ];
 
 /* XP nền của học sinh mẫu: các lần cộng XP sau này cộng dồn lên số này */
@@ -262,11 +228,6 @@ const DEFAULT_FAS_LOG = [
   { studentId:'phambaotruc', foodId:'bong-cai', groupId:'g-rau', place:'school', foodName:'Bông cải xanh', attempt:2, score:2, rating:2, tryAgain:true,  timestamp:'2026-10-09T12:00:00' },
   { studentId:'phambaotruc', foodId:'bong-cai', groupId:'g-rau', place:'school', foodName:'Bông cải xanh', attempt:3, score:2, rating:2, tryAgain:true,  timestamp:'2026-10-14T12:00:00' },
   { studentId:'phambaotruc', foodId:'bong-cai', groupId:'g-rau', place:'school', foodName:'Bông cải xanh', attempt:4, score:3, rating:3, tryAgain:false, timestamp:'2026-10-21T12:00:00' },
-  { studentId:'nguyenminhan', foodId:'ca-rot', groupId:'g-cu', place:'school',   foodName:'Cà rốt',        attempt:1, score:1, rating:1, tryAgain:true,  timestamp:'2026-10-08T12:00:00' },
-  { studentId:'nguyenminhan', foodId:'ca-rot', groupId:'g-cu', place:'school',   foodName:'Cà rốt',        attempt:2, score:2, rating:2, tryAgain:true,  timestamp:'2026-10-15T12:00:00' },
-  { studentId:'nguyenminhan', foodId:'ca-rot', groupId:'g-cu', place:'school',   foodName:'Cà rốt',        attempt:3, score:2, rating:2, tryAgain:false, timestamp:'2026-10-22T12:00:00' },
-  { studentId:'tranthanhkhoa', foodId:'rau-muong', groupId:'g-rau', place:'school', foodName:'Rau muống',   attempt:1, score:3, rating:3, tryAgain:false, timestamp:'2026-10-10T12:00:00' },
-  { studentId:'tranthanhkhoa', foodId:'rau-muong', groupId:'g-rau', place:'school', foodName:'Rau muống',   attempt:2, score:4, rating:4, tryAgain:false, timestamp:'2026-10-17T12:00:00' },
 ];
 
 /* ═════════════ PHẦN C — KHỞI TẠO ═════════════ */

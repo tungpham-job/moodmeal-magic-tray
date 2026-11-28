@@ -187,10 +187,9 @@ function mmBigDemoApply(data) {
     (ovBy[sid] = ovBy[sid] || []).push({ date: toLocalDateStr(day), ing, score: sc });
   });
 
-  /* Tài khoản: bỏ 2 bé mẫu cũ (lớp 4A9, 3A4) để 5 lớp đủ 30 bạn; giữ admin, Bảo Trúc và phụ huynh */
-  const dropIds = ['nguyenminhan', 'tranthanhkhoa'];
-  const accounts = store.get(K.ACCOUNTS, []).filter(a => dropIds.indexOf(a.id) === -1 && dropIds.indexOf(a.linkedId) === -1);
-  let fas = store.get(K.FAS_LOG, []).filter(r => dropIds.indexOf(r.studentId) === -1);
+  /* Tài khoản: giữ nguyên dữ liệu gốc do mmSeedAll tạo (admin, Bảo Trúc, phụ huynh) rồi thêm học sinh từ CSV */
+  const accounts = store.get(K.ACCOUNTS, []);
+  let fas = store.get(K.FAS_LOG, []);
   const avatars = ['🧒', '👦', '👧'];
   let nRows = 0;
   STUDENTS.forEach((stu, i) => {

@@ -7,6 +7,8 @@ Thoát mã 0 nếu mọi bước đạt, mã 1 nếu có bước lỗi. Dùng tr
 import json, socket, subprocess, sys, time
 from pathlib import Path
 from playwright.sync_api import sync_playwright
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from legacy_fixture import add_legacy
 
 ROOT = Path(__file__).resolve().parent.parent
 res = []
@@ -19,6 +21,7 @@ def ls(pg, k): return json.loads(pg.evaluate(f"localStorage.getItem('{k}')") or 
 
 def run(browser, base):
     ctx = browser.new_context(viewport={'width': 1400, 'height': 900}, accept_downloads=True)
+    add_legacy(ctx)
     pg = ctx.new_page(); errs = []
     pg.on('pageerror', lambda e: errs.append(str(e)))
     pg.on('console', lambda m: m.type == 'error' and errs.append(m.text))

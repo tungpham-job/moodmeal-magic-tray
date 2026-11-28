@@ -7,6 +7,8 @@ Thoát mã 0 nếu mọi bước đạt, mã 1 nếu có bước lỗi. Dùng tr
 import base64, json, socket, subprocess, sys, tempfile, time
 from pathlib import Path
 from playwright.sync_api import sync_playwright
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from legacy_fixture import add_legacy
 
 ROOT = Path(__file__).resolve().parent.parent
 res = []
@@ -35,6 +37,7 @@ def assign(ad, sid, char_id):
 
 def run(browser, base):
     ctx = browser.new_context(viewport={'width': 430, 'height': 900})
+    add_legacy(ctx)
     ad, errs_a = login(ctx, base, 'admin', 'admin2026')
 
     print('0. Dữ liệu mẫu: Phạm Bảo Trúc 605 XP, Gạo → Kim Vương (Level 4)')

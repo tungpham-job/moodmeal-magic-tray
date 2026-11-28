@@ -5,6 +5,8 @@ Chạy:  python tests/test_char_locked.py
 import json, socket, subprocess, sys, time
 from pathlib import Path
 from playwright.sync_api import sync_playwright
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from legacy_fixture import add_legacy
 
 ROOT = Path(__file__).resolve().parent.parent
 res = []
@@ -28,6 +30,7 @@ def set_active(pg, ids_off):
 
 def run(browser, base):
     ctx = browser.new_context(viewport={'width': 500, 'height': 900}); errs = []
+    add_legacy(ctx)
     ctx.new_page().goto(base + '/index.html')
     ad = login(ctx, base, 'admin', 'admin2026', errs)
     ad.set_viewport_size({'width': 1400, 'height': 900})
