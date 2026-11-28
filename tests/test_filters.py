@@ -21,7 +21,7 @@ def run(browser, base):
     pg.on('pageerror', lambda e: errs.append(str(e)))
     pg.on('console', lambda m: m.type == 'error' and errs.append(m.text))
     pg.on('dialog', lambda d: d.accept())
-    pg.goto(base + '/index.html'); pg.click('#btnResetBig'); pg.wait_for_timeout(2500)
+    pg.goto(base + '/index.html'); pg.click('#btnReset'); pg.wait_for_timeout(2500)
     pg.fill('#username', 'admin'); pg.fill('#password', 'admin2026'); pg.click('#btnSubmit'); pg.wait_for_timeout(1500)
     vis = lambda: pg.locator('#accountsTbody tr:visible').count()
     acc = ls(pg, 'mm_accounts')
