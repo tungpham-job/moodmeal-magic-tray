@@ -171,7 +171,7 @@ function renderAccounts() {
     }
 
     return `
-      <tr data-id="${escHtml(acc.id)}" data-role="${escHtml(acc.role)}" data-class="${escHtml(classOf(acc))}">
+      <tr data-id="${escHtml(acc.id)}" data-role="${escHtml(acc.role)}" data-class="${escHtml(classOf(acc))}" data-level="${acc.role === 'student' ? getLevelInfo(getStudentXp(acc.id)).level : ''}" data-locked="${acc.locked ? 1 : 0}">
         <td><code style="font-size:12px">${escHtml(acc.id)}</code></td>
         <td><strong>${escHtml(acc.name)}</strong></td>
         <td>${acc.role !== 'student' ? '<span style="color:#aaa">—</span>' : classOf(acc) ? escHtml(classOf(acc)) : '<span style="color:#aaa">Chưa có lớp</span>'}</td>
@@ -189,7 +189,22 @@ function renderAccounts() {
       </tr>`;
   }).join('');
   fillClassFilter('accFilterClass', accounts);
+  fillAccLevelFilter();
   if (typeof filterAccountsTable === 'function') filterAccountsTable();
+}
+
+/* Ô lọc Level: theo bảng "Cấu hình Level" hiện hành (giữ lựa chọn nếu level còn tồn tại) */
+function fillAccLevelFilter() {
+  const sel = document.getElementById('accFilterLevel'); if (!sel) return;
+  const keep = sel.value;
+  sel.innerHTML = '<option value="">— Tất cả level —</option>' +
+    sortedLevels().map(l => `<option value="${l.level}">Level ${l.level} · ${escHtml(l.name)}</option>`).join('');
+  sel.value = [...sel.options].some(o => o.value === keep) ? keep : '';
+}
+
+/* "Làm mới": đưa các ô lọc về giá trị ban đầu (bỏ lọc) rồi mới dựng lại bảng */
+function resetFilters(ids) {
+  ids.forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
 }
 
 function roleLabel(role) {
@@ -1662,6 +1677,8 @@ function refreshTab(kind) {
     report:    renderReport,
   }[kind];
   if (!fn) return;
+  if (kind === 'accounts') resetFilters(['accFilterRole', 'accFilterClass', 'accFilterLevel', 'accFilterStatus', 'accSearch']);
+  if (kind === 'report')   resetFilters(['filterClass', 'filterStudent', 'filterFood', 'filterPlace']);
   fn();
   showToast('Đã làm mới');
 }

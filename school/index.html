@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏫</text></svg>">
   <title>Ban Giám Hiệu — MOODMEAL MAGIC TRAY</title>
-  <link rel="stylesheet" href="../css/base.css?v=20261128j">
-  <link rel="stylesheet" href="../css/school.css?v=20261128j">
-  <link rel="stylesheet" href="../css/characters.css?v=20261128j">
+  <link rel="stylesheet" href="../css/base.css?v=20261128k">
+  <link rel="stylesheet" href="../css/school.css?v=20261128k">
+  <link rel="stylesheet" href="../css/characters.css?v=20261128k">
 </head>
 <body class="page-school">
 <div class="school-layout">
@@ -75,11 +75,25 @@
         <div class="content-card sticky-card">
           <div class="content-card-header">
             <span class="content-card-title">Danh sách tài khoản</span>
-            <div style="display:flex;gap:8px">
-              <select class="form-control" id="accFilterClass" style="width:140px;padding:6px 10px;font-size:12px" onchange="filterAccountsTable()">
+            <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
+              <select class="form-control" id="accFilterRole" style="width:130px;padding:6px 10px;font-size:12px" onchange="filterAccountsTable()">
+                <option value="">— Tất cả vai trò —</option>
+                <option value="admin">BGH</option>
+                <option value="student">Học sinh</option>
+                <option value="parent">Phụ huynh</option>
+              </select>
+              <select class="form-control" id="accFilterClass" style="width:138px;padding:6px 10px;font-size:12px" onchange="filterAccountsTable()">
                 <option value="">— Tất cả lớp —</option>
               </select>
-              <input class="form-control" id="accSearch" style="width:220px;padding:6px 10px;font-size:12px"
+              <select class="form-control" id="accFilterLevel" style="width:140px;padding:6px 10px;font-size:12px" onchange="filterAccountsTable()">
+                <option value="">— Tất cả level —</option>
+              </select>
+              <select class="form-control" id="accFilterStatus" style="width:150px;padding:6px 10px;font-size:12px" onchange="filterAccountsTable()">
+                <option value="">— Tất cả trạng thái —</option>
+                <option value="active">✅ Hoạt động</option>
+                <option value="locked">🔒 Tạm khóa</option>
+              </select>
+              <input class="form-control" id="accSearch" style="width:190px;padding:6px 10px;font-size:12px"
                 placeholder="🔍 Tìm tên, ID hoặc lớp..." oninput="filterAccountsTable()">
             </div>
           </div>
@@ -666,24 +680,30 @@
 </div>
 
 <!-- ══ SCRIPTS ══ -->
-<script src="../js/config.js?v=20261128j"></script>
-<script src="../js/seed.js?v=20261128j"></script>
-<script src="../js/utils.js?v=20261128j"></script>
-<script src="../js/store.js?v=20261128j"></script>
-<script src="../js/auth.js?v=20261128j"></script>
-<script src="../js/xp.js?v=20261128j"></script>
-<script src="../js/characters.js?v=20261128j"></script>
-<script src="../js/badges.js?v=20261128j"></script>
-<script src="js/school.js?v=20261128j"></script>
+<script src="../js/config.js?v=20261128k"></script>
+<script src="../js/seed.js?v=20261128k"></script>
+<script src="../js/utils.js?v=20261128k"></script>
+<script src="../js/store.js?v=20261128k"></script>
+<script src="../js/auth.js?v=20261128k"></script>
+<script src="../js/xp.js?v=20261128k"></script>
+<script src="../js/characters.js?v=20261128k"></script>
+<script src="../js/badges.js?v=20261128k"></script>
+<script src="js/school.js?v=20261128k"></script>
 <script>
   /* Filter accounts table by search */
   function filterAccountsTable() {
     const q = (document.getElementById('accSearch').value || '').toLowerCase();
     const cls = document.getElementById('accFilterClass').value;   // '' = tất cả · '__none' = học sinh chưa có lớp · còn lại = tên lớp
+    const role = document.getElementById('accFilterRole').value;
+    const lvl  = document.getElementById('accFilterLevel').value;   // số level; chỉ học sinh có level
+    const stat = document.getElementById('accFilterStatus').value;  // 'active' | 'locked'
     document.querySelectorAll('#accountsTbody tr').forEach(r => {
       const okText = r.textContent.toLowerCase().includes(q);
       const okCls = !cls || (cls === '__none' ? (r.dataset.role === 'student' && !r.dataset.class) : r.dataset.class === cls);
-      r.style.display = okText && okCls ? '' : 'none';
+      const okRole = !role || r.dataset.role === role;
+      const okLvl = !lvl || r.dataset.level === lvl;
+      const okStat = !stat || (stat === 'locked') === (r.dataset.locked === '1');
+      r.style.display = okText && okCls && okRole && okLvl && okStat ? '' : 'none';
     });
   }
 
