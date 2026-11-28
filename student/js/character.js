@@ -71,8 +71,8 @@
     host.innerHTML = cardHtml(ch, idx);
     const chg = document.getElementById('petChg');
     if (chg) chg.addEventListener('click', () => {
-      const list = mmCharAll(false);
-      if (!list.some(c => c.id === ch.id)) list.push(ch);     /* nhân vật hiện tại bị BGH tắt vẫn hiện (đang đồng hành) */
+      const list = mmCharAll(true);                            /* gồm cả bạn bị tắt (hiện khóa 🔒); bạn đang đồng hành không bị khóa */
+      if (!list.some(c => c.id === ch.id)) list.push(ch);
       showChooser(list, ch);
     });
     /* Level tăng từ lần mở trước → chiếu hoạt ảnh tiến hóa một lần. Chưa có ghi nhận (BGH vừa gán) → hiện thẳng, không chiếu. */
@@ -103,6 +103,15 @@
     let picked = null;
     const change = !!cur, aIdx = change ? curIdx() : 0, info = getLevelInfo(getStudentXp(sid));
     const nm = c => change ? (mmCharStage(c, aIdx).name || c.name) : c.name;
+    /* Nhân vật BGH đã tắt vẫn hiện nhưng khóa 🔒 (trừ bạn đang đồng hành) */
+    const isLocked = c => c.active === false && !(change && c.id === cur.id);
+    const lockedN = list.filter(isLocked).length, openCount = list.length - lockedN;
+    const noteHtml = () => !lockedN
+      ? (change ? '' : `<div class="cp-note">Có ${list.length} bạn đồng hành để chọn. Em chọn một bạn nhé!</div>`)
+      : !openCount
+        ? '<div class="cp-note">🔒 Các bạn đồng hành đang tạm khóa, em quay lại sau nhé!</div>'
+        : change ? `<div class="cp-note" style="margin-top:6px">🔒 ${lockedN} bạn đang tạm khóa, chưa chọn được</div>`
+                 : `<div class="cp-note">Có ${openCount} bạn đồng hành để chọn · ${lockedN} bạn đang <b>🔒 tạm khóa</b>. Em chọn một bạn nhé!</div>`;
     const ov = document.createElement('div');
     ov.className = 'char-pick'; ov.id = 'charPick';
     ov.innerHTML = `
@@ -111,10 +120,13 @@
         ${change ? `<span class="cp-lv">Level ${info.level} · ${escHtml(info.name)}</span>` : ''}</div>
       <div class="cp-body">
         <div class="cp-grid">${list.map(c => `
-          <div class="cp-opt${change && c.id === cur.id ? ' cur' : ''}" data-id="${escHtml(c.id)}"><div class="char-art">${mmCharArt(c, aIdx)}</div>
-            <b>${escHtml(nm(c))}</b>${change ? `<small>Dòng ${escHtml(c.name)}</small>` : ''}${change && c.id === cur.id ? '<em>Đang đồng hành</em>' : `<span>${escHtml(c.desc || '')}</span>`}</div>`).join('')}</div>
+          <div class="cp-opt${change && c.id === cur.id ? ' cur' : ''}${isLocked(c) ? ' locked' : ''}" data-id="${escHtml(c.id)}">${isLocked(c) ? '<i class="cp-lock">🔒</i>' : ''}<div class="char-art">${mmCharArt(c, aIdx)}</div>
+            <b>${escHtml(nm(c))}</b>${change ? `<small>Dòng ${escHtml(c.name)}</small>` : ''}${change && c.id === cur.id ? '<em>Đang đồng hành</em>' : isLocked(c) ? '<em class="cp-lk">Tạm khóa</em>' : `<span>${escHtml(c.desc || '')}</span>`}</div>`).join('')}</div>
         <button class="cp-go" id="cpGo" disabled>✓ Chọn bạn này</button>
-        ${change ? '<button type="button" class="cp-cancel" id="cpCancel">← Quay lại Trang chủ</button>' : `<div class="cp-note">Có ${list.length} bạn đồng hành để chọn. Em chọn một bạn nhé!</div>`}
+        ${noteHtml()}
+        ${change || !openCount ? '<button type="button" class="cp-cancel" id="cpCancel">← Quay lại Trang chủ</button>' : ''}
+      </div>
+      <div class="cp-toast" id="cpToast" style="display:none"></div>
       </div>
       <div class="cp-dim" id="cpDim"></div>
       <div class="cp-sheet" id="cpSheet">
@@ -126,7 +138,14 @@
     frame.appendChild(ov);
     const go = ov.querySelector('#cpGo'), dim = ov.querySelector('#cpDim'), sheet = ov.querySelector('#cpSheet');
     const openSheet = on => { dim.classList.toggle('show', on); sheet.classList.toggle('show', on); };
+    let toastTimer = null;
     ov.querySelectorAll('.cp-opt').forEach(o => o.addEventListener('click', () => {
+      if (o.classList.contains('locked')) {          /* bạn bị khóa: không chọn được, báo nhẹ 3 giây */
+        const c = list.find(x => x.id === o.dataset.id), t = ov.querySelector('#cpToast');
+        t.innerHTML = '🔒 Bạn ' + escHtml(c ? c.name : '') + ' đang tạm khóa.<br>Em chọn một bạn khác nhé!';
+        t.style.display = 'block'; clearTimeout(toastTimer); toastTimer = setTimeout(() => { t.style.display = 'none'; }, 3000);
+        return;
+      }
       if (change && o.dataset.id === cur.id) return;           /* bạn đang đồng hành: không có gì để đổi */
       picked = o.dataset.id;
       ov.querySelectorAll('.cp-opt').forEach(x => x.classList.toggle('picked', x === o));
@@ -139,7 +158,7 @@
       openSheet(true);
     });
     ov.querySelector('#cpBack').addEventListener('click', () => openSheet(false));
-    const cancel = ov.querySelector('#cpCancel'); if (cancel) cancel.addEventListener('click', () => ov.remove());
+    const cancel = ov.querySelector('#cpCancel'); if (cancel) cancel.addEventListener('click', () => { ov.remove(); if (!change) renderEmpty(); });
     dim.addEventListener('click', () => openSheet(false));
     ov.querySelector('#cpOk').addEventListener('click', () => {
       const c = list.find(x => x.id === picked); if (!c) return;
@@ -155,5 +174,5 @@
 
   const ch = mmCharOf(sid);
   if (ch) renderCard(ch);
-  else { const list = mmCharAll(false); if (list.length) showChooser(list); else renderEmpty(); }
+  else { const list = mmCharAll(true); if (list.length) showChooser(list); else renderEmpty(); }
 })();

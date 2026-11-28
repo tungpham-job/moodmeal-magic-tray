@@ -1381,7 +1381,7 @@ function renderCharEditor() {
     <div class="content-card-header"><span class="content-card-title">Chỉnh sửa: ${escHtml(c.name)}</span>
       <div style="display:flex;gap:6px">
         <button class="btn btn-sm btn-ghost" onclick="toggleCharacter(${CHAR_SEL})">${c.active !== false ? '🚫 Tắt nhân vật' : '✅ Bật nhân vật'}</button>
-        ${use || list.length < 2 ? '' : `<button class="btn btn-sm btn-danger" onclick="deleteCharacter(${CHAR_SEL})">🗑️ Xóa</button>`}
+        ${use || list.length < 2 || lib ? '' : `<button class="btn btn-sm btn-danger" onclick="deleteCharacter(${CHAR_SEL})">🗑️ Xóa</button>`}
       </div></div>
     <div class="char-edit-body">
       <div class="char-fields">
@@ -1447,6 +1447,7 @@ function toggleCharacter(i) {
 
 function deleteCharacter(i) {
   const list = charDraft(), c = list[i]; if (!c) return;
+  if (c.builtin || MM_CHAR_BUILTIN.some(b => b.id === c.id)) { showToast('Đây là nhân vật mặc định, không xóa được (chỉ tắt được).', 'error'); return; }
   if ((mmCharUsage()[c.id] || 0) > 0) { showToast('Đã có học sinh dùng nhân vật này, không xóa được.', 'error'); return; }
   if (list.length < 2) { showToast('Cần giữ lại ít nhất một nhân vật.', 'error'); return; }
   if (!confirm('Xóa nhân vật "' + c.name + '"?')) return;

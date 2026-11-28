@@ -77,3 +77,12 @@
 .cp-opt.cur { border-color:#E0B43C; background:#FFFAF0; cursor:default; }
 .cp-opt em { display:block; font-style:normal; font-size:9px; font-weight:700; color:#8A5A00; background:#FFF1C9; border-radius:999px; margin:3px 6px 0; padding:1px 0; }
 .cp-cancel { display:flex; align-items:center; justify-content:center; width:calc(100% - 24px); margin:8px 12px 0; height:38px; border:1.5px solid #CFD8DE; border-radius:12px; background:#fff; color:#455A64; font-weight:700; font-size:13px; font-family:inherit; cursor:pointer; }
+
+/* Nhân vật bị BGH tắt: hiện nhưng khóa */
+.cp-opt { position:relative; }
+.cp-opt.locked { background:#F3F5F6; border-color:#DDE2E5; cursor:not-allowed; }
+.cp-opt.locked .char-art { filter:grayscale(1); opacity:.4; }
+.cp-opt.locked b { color:#8A97A0; } .cp-opt.locked small { color:#A5AFB6; }
+.cp-lock { position:absolute; top:4px; right:4px; width:20px; height:20px; border-radius:50%; background:#607D8B; color:#fff; font-size:11px; font-style:normal; display:flex; align-items:center; justify-content:center; box-shadow:0 1px 3px rgba(0,0,0,.25); z-index:2; }
+.cp-opt em.cp-lk { background:#E4E9EC; color:#6B7B86; font-weight:700; }
+.cp-toast { position:absolute; left:14px; right:14px; bottom:92px; z-index:40; background:#37474F; color:#fff; border-radius:12px; padding:10px 12px; font-size:12px; font-weight:600; line-height:1.45; text-align:center; box-shadow:0 6px 18px rgba(0,0,0,.3); }
