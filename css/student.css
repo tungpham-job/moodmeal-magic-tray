@@ -134,6 +134,7 @@ body.page-student {
 .home-hero {
   background: linear-gradient(160deg, #0E6655 0%, #1E8449 60%, #27AE60 100%);
   padding: 20px 16px 16px; color: white;
+  position: sticky; top: 0; z-index: 20;   /* cố định khi cuộn nội dung bên dưới */
 }
 .hero-title   { font-size: 18px; font-weight: 800; letter-spacing: -0.3px; line-height: 1.2; }
 .hero-sub     { font-size: 11px; opacity: 0.85; margin-top: 4px; }
